@@ -33,7 +33,9 @@
 		A1B2C3D401000033 /* DriverDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000033 /* DriverDetailViewModel.swift */; };
 		A1B2C3D401000034 /* RaceDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000034 /* RaceDetailViewModel.swift */; };
 		A1B2C3D401000035 /* DriverStandingDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000035 /* DriverStandingDetailViewModel.swift */; };
-/* End PBXBuildFile section */
+		CB15B4C72CE743C780E4CD88 /* TeamDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B79758E1DFB7439D9DFFAE21 /* TeamDetailViewModel.swift */; };
+				2973459F37BB415EAC8EB558 /* TeamDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF2B71A9A3046558D6FFF98 /* TeamDetailView.swift */; };
+		/* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		A1B2C3D400000001 /* BoxBoxApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoxBoxApp.swift; sourceTree = "<group>"; };
@@ -64,7 +66,9 @@
 		A1B2C3D400000034 /* RaceDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RaceDetailViewModel.swift; sourceTree = "<group>"; };
 		A1B2C3D400000035 /* DriverStandingDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriverStandingDetailViewModel.swift; sourceTree = "<group>"; };
 		A1B2C3D4F0000001 /* BoxBox.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BoxBox.app; sourceTree = BUILT_PRODUCTS_DIR; };
-/* End PBXFileReference section */
+		B79758E1DFB7439D9DFFAE21 /* TeamDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeamDetailViewModel.swift; sourceTree = "<group>"; };
+				CDF2B71A9A3046558D6FFF98 /* TeamDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeamDetailView.swift; sourceTree = "<group>"; };
+		/* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		A1B2C3D4E0000001 /* Frameworks */ = {
@@ -141,7 +145,8 @@
 				A1B2C3D400000034 /* RaceDetailViewModel.swift */,
 				A1B2C3D40000000E /* StandingsViewModel.swift */,
 				A1B2C3D400000035 /* DriverStandingDetailViewModel.swift */,
-			);
+			
+				B79758E1DFB7439D9DFFAE21 /* TeamDetailViewModel.swift */,);
 			path = ViewModels;
 			sourceTree = "<group>";
 		};
@@ -162,7 +167,8 @@
 			children = (
 				A1B2C3D40000000F /* DriversView.swift */,
 				A1B2C3D400000030 /* DriverDetailView.swift */,
-			);
+			
+				CDF2B71A9A3046558D6FFF98 /* TeamDetailView.swift */,);
 			path = Drivers;
 			sourceTree = "<group>";
 		};
@@ -304,7 +310,9 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-/* End PBXSourcesBuildPhase section */
+				CB15B4C72CE743C780E4CD88 /* TeamDetailViewModel.swift in Sources */,
+								2973459F37BB415EAC8EB558 /* TeamDetailView.swift in Sources */,
+				/* End PBXSourcesBuildPhase section */
 
 /* Begin XCBuildConfiguration section */
 		A1B2C3D4B1000001 /* Debug */ = {
