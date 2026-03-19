@@ -11,7 +11,7 @@ class HomeViewModel {
     var error: String?
     var countdown: String = ""
 
-    nonisolated private var countdownTask: Task<Void, Never>?
+    @ObservationIgnored private var countdownTask: Task<Void, Never>?
     private let service = OpenF1Service.shared
 
     func loadData() async {
