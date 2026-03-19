@@ -89,6 +89,25 @@ struct RaceResult: Identifiable, Codable {
     let status: String
 }
 
+// MARK: - Team Race Result (for TeamDetailView)
+
+struct TeamRaceResult: Identifiable {
+    let id: String
+    let raceName: String
+    let driverCode: String
+    let position: Int
+    let points: Double
+    let status: String
+
+    var isDNF: Bool {
+        status != "Finished" && !status.starts(with: "+")
+    }
+
+    var shortName: String {
+        raceName.replacingOccurrences(of: " Grand Prix", with: "")
+    }
+}
+
 // MARK: - Driver Race Result (for DriverDetailView)
 
 struct DriverRaceResult: Identifiable {

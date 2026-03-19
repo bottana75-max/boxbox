@@ -164,6 +164,28 @@ actor OpenF1Service {
         return nil
     }
 
+    func fetchConstructorResults(constructorId: String) async throws -> [TeamRaceResult] {
+        let url = URL(string: "\(jolpicaBase)/current/constructors/\(constructorId)/results.json?limit=10")!
+        let (data, _) = try await URLSession.shared.data(from: url)
+        let response = try decoder.decode(JolpicaRaceResponse.self, from: data)
+        let races = response.MRData.RaceTable.Races
+        guard !races.isEmpty else {
+            throw F1Error.noData
+        }
+        return races.flatMap { race in
+            (race.Results ?? []).map { r in
+                TeamRaceResult(
+                    id: "\(race.round)-\(r.Driver.driverId)",
+                    raceName: race.raceName,
+                    driverCode: r.Driver.code ?? String(r.Driver.familyName.prefix(3)).uppercased(),
+                    position: Int(r.position) ?? 0,
+                    points: Double(r.points) ?? 0,
+                    status: r.status
+                )
+            }
+        }
+    }
+
     func fetchConstructorStandings() async throws -> [Constructor] {
         let url = URL(string: "\(jolpicaBase)/current/constructorStandings.json")!
         let (data, _) = try await URLSession.shared.data(from: url)
