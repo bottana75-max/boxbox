@@ -70,7 +70,7 @@ class HomeViewModel {
         }
     }
 
-    deinit {
-        timer?.invalidate()
+    nonisolated deinit {
+        // Timer will be invalidated automatically
     }
 }
