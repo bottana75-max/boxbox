@@ -78,16 +78,16 @@ struct RaceDetailView: View {
         VStack(alignment: .leading, spacing: 16) {
             F1SectionHeader(title: "TRACK MAP")
 
-            HStack(spacing: 20) {
-                CircuitMapView(points: info.trackMapPoints)
-                    .frame(width: 150, height: 150)
+            CircuitMapView(points: info.trackMapPoints)
+                .frame(maxWidth: .infinity)
+                .frame(height: 220)
+                .padding(.horizontal, -4)
 
-                VStack(alignment: .leading, spacing: 12) {
-                    infoLine(icon: "road.lanes", title: "Layout", value: "\(info.turns) turns · \(info.direction)")
-                    infoLine(icon: "bolt.fill", title: "Profile", value: info.speedClass)
-                    infoLine(icon: "arrow.up.right", title: "DRS", value: "\(info.drsZones) zones")
-                    infoLine(icon: "ruler", title: "Distance", value: info.totalDistanceKm)
-                }
+            VStack(alignment: .leading, spacing: 10) {
+                infoLine(icon: "road.lanes", title: "Layout", value: "\(info.turns) turns · \(info.direction)")
+                infoLine(icon: "bolt.fill", title: "Profile", value: info.speedClass)
+                infoLine(icon: "arrow.up.right", title: "DRS", value: "\(info.drsZones) zones")
+                infoLine(icon: "ruler", title: "Distance", value: info.totalDistanceKm)
             }
         }
         .f1Card()
@@ -310,10 +310,10 @@ private struct CircuitMapView: View {
                     .fill(Color.f1SecondaryBackground)
 
                 linePath
-                    .stroke(Color.white.opacity(0.14), style: StrokeStyle(lineWidth: 18, lineCap: .round, lineJoin: .round))
+                    .stroke(Color.white.opacity(0.14), style: StrokeStyle(lineWidth: 10, lineCap: .round, lineJoin: .round))
 
                 linePath
-                    .stroke(Color.f1Red, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
+                    .stroke(Color.f1Red, style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
 
                 if let start = points.first {
                     Circle()
