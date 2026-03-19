@@ -7,7 +7,7 @@ struct PredictView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 20) {
+                VStack(spacing: F1Design.cardSpacing) {
                     if let race = viewModel.nextRace {
                         nextRaceHeader(race)
                         predictionBriefingCard(race)
@@ -15,6 +15,7 @@ struct PredictView: View {
                         weekendPlanCard(race)
                     }
 
+                    trialStatusBanner
                     predictButton
 
                     if let prediction = viewModel.prediction {
@@ -44,6 +45,9 @@ struct PredictView: View {
             .sheet(isPresented: $viewModel.showAPIKeySheet) {
                 apiKeySheet
             }
+            .sheet(isPresented: $viewModel.showPaywall) {
+                PaywallView()
+            }
         }
         .task {
             await viewModel.loadNextRace()
@@ -51,15 +55,13 @@ struct PredictView: View {
     }
 
     private func nextRaceHeader(_ race: Race) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: F1Design.innerSpacing) {
             HStack {
-                Text("UPCOMING RACE")
-                    .font(.caption)
-                    .fontWeight(.bold)
-                    .foregroundStyle(Color.f1Red)
+                F1SectionHeader(title: "UPCOMING RACE")
                 Spacer()
                 Text("Round \(race.round)")
                     .font(.caption)
+                    .fontWeight(.medium)
                     .foregroundStyle(.secondary)
             }
 
@@ -73,46 +75,43 @@ struct PredictView: View {
                 .foregroundStyle(.secondary)
 
             HStack(spacing: 10) {
-                contextTile(title: "Date", value: race.formattedDate)
-                contextTile(title: "Track", value: race.circuitInfo?.speedClass ?? "Unknown")
-                contextTile(title: "Tyres", value: viewModel.pressureProfile.tyreStress)
+                F1MetricTile(title: "Date", value: race.formattedDate)
+                F1MetricTile(title: "Track", value: race.circuitInfo?.speedClass ?? "Unknown")
+                F1MetricTile(title: "Tyres", value: viewModel.pressureProfile.tyreStress)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .background(Color.f1CardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .f1Card()
     }
 
     private func predictionBriefingCard(_ race: Race) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            sectionHeader("RACE BRIEF", subtitle: "The predictor now explains the setup before asking for AI")
+        VStack(alignment: .leading, spacing: F1Design.innerSpacing) {
+            F1SectionHeader(title: "RACE BRIEF", subtitle: "Circuit context for the AI prediction engine")
 
             Text(viewModel.projectedStoryline)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+                .lineSpacing(2)
 
-            HStack(spacing: 12) {
-                insightPill(title: "Overtaking", value: viewModel.pressureProfile.overtaking)
-                insightPill(title: "Qualifying", value: viewModel.pressureProfile.qualifyingImportance)
-                insightPill(title: "Reliability", value: viewModel.pressureProfile.reliabilityRisk)
+            HStack(spacing: 10) {
+                F1StatPill(title: "Overtaking", value: viewModel.pressureProfile.overtaking, style: .subtle)
+                F1StatPill(title: "Qualifying", value: viewModel.pressureProfile.qualifyingImportance, style: .subtle)
+                F1StatPill(title: "Reliability", value: viewModel.pressureProfile.reliabilityRisk, style: .subtle)
             }
         }
-        .padding()
-        .background(Color.f1CardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .f1Card()
     }
 
     private var contendersCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            sectionHeader("LEADING CONTENDERS", subtitle: "Standings + recent form, because black-box AI is lazy product")
+        VStack(alignment: .leading, spacing: F1Design.innerSpacing) {
+            F1SectionHeader(title: "LEADING CONTENDERS", subtitle: "Standings + recent form feed the prediction model")
 
             ForEach(Array(viewModel.favoriteDrivers.enumerated()), id: \.element.id) { index, driver in
                 let trend = viewModel.trends.first(where: { $0.id == driver.id })
                 HStack(spacing: 12) {
                     Text("P\(index + 1)")
                         .font(.caption)
-                        .fontWeight(.bold)
+                        .fontWeight(.heavy)
                         .foregroundStyle(Color.f1Red)
                         .frame(width: 30)
 
@@ -126,7 +125,7 @@ struct PredictView: View {
                         if let trend {
                             Text("\(trend.recentSummary) · \(trend.momentumLabel)")
                                 .font(.caption2)
-                                .foregroundStyle(.secondary)
+                                .foregroundStyle(.tertiary)
                         }
                     }
 
@@ -142,19 +141,15 @@ struct PredictView: View {
                             .foregroundStyle(.secondary)
                     }
                 }
-                .padding()
-                .background(Color.f1SecondaryBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .f1InnerCard()
             }
         }
-        .padding()
-        .background(Color.f1CardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .f1Card()
     }
 
     private func weekendPlanCard(_ race: Race) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            sectionHeader("SESSION RADAR", subtitle: "Estimated weekend cadence so users can plan around the big moments")
+        VStack(alignment: .leading, spacing: F1Design.innerSpacing) {
+            F1SectionHeader(title: "SESSION RADAR", subtitle: "Weekend cadence and timing")
 
             ForEach(race.weekendSessions) { session in
                 HStack {
@@ -165,27 +160,23 @@ struct PredictView: View {
                             .foregroundStyle(.white)
                         Text(session.subtitle)
                             .font(.caption2)
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.tertiary)
                     }
                     Spacer()
                     VStack(alignment: .trailing, spacing: 3) {
                         Text(session.relativeLabel.uppercased())
-                            .font(.caption2)
-                            .fontWeight(.bold)
+                            .font(.system(size: 9, weight: .heavy))
+                            .tracking(0.4)
                             .foregroundStyle(session.isUpcoming ? Color.f1Red : .secondary)
                         Text(session.timeLabel)
                             .font(.caption)
                             .foregroundStyle(.white)
                     }
                 }
-                .padding()
-                .background(Color.f1SecondaryBackground)
-                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .f1InnerCard()
             }
         }
-        .padding()
-        .background(Color.f1CardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .f1Card()
     }
 
     private var predictButton: some View {
@@ -217,10 +208,8 @@ struct PredictView: View {
 
     private func podiumCard(_ prediction: Prediction) -> some View {
         VStack(spacing: 16) {
-            Text("PREDICTED PODIUM")
-                .font(.caption)
-                .fontWeight(.bold)
-                .foregroundStyle(Color.f1Red)
+            F1SectionHeader(title: "PREDICTED PODIUM")
+                .frame(maxWidth: .infinity, alignment: .center)
 
             HStack(alignment: .bottom, spacing: 12) {
                 podiumPlace(position: 2, name: prediction.second, height: 80)
@@ -228,9 +217,7 @@ struct PredictView: View {
                 podiumPlace(position: 3, name: prediction.third, height: 60)
             }
         }
-        .padding()
-        .background(Color.f1CardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .f1Card()
         .transition(.scale.combined(with: .opacity))
     }
 
@@ -259,7 +246,7 @@ struct PredictView: View {
     private func podiumGradient(for position: Int) -> LinearGradient {
         switch position {
         case 1:
-            return LinearGradient(colors: [.yellow, .orange], startPoint: .top, endPoint: .bottom)
+            return LinearGradient(colors: [Color(red: 1, green: 0.84, blue: 0), .orange], startPoint: .top, endPoint: .bottom)
         case 2:
             return LinearGradient(colors: [Color(white: 0.7), Color(white: 0.5)], startPoint: .top, endPoint: .bottom)
         case 3:
@@ -271,10 +258,7 @@ struct PredictView: View {
 
     private func reasoningCard(_ prediction: Prediction) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("AI ANALYSIS")
-                .font(.caption)
-                .fontWeight(.bold)
-                .foregroundStyle(Color.f1Red)
+            F1SectionHeader(title: "AI ANALYSIS")
 
             Text(prediction.reasoning)
                 .font(.subheadline)
@@ -282,59 +266,29 @@ struct PredictView: View {
                 .lineSpacing(4)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding()
-        .background(Color.f1CardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .f1Card()
         .transition(.opacity)
     }
 
-    private func sectionHeader(_ title: String, subtitle: String? = nil) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title)
+    private var trialStatusBanner: some View {
+        HStack {
+            Image(systemName: viewModel.storeKit.isProUnlocked ? "checkmark.seal.fill" : "sparkles")
+                .foregroundStyle(Color.f1Red)
+            Text(viewModel.trialStatusText)
+                .font(.caption)
+                .fontWeight(.medium)
+                .foregroundStyle(.white)
+            Spacer()
+            if !viewModel.storeKit.isProUnlocked && viewModel.storeKit.remainingFreePredictions == 0 {
+                Button("Upgrade") {
+                    viewModel.showPaywall = true
+                }
                 .font(.caption)
                 .fontWeight(.bold)
                 .foregroundStyle(Color.f1Red)
-            if let subtitle {
-                Text(subtitle)
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private func contextTile(title: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title.uppercased())
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-            Text(value)
-                .font(.subheadline)
-                .fontWeight(.bold)
-                .foregroundStyle(.white)
-                .lineLimit(2)
-                .minimumScaleFactor(0.75)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(10)
-        .background(Color.f1SecondaryBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
-    }
-
-    private func insightPill(title: String, value: String) -> some View {
-        VStack(spacing: 4) {
-            Text(title)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-            Text(value)
-                .font(.caption)
-                .fontWeight(.bold)
-                .foregroundStyle(.white)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 10)
-        .background(Color.f1SecondaryBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .f1Card()
     }
 
     private var apiKeySheet: some View {
