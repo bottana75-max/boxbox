@@ -7,9 +7,12 @@ struct PredictView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(spacing: 24) {
+                VStack(spacing: 20) {
                     if let race = viewModel.nextRace {
                         nextRaceHeader(race)
+                        predictionBriefingCard(race)
+                        contendersCard
+                        weekendPlanCard(race)
                     }
 
                     predictButton
@@ -48,22 +51,138 @@ struct PredictView: View {
     }
 
     private func nextRaceHeader(_ race: Race) -> some View {
-        VStack(spacing: 8) {
-            Text("UPCOMING RACE")
-                .font(.caption)
-                .fontWeight(.bold)
-                .foregroundStyle(Color.f1Red)
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text("UPCOMING RACE")
+                    .font(.caption)
+                    .fontWeight(.bold)
+                    .foregroundStyle(Color.f1Red)
+                Spacer()
+                Text("Round \(race.round)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
             Text(race.raceName)
                 .font(.title2)
                 .fontWeight(.bold)
-            Text(race.circuitName)
+                .foregroundStyle(.white)
+
+            Text("\(race.circuitName) · \(race.country)")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
-            Text(race.formattedDate)
-                .font(.caption)
-                .foregroundStyle(.secondary)
+
+            HStack(spacing: 10) {
+                contextTile(title: "Date", value: race.formattedDate)
+                contextTile(title: "Track", value: race.circuitInfo?.speedClass ?? "Unknown")
+                contextTile(title: "Tyres", value: viewModel.pressureProfile.tyreStress)
+            }
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(Color.f1CardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+
+    private func predictionBriefingCard(_ race: Race) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            sectionHeader("RACE BRIEF", subtitle: "The predictor now explains the setup before asking for AI")
+
+            Text(viewModel.projectedStoryline)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+
+            HStack(spacing: 12) {
+                insightPill(title: "Overtaking", value: viewModel.pressureProfile.overtaking)
+                insightPill(title: "Qualifying", value: viewModel.pressureProfile.qualifyingImportance)
+                insightPill(title: "Reliability", value: viewModel.pressureProfile.reliabilityRisk)
+            }
+        }
+        .padding()
+        .background(Color.f1CardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+
+    private var contendersCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            sectionHeader("LEADING CONTENDERS", subtitle: "Standings + recent form, because black-box AI is lazy product")
+
+            ForEach(Array(viewModel.favoriteDrivers.enumerated()), id: \.element.id) { index, driver in
+                let trend = viewModel.trends.first(where: { $0.id == driver.id })
+                HStack(spacing: 12) {
+                    Text("P\(index + 1)")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundStyle(Color.f1Red)
+                        .frame(width: 30)
+
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(driver.driverName)
+                            .font(.headline)
+                            .foregroundStyle(.white)
+                        Text(driver.constructorName)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        if let trend {
+                            Text("\(trend.recentSummary) · \(trend.momentumLabel)")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    Spacer()
+
+                    VStack(alignment: .trailing, spacing: 4) {
+                        Text("\(driver.points.cleanNumber)")
+                            .font(.headline)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.white)
+                        Text("pts")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+                .padding()
+                .background(Color.f1SecondaryBackground)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+            }
+        }
+        .padding()
+        .background(Color.f1CardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+
+    private func weekendPlanCard(_ race: Race) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            sectionHeader("SESSION RADAR", subtitle: "Estimated weekend cadence so users can plan around the big moments")
+
+            ForEach(race.weekendSessions) { session in
+                HStack {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(session.label)
+                            .font(.subheadline)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.white)
+                        Text(session.subtitle)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    VStack(alignment: .trailing, spacing: 3) {
+                        Text(session.relativeLabel.uppercased())
+                            .font(.caption2)
+                            .fontWeight(.bold)
+                            .foregroundStyle(session.isUpcoming ? Color.f1Red : .secondary)
+                        Text(session.timeLabel)
+                            .font(.caption)
+                            .foregroundStyle(.white)
+                    }
+                }
+                .padding()
+                .background(Color.f1SecondaryBackground)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+            }
+        }
         .padding()
         .background(Color.f1CardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 16))
@@ -73,15 +192,20 @@ struct PredictView: View {
         Button {
             Task { await viewModel.predict() }
         } label: {
-            HStack(spacing: 8) {
-                if viewModel.isLoading {
-                    ProgressView()
-                        .tint(.white)
-                } else {
-                    Image(systemName: "sparkles")
+            VStack(spacing: 8) {
+                HStack(spacing: 8) {
+                    if viewModel.isLoading {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        Image(systemName: "sparkles")
+                    }
+                    Text(viewModel.isLoading ? "Analyzing context..." : "Generate AI Podium")
+                        .fontWeight(.bold)
                 }
-                Text(viewModel.isLoading ? "Analyzing..." : "Predict Next Race")
-                    .fontWeight(.bold)
+                Text(viewModel.hasAPIKey ? "Uses standings, recent results and circuit profile." : "Add your OpenAI key once to unlock the prediction engine.")
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.85))
             }
             .frame(maxWidth: .infinity)
             .padding()
@@ -99,11 +223,8 @@ struct PredictView: View {
                 .foregroundStyle(Color.f1Red)
 
             HStack(alignment: .bottom, spacing: 12) {
-                // P2
                 podiumPlace(position: 2, name: prediction.second, height: 80)
-                // P1
                 podiumPlace(position: 1, name: prediction.first, height: 110)
-                // P3
                 podiumPlace(position: 3, name: prediction.third, height: 60)
             }
         }
@@ -165,6 +286,55 @@ struct PredictView: View {
         .background(Color.f1CardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .transition(.opacity)
+    }
+
+    private func sectionHeader(_ title: String, subtitle: String? = nil) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.caption)
+                .fontWeight(.bold)
+                .foregroundStyle(Color.f1Red)
+            if let subtitle {
+                Text(subtitle)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func contextTile(title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title.uppercased())
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.subheadline)
+                .fontWeight(.bold)
+                .foregroundStyle(.white)
+                .lineLimit(2)
+                .minimumScaleFactor(0.75)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(10)
+        .background(Color.f1SecondaryBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func insightPill(title: String, value: String) -> some View {
+        VStack(spacing: 4) {
+            Text(title)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.caption)
+                .fontWeight(.bold)
+                .foregroundStyle(.white)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 10)
+        .background(Color.f1SecondaryBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
     private var apiKeySheet: some View {

@@ -10,18 +10,13 @@ actor OpenF1Service {
         return d
     }()
 
-    // MARK: - OpenF1 Endpoints
-
     func fetchDrivers(sessionKey: String = "latest") async throws -> [Driver] {
         let url = URL(string: "\(openF1Base)/drivers?session_key=\(sessionKey)")!
         let (data, _) = try await URLSession.shared.data(from: url)
         let drivers = try decoder.decode([Driver].self, from: data)
-        // Deduplicate by driver number, keeping first occurrence
         var seen = Set<Int>()
         return drivers.filter { seen.insert($0.driverNumber).inserted }
     }
-
-    // MARK: - OpenF1 Position Data
 
     struct DriverPosition: Codable {
         let position: Int
@@ -48,35 +43,14 @@ actor OpenF1Service {
         guard let jolpicaRace = response.MRData.RaceTable.Races.first else {
             throw F1Error.noData
         }
-        return (jolpicaRace.Results ?? []).map { r in
-            RaceResult(
-                id: "\(r.position)-\(r.Driver.driverId)",
-                position: Int(r.position) ?? 0,
-                driverName: "\(r.Driver.givenName) \(r.Driver.familyName)",
-                driverCode: r.Driver.code ?? String(r.Driver.familyName.prefix(3)).uppercased(),
-                constructor: r.Constructor.name,
-                points: Double(r.points) ?? 0,
-                status: r.status
-            )
-        }
+        return mapRaceResults(jolpicaRace.Results ?? [])
     }
-
-    // MARK: - Jolpica Endpoints
 
     func fetchCurrentSchedule() async throws -> [Race] {
         let url = URL(string: "\(jolpicaBase)/current.json")!
         let (data, _) = try await URLSession.shared.data(from: url)
         let response = try decoder.decode(JolpicaRaceResponse.self, from: data)
-        return response.MRData.RaceTable.Races.map { jolpicaRace in
-            Race(
-                id: jolpicaRace.round,
-                raceName: jolpicaRace.raceName,
-                circuitName: jolpicaRace.Circuit.circuitName,
-                country: jolpicaRace.Circuit.Location.country,
-                date: jolpicaRace.date,
-                round: Int(jolpicaRace.round) ?? 0
-            )
-        }
+        return response.MRData.RaceTable.Races.map(mapRace)
     }
 
     func fetchLastRaceResults() async throws -> (Race, [RaceResult]) {
@@ -86,26 +60,20 @@ actor OpenF1Service {
         guard let jolpicaRace = response.MRData.RaceTable.Races.first else {
             throw F1Error.noData
         }
-        let race = Race(
-            id: jolpicaRace.round,
-            raceName: jolpicaRace.raceName,
-            circuitName: jolpicaRace.Circuit.circuitName,
-            country: jolpicaRace.Circuit.Location.country,
-            date: jolpicaRace.date,
-            round: Int(jolpicaRace.round) ?? 0
-        )
-        let results = (jolpicaRace.Results ?? []).map { r in
-            RaceResult(
-                id: "\(r.position)-\(r.Driver.driverId)",
-                position: Int(r.position) ?? 0,
-                driverName: "\(r.Driver.givenName) \(r.Driver.familyName)",
-                driverCode: r.Driver.code ?? r.Driver.familyName.prefix(3).uppercased(),
-                constructor: r.Constructor.name,
-                points: Double(r.points) ?? 0,
-                status: r.status
-            )
+        return (mapRace(jolpicaRace), mapRaceResults(jolpicaRace.Results ?? []))
+    }
+
+    func fetchRecentCompletedRaces(limit: Int = 3) async throws -> [(Race, [RaceResult])] {
+        let schedule = try await fetchCurrentSchedule()
+        let completed = schedule.filter { $0.isPast }.sorted { $0.round > $1.round }
+        var payload: [(Race, [RaceResult])] = []
+
+        for race in completed.prefix(limit) {
+            let results = try await fetchRaceResults(round: race.round)
+            payload.append((race, results))
         }
-        return (race, results)
+
+        return payload
     }
 
     func fetchDriverStandings() async throws -> [DriverStanding] {
@@ -149,14 +117,11 @@ actor OpenF1Service {
         }
     }
 
-    /// Try to find the Jolpica driverId for an OpenF1 driver by matching driver number or name
     func findDriverId(for driver: Driver) async throws -> String? {
         let standings = try await fetchDriverStandings()
-        // Match by driver code first
         if let match = standings.first(where: { $0.driverCode == driver.nameAcronym }) {
             return match.id
         }
-        // Match by name similarity
         let driverName = driver.fullName.lowercased()
         if let match = standings.first(where: { driverName.contains($0.driverName.split(separator: " ").last?.lowercased() ?? "") }) {
             return match.id
@@ -201,6 +166,63 @@ actor OpenF1Service {
                 points: Double(s.points) ?? 0,
                 position: Int(s.position) ?? 0,
                 wins: Int(s.wins) ?? 0
+            )
+        }
+    }
+
+    func buildTrends(from standings: [DriverStanding], recentRaces: [(Race, [RaceResult])], limit: Int = 5) -> [DriverTrend] {
+        let indexedResults = recentRaces.map { $0.1 }
+        return standings.prefix(limit).map { standing in
+            let results = indexedResults.compactMap { raceResults in
+                raceResults.first(where: { $0.driverCode == standing.driverCode || $0.driverName == standing.driverName })
+            }
+
+            let score = results.enumerated().reduce(0) { partial, item in
+                let weight = max(1, 4 - item.offset)
+                let resultScore = max(0, 12 - item.element.position)
+                return partial + weight * resultScore
+            } + standing.wins
+
+            return DriverTrend(
+                id: standing.id,
+                driverName: standing.driverName,
+                driverCode: standing.driverCode,
+                constructorName: standing.constructorName,
+                currentPosition: standing.position,
+                currentPoints: standing.points,
+                recentResults: results,
+                trendScore: score
+            )
+        }
+        .sorted { lhs, rhs in
+            if lhs.trendScore == rhs.trendScore {
+                return lhs.currentPosition < rhs.currentPosition
+            }
+            return lhs.trendScore > rhs.trendScore
+        }
+    }
+
+    private func mapRace(_ jolpicaRace: JolpicaRace) -> Race {
+        Race(
+            id: jolpicaRace.round,
+            raceName: jolpicaRace.raceName,
+            circuitName: jolpicaRace.Circuit.circuitName,
+            country: jolpicaRace.Circuit.Location.country,
+            date: jolpicaRace.date,
+            round: Int(jolpicaRace.round) ?? 0
+        )
+    }
+
+    private func mapRaceResults(_ results: [JolpicaResult]) -> [RaceResult] {
+        results.map { r in
+            RaceResult(
+                id: "\(r.position)-\(r.Driver.driverId)",
+                position: Int(r.position) ?? 0,
+                driverName: "\(r.Driver.givenName) \(r.Driver.familyName)",
+                driverCode: r.Driver.code ?? String(r.Driver.familyName.prefix(3)).uppercased(),
+                constructor: r.Constructor.name,
+                points: Double(r.points) ?? 0,
+                status: r.status
             )
         }
     }

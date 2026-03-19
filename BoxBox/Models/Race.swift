@@ -11,6 +11,7 @@ struct Race: Identifiable, Codable, Hashable {
     var raceDate: Date? {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
         return formatter.date(from: date)
     }
 
@@ -26,9 +27,139 @@ struct Race: Identifiable, Codable, Hashable {
         return formatter.string(from: raceDate)
     }
 
+    var raceWeekendTitle: String {
+        raceName.replacingOccurrences(of: " Grand Prix", with: "")
+    }
+
+    var daysUntilRace: Int? {
+        guard let raceDate else { return nil }
+        return Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: Date()), to: Calendar.current.startOfDay(for: raceDate)).day
+    }
+
+    var weekendSessions: [WeekendSession] {
+        guard let raceDate else { return [] }
+        let calendar = Calendar(identifier: .gregorian)
+        let raceStart = calendar.date(bySettingHour: 14, minute: 0, second: 0, of: raceDate) ?? raceDate
+
+        let offsets: [(String, String, Int, Int)] = [
+            ("FP1", "Track goes green", -2, 11),
+            ("FP2", "Long-run window", -2, 15),
+            ("FP3", "Final setup check", -1, 11),
+            ("Qualifying", "Grid-defining session", -1, 15),
+            ("Race", "Lights out estimate", 0, 14)
+        ]
+
+        return offsets.compactMap { label, subtitle, dayOffset, hour in
+            guard let day = calendar.date(byAdding: .day, value: dayOffset, to: raceStart),
+                  let sessionDate = calendar.date(bySettingHour: hour, minute: 0, second: 0, of: day)
+            else { return nil }
+            return WeekendSession(label: label, subtitle: subtitle, date: sessionDate)
+        }
+    }
+
     /// Circuit info from hardcoded data (laps, length in km)
     var circuitInfo: CircuitInfo? {
         CircuitInfo.lookup(circuitName: circuitName, country: country)
+    }
+}
+
+struct WeekendSession: Identifiable, Hashable {
+    let label: String
+    let subtitle: String
+    let date: Date
+
+    var id: String {
+        "\(label)-\(date.timeIntervalSince1970)"
+    }
+
+    var isUpcoming: Bool {
+        date > Date()
+    }
+
+    var relativeLabel: String {
+        if Calendar.current.isDateInToday(date) { return "Today" }
+        if Calendar.current.isDateInTomorrow(date) { return "Tomorrow" }
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEE"
+        return formatter.string(from: date)
+    }
+
+    var timeLabel: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: date)
+    }
+}
+
+struct DriverTrend: Identifiable, Hashable {
+    let id: String
+    let driverName: String
+    let driverCode: String
+    let constructorName: String
+    let currentPosition: Int
+    let currentPoints: Double
+    let recentResults: [RaceResult]
+    let trendScore: Int
+
+    var averageFinish: Double {
+        guard !recentResults.isEmpty else { return Double(currentPosition) }
+        return recentResults.map(\.position).map(Double.init).reduce(0, +) / Double(recentResults.count)
+    }
+
+    var momentumLabel: String {
+        switch trendScore {
+        case 22...: return "White hot"
+        case 16...: return "Charging"
+        case 10...: return "Stable"
+        default: return "Needs a reset"
+        }
+    }
+
+    var trendIcon: String {
+        switch trendScore {
+        case 22...: return "arrow.up.right"
+        case 16...: return "flame.fill"
+        case 10...: return "equal"
+        default: return "arrow.down.right"
+        }
+    }
+
+    var recentSummary: String {
+        recentResults.prefix(3).map { "P\($0.position)" }.joined(separator: " · ")
+    }
+}
+
+struct CircuitPressureProfile: Hashable {
+    let overtaking: String
+    let tyreStress: String
+    let qualifyingImportance: String
+    let reliabilityRisk: String
+
+    static func from(info: CircuitInfo?) -> CircuitPressureProfile {
+        guard let info else {
+            return CircuitPressureProfile(overtaking: "Unknown", tyreStress: "Unknown", qualifyingImportance: "Unknown", reliabilityRisk: "Unknown")
+        }
+
+        let overtaking = info.drsZones >= 3 ? "High" : (info.drsZones == 2 ? "Medium" : "Track position")
+        let tyreStress = (info.lengthKm > 5.7 || info.speedClass.lowercased().contains("high")) ? "High" : (info.speedClass.lowercased().contains("street") ? "Medium" : "Balanced")
+        let qualifyingImportance = (info.drsZones <= 1 || info.speedClass.lowercased().contains("street")) ? "Massive" : (info.turns <= 12 ? "Important" : "Balanced")
+        let reliabilityRisk = info.turns >= 20 || info.speedClass.lowercased().contains("street") ? "Punishing" : (info.lengthKm > 5.6 ? "Medium" : "Contained")
+
+        return CircuitPressureProfile(
+            overtaking: overtaking,
+            tyreStress: tyreStress,
+            qualifyingImportance: qualifyingImportance,
+            reliabilityRisk: reliabilityRisk
+        )
+    }
+}
+
+extension Double {
+    var cleanNumber: String {
+        if truncatingRemainder(dividingBy: 1) == 0 {
+            return String(Int(self))
+        }
+        return String(format: "%.1f", self)
     }
 }
 
@@ -100,7 +231,7 @@ struct TrackMapPoint: Hashable, Codable {
     }
 }
 
-struct RaceResult: Identifiable, Codable {
+struct RaceResult: Identifiable, Codable, Hashable {
     let id: String
     let position: Int
     let driverName: String
@@ -109,8 +240,6 @@ struct RaceResult: Identifiable, Codable {
     let points: Double
     let status: String
 }
-
-// MARK: - Team Race Result (for TeamDetailView)
 
 struct TeamRaceResult: Identifiable {
     let id: String
@@ -129,8 +258,6 @@ struct TeamRaceResult: Identifiable {
     }
 }
 
-// MARK: - Driver Race Result (for DriverDetailView)
-
 struct DriverRaceResult: Identifiable {
     let id: String
     let raceName: String
@@ -142,14 +269,11 @@ struct DriverRaceResult: Identifiable {
         status != "Finished" && !status.starts(with: "+")
     }
 
-    /// Short race name (e.g. "Australian Grand Prix" → "Australia")
     var shortName: String {
         raceName
             .replacingOccurrences(of: " Grand Prix", with: "")
     }
 }
-
-// MARK: - Jolpica API Response Models
 
 struct JolpicaRaceResponse: Codable {
     let MRData: MRData
@@ -198,8 +322,6 @@ struct JolpicaDriver: Codable {
 struct JolpicaConstructor: Codable {
     let name: String
 }
-
-// MARK: - Standings Response Models
 
 struct StandingsResponse: Codable {
     let MRData: StandingsMRData

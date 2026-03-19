@@ -16,34 +16,64 @@ class AIService {
     }
 
     func predictRace(
-        nextRace: String,
-        circuitName: String,
+        nextRace: Race,
         driverStandings: [DriverStanding],
-        lastRaceResults: [String]
+        recentRaces: [(Race, [RaceResult])],
+        trends: [DriverTrend],
+        pressureProfile: CircuitPressureProfile
     ) async throws -> Prediction {
         guard let apiKey, !apiKey.isEmpty else {
             throw AIError.noAPIKey
         }
 
-        let top10 = driverStandings.prefix(10).map { "\($0.position). \($0.driverName) (\($0.constructorName)) - \($0.points) pts" }.joined(separator: "\n")
-        let recentWinners = lastRaceResults.prefix(3).joined(separator: ", ")
+        let top10 = driverStandings.prefix(10)
+            .map { "\($0.position). \($0.driverName) (\($0.constructorName)) - \($0.points.cleanNumber) pts, \($0.wins) wins" }
+            .joined(separator: "\n")
+
+        let recentSummary = recentRaces.prefix(3).map { race, results in
+            let podium = results.prefix(3).map { "P\($0.position) \($0.driverCode)" }.joined(separator: ", ")
+            return "- \(race.raceWeekendTitle): \(podium)"
+        }.joined(separator: "\n")
+
+        let trendSummary = trends.prefix(5).map {
+            "- \($0.driverName): \($0.recentSummary.isEmpty ? "No recent results" : $0.recentSummary) | momentum \($0.momentumLabel) | avg finish \(String(format: "%.1f", $0.averageFinish))"
+        }.joined(separator: "\n")
+
+        let sessionTimeline = nextRace.weekendSessions.map {
+            "- \($0.label): \($0.relativeLabel) \($0.timeLabel)"
+        }.joined(separator: "\n")
 
         let prompt = """
-        You are an expert Formula 1 analyst. Predict the podium (top 3) for the upcoming race.
+        You are an expert Formula 1 analyst. Predict the podium (top 3) for the upcoming race using the supplied data, not vibes.
 
-        Race: \(nextRace)
-        Circuit: \(circuitName)
+        Race: \(nextRace.raceName)
+        Circuit: \(nextRace.circuitName)
+        Country: \(nextRace.country)
+        Date: \(nextRace.formattedDate)
 
-        Current Driver Standings (Top 10):
+        Current driver standings:
         \(top10)
 
-        Recent Race Winners: \(recentWinners)
+        Recent completed races:
+        \(recentSummary)
 
-        Consider:
-        - Current form and momentum
-        - Historical circuit performance
-        - Team car performance characteristics
-        - Weather and track conditions tendencies
+        Momentum board:
+        \(trendSummary)
+
+        Circuit pressure profile:
+        - Overtaking: \(pressureProfile.overtaking)
+        - Tyre stress: \(pressureProfile.tyreStress)
+        - Qualifying importance: \(pressureProfile.qualifyingImportance)
+        - Reliability risk: \(pressureProfile.reliabilityRisk)
+
+        Expected weekend timeline:
+        \(sessionTimeline)
+
+        Weigh:
+        - current championship order and points gap
+        - recent podium/run of form
+        - how the circuit profile suits likely frontrunners
+        - qualifying importance vs overtaking chances
 
         Respond ONLY with valid JSON in this exact format:
         {
@@ -82,7 +112,6 @@ class AIService {
             throw AIError.noResponse
         }
 
-        // Parse the JSON from the response
         let cleanContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
             .replacingOccurrences(of: "```json", with: "")
             .replacingOccurrences(of: "```", with: "")
@@ -96,8 +125,8 @@ class AIService {
 
         return Prediction(
             id: UUID(),
-            raceId: nextRace,
-            raceName: nextRace,
+            raceId: nextRace.id,
+            raceName: nextRace.raceName,
             first: predictionResponse.first,
             second: predictionResponse.second,
             third: predictionResponse.third,
@@ -106,8 +135,6 @@ class AIService {
         )
     }
 }
-
-// MARK: - OpenAI Response Models
 
 struct ChatCompletionResponse: Codable {
     let choices: [Choice]

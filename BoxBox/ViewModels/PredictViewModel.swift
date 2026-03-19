@@ -5,6 +5,10 @@ import Foundation
 class PredictViewModel {
     var prediction: Prediction?
     var nextRace: Race?
+    var standings: [DriverStanding] = []
+    var recentRaces: [(Race, [RaceResult])] = []
+    var trends: [DriverTrend] = []
+    var pressureProfile = CircuitPressureProfile.from(info: nil)
     var isLoading = false
     var error: String?
     var showAPIKeySheet = false
@@ -14,18 +18,42 @@ class PredictViewModel {
 
     var hasAPIKey: Bool { aiService.hasAPIKey }
 
+    var favoriteDrivers: [DriverStanding] {
+        Array(standings.prefix(3))
+    }
+
+    var projectedStoryline: String {
+        guard let race = nextRace else { return "No upcoming race found." }
+        let circuit = race.circuitInfo
+        let city = circuit?.city ?? race.country
+        let quality = pressureProfile.qualifyingImportance.lowercased()
+        let overtaking = pressureProfile.overtaking.lowercased()
+        return "\(race.raceWeekendTitle) drops into \(city). Expect \(quality) qualifying, \(pressureProfile.tyreStress.lowercased()) tyre stress and \(overtaking) overtaking pressure. In other words: context first, AI second."
+    }
+
     func saveAPIKey(_ key: String) {
         aiService.apiKey = key
     }
 
     func loadNextRace() async {
+        error = nil
         do {
-            let schedule = try await service.fetchCurrentSchedule()
+            async let scheduleTask = service.fetchCurrentSchedule()
+            async let standingsTask = service.fetchDriverStandings()
+            async let recentTask = service.fetchRecentCompletedRaces(limit: 3)
+
+            let schedule = try await scheduleTask
+            let standings = try await standingsTask
+            let recent = try await recentTask
             let now = Date()
             nextRace = schedule.first { race in
                 guard let raceDate = race.raceDate else { return false }
                 return raceDate > now
             }
+            self.standings = standings
+            recentRaces = recent
+            pressureProfile = CircuitPressureProfile.from(info: nextRace?.circuitInfo)
+            trends = await service.buildTrends(from: standings, recentRaces: recent, limit: 5)
         } catch {
             self.error = error.localizedDescription
         }
@@ -46,15 +74,16 @@ class PredictViewModel {
         error = nil
 
         do {
-            let standings = try await service.fetchDriverStandings()
-            let (_, results) = try await service.fetchLastRaceResults()
-            let recentWinners = results.prefix(3).map { $0.driverName }
+            let standings = self.standings.isEmpty ? try await service.fetchDriverStandings() : self.standings
+            let recentPayload = recentRaces.isEmpty ? try await service.fetchRecentCompletedRaces(limit: 3) : recentRaces
+            let trendPayload = trends.isEmpty ? await service.buildTrends(from: standings, recentRaces: recentPayload, limit: 5) : trends
 
             prediction = try await aiService.predictRace(
-                nextRace: nextRace.raceName,
-                circuitName: nextRace.circuitName,
+                nextRace: nextRace,
                 driverStandings: standings,
-                lastRaceResults: recentWinners
+                recentRaces: recentPayload,
+                trends: trendPayload,
+                pressureProfile: pressureProfile
             )
         } catch {
             self.error = error.localizedDescription
