@@ -28,8 +28,10 @@ struct StandingsView: View {
                     List {
                         if viewModel.selectedTab == 0 {
                             ForEach(viewModel.driverStandings) { standing in
-                                driverStandingRow(standing)
-                                    .listRowBackground(Color.f1CardBackground)
+                                NavigationLink(value: standing) {
+                                    driverStandingRow(standing)
+                                }
+                                .listRowBackground(Color.f1CardBackground)
                             }
                         } else {
                             ForEach(viewModel.constructorStandings) { constructor in
@@ -40,6 +42,9 @@ struct StandingsView: View {
                     }
                     .listStyle(.plain)
                     .scrollContentBackground(.hidden)
+                    .navigationDestination(for: DriverStanding.self) { standing in
+                        DriverStandingDetailView(standing: standing)
+                    }
                 }
             }
             .background(Color.f1Background)
