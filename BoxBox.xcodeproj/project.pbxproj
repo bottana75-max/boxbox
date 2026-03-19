@@ -76,9 +76,9 @@
 		3AFBC482F2D7707CFADD5A2C /* TeamDetailView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TeamDetailView.swift; sourceTree = "<group>"; };
 		4F041C9F8234BBB4C3593CB8 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/WidgetKit.framework; sourceTree = DEVELOPER_DIR; };
 		76CEFBDE356549A61B42D5C6 /* TeamDetailViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TeamDetailViewModel.swift; sourceTree = "<group>"; };
-		86FB8E3EF96A3DB37D3B65D5 /* StandingsWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = StandingsWidget.swift; path = BoxBoxWidget/StandingsWidget.swift; sourceTree = "<group>"; };
+		86FB8E3EF96A3DB37D3B65D5 /* StandingsWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = StandingsWidget.swift; path = StandingsWidget.swift; sourceTree = "<group>"; };
 		93F95989627549CD3CC318DB /* PaywallView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PaywallView.swift; path = BoxBox/Views/Predict/PaywallView.swift; sourceTree = "<group>"; };
-		9FC0810A95EFBD26870CA7B3 /* BoxBoxWidgetBundle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BoxBoxWidgetBundle.swift; path = BoxBoxWidget/BoxBoxWidgetBundle.swift; sourceTree = "<group>"; };
+		9FC0810A95EFBD26870CA7B3 /* BoxBoxWidgetBundle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BoxBoxWidgetBundle.swift; path = BoxBoxWidgetBundle.swift; sourceTree = "<group>"; };
 		A1B2C3D400000001 /* BoxBoxApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoxBoxApp.swift; sourceTree = "<group>"; };
 		A1B2C3D400000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A1B2C3D400000003 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -108,11 +108,11 @@
 		A1B2C3D400000035 /* DriverStandingDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriverStandingDetailViewModel.swift; sourceTree = "<group>"; };
 		A1B2C3D400000036 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
 		A1B2C3D4F0000001 /* BoxBox.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BoxBox.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		A5416964D16F05B9E87671FE /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = Info.plist; path = BoxBoxWidget/Info.plist; sourceTree = "<group>"; };
+		A5416964D16F05B9E87671FE /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = Info.plist; path = Info.plist; sourceTree = "<group>"; };
 		A5856908E55AC68E7DDE7106 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		AC42CA8437C937C1A1704BDF /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/SwiftUI.framework; sourceTree = DEVELOPER_DIR; };
 		CDF38FFC44E0E85C42316A44 /* BoxBoxWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BoxBoxWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		E0BB7F7338ADE1257CC49FB7 /* NextRaceWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NextRaceWidget.swift; path = BoxBoxWidget/NextRaceWidget.swift; sourceTree = "<group>"; };
+		E0BB7F7338ADE1257CC49FB7 /* NextRaceWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NextRaceWidget.swift; path = NextRaceWidget.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
