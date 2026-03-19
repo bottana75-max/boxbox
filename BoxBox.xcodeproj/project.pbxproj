@@ -72,12 +72,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		1508E70DA0E9B06DAE605897 /* StoreKitManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = StoreKitManager.swift; path = BoxBox/Services/StoreKitManager.swift; sourceTree = "<group>"; };
+		1508E70DA0E9B06DAE605897 /* StoreKitManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = StoreKitManager.swift; path = StoreKitManager.swift; sourceTree = "<group>"; };
 		3AFBC482F2D7707CFADD5A2C /* TeamDetailView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TeamDetailView.swift; sourceTree = "<group>"; };
 		4F041C9F8234BBB4C3593CB8 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/WidgetKit.framework; sourceTree = DEVELOPER_DIR; };
 		76CEFBDE356549A61B42D5C6 /* TeamDetailViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TeamDetailViewModel.swift; sourceTree = "<group>"; };
 		86FB8E3EF96A3DB37D3B65D5 /* StandingsWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = StandingsWidget.swift; path = StandingsWidget.swift; sourceTree = "<group>"; };
-		93F95989627549CD3CC318DB /* PaywallView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PaywallView.swift; path = BoxBox/Views/Predict/PaywallView.swift; sourceTree = "<group>"; };
+		93F95989627549CD3CC318DB /* PaywallView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PaywallView.swift; path = PaywallView.swift; sourceTree = "<group>"; };
 		9FC0810A95EFBD26870CA7B3 /* BoxBoxWidgetBundle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BoxBoxWidgetBundle.swift; path = BoxBoxWidgetBundle.swift; sourceTree = "<group>"; };
 		A1B2C3D400000001 /* BoxBoxApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoxBoxApp.swift; sourceTree = "<group>"; };
 		A1B2C3D400000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
