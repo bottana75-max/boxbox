@@ -13,7 +13,7 @@ struct TeamDetailView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
+            VStack(spacing: F1Design.cardSpacing) {
                 headerSection
                 standingsCard
                 driversCard
@@ -34,12 +34,12 @@ struct TeamDetailView: View {
     private var headerSection: some View {
         VStack(spacing: 0) {
             HStack(spacing: 0) {
-                ForEach(0..<5) { _ in
+                ForEach(0..<5, id: \.self) { _ in
                     Rectangle()
                         .fill(teamColor)
                         .frame(height: 4)
                 }
-                ForEach(0..<5) { _ in
+                ForEach(0..<5, id: \.self) { _ in
                     Rectangle()
                         .fill(teamColor.opacity(0.4))
                         .frame(height: 4)
@@ -53,29 +53,26 @@ struct TeamDetailView: View {
                     .foregroundStyle(teamColor)
 
                 Text("CONSTRUCTOR")
-                    .font(.caption)
-                    .fontWeight(.bold)
+                    .font(.system(size: 10, weight: .heavy))
+                    .tracking(1.2)
                     .foregroundStyle(.secondary)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 20)
         }
         .background(Color.f1CardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: F1Design.cornerRadius, style: .continuous))
     }
 
     // MARK: - Standings Card
 
     private var standingsCard: some View {
         VStack(spacing: 16) {
-            Text("CHAMPIONSHIP STANDING")
-                .font(.caption)
-                .fontWeight(.bold)
-                .foregroundStyle(Color.f1Red)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            F1SectionHeader(title: "CHAMPIONSHIP STANDING")
 
             if viewModel.isLoading {
                 ProgressView()
+                    .tint(Color.f1Red)
                     .frame(maxWidth: .infinity, minHeight: 60)
             } else if let standing = viewModel.standing {
                 HStack(spacing: 24) {
@@ -86,7 +83,7 @@ struct TeamDetailView: View {
                         Text("P\(standing.position)")
                             .font(.system(.title, design: .rounded))
                             .fontWeight(.black)
-                            .foregroundStyle(positionColor(standing.position))
+                            .foregroundStyle(F1Design.positionColor(standing.position))
                     }
                     .frame(maxWidth: .infinity)
 
@@ -113,35 +110,24 @@ struct TeamDetailView: View {
             } else if let error = viewModel.error {
                 errorRow(error)
             } else {
-                Text("No standings data")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, minHeight: 60)
+                F1EmptyView(icon: "chart.bar", title: "No standings data")
             }
         }
-        .padding()
-        .background(Color.f1CardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .f1Card()
     }
 
     // MARK: - Drivers Card
 
     private var driversCard: some View {
         VStack(spacing: 16) {
-            Text("TEAM DRIVERS")
-                .font(.caption)
-                .fontWeight(.bold)
-                .foregroundStyle(Color.f1Red)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            F1SectionHeader(title: "TEAM DRIVERS")
 
             if viewModel.isLoading {
                 ProgressView()
+                    .tint(Color.f1Red)
                     .frame(maxWidth: .infinity, minHeight: 60)
             } else if viewModel.teamDrivers.isEmpty {
-                Text("No driver data available")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, minHeight: 60)
+                F1EmptyView(icon: "person.2", title: "No driver data available")
             } else {
                 ForEach(viewModel.teamDrivers) { driver in
                     HStack(spacing: 12) {
@@ -169,31 +155,22 @@ struct TeamDetailView: View {
                 }
             }
         }
-        .padding()
-        .background(Color.f1CardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .f1Card()
     }
 
     // MARK: - Recent Results Card
 
     private var recentResultsCard: some View {
         VStack(spacing: 12) {
-            Text("RECENT RESULTS")
-                .font(.caption)
-                .fontWeight(.bold)
-                .foregroundStyle(Color.f1Red)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            F1SectionHeader(title: "RECENT RESULTS")
 
             if viewModel.isLoading {
-                ProgressView()
-                    .frame(maxWidth: .infinity, minHeight: 100)
+                F1LoadingView(message: "Loading results")
+                    .frame(minHeight: 100)
             } else if let error = viewModel.error {
                 errorRow(error)
             } else if viewModel.recentResults.isEmpty {
-                Text("No results available yet")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, minHeight: 60)
+                F1EmptyView(icon: "flag.checkered", title: "No results available yet")
             } else {
                 ForEach(viewModel.recentResults) { result in
                     resultRow(result)
@@ -203,9 +180,7 @@ struct TeamDetailView: View {
                 }
             }
         }
-        .padding()
-        .background(Color.f1CardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .f1Card()
     }
 
     private func resultRow(_ result: TeamRaceResult) -> some View {
@@ -214,7 +189,7 @@ struct TeamDetailView: View {
                 .font(.system(.title3, design: .rounded))
                 .fontWeight(.black)
                 .frame(width: 44)
-                .foregroundStyle(positionColor(result.position, isDNF: result.isDNF))
+                .foregroundStyle(F1Design.positionColor(result.position, isDNF: result.isDNF))
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(result.shortName)
@@ -252,16 +227,6 @@ struct TeamDetailView: View {
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, minHeight: 60)
-    }
-
-    private func positionColor(_ position: Int, isDNF: Bool = false) -> Color {
-        if isDNF { return .red }
-        switch position {
-        case 1: return .yellow
-        case 2: return Color.white.opacity(0.75)
-        case 3: return Color(red: 0.8, green: 0.5, blue: 0.2)
-        default: return .white
-        }
     }
 }
 

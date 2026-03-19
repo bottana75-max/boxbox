@@ -12,7 +12,7 @@ struct DriversView: View {
         NavigationStack {
             Group {
                 if viewModel.isLoading {
-                    ProgressView()
+                    F1LoadingView(message: "Loading drivers")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if let error = viewModel.error {
                     ErrorCard(message: error) {
@@ -46,7 +46,6 @@ struct DriversView: View {
 
     private func driverCard(_ driver: Driver) -> some View {
         VStack(spacing: 12) {
-            // Driver photo
             AsyncImage(url: driver.headshotUrl.flatMap { URL(string: $0) }) { phase in
                 switch phase {
                 case .success(let image):
@@ -55,6 +54,10 @@ struct DriversView: View {
                         .aspectRatio(contentMode: .fill)
                         .frame(width: 80, height: 80)
                         .clipShape(Circle())
+                        .overlay(
+                            Circle()
+                                .strokeBorder(driver.teamColor.opacity(0.4), lineWidth: 2)
+                        )
                 case .failure:
                     driverPlaceholder(driver)
                 default:
@@ -84,17 +87,18 @@ struct DriversView: View {
                 Spacer()
 
                 Text(driver.countryCode)
-                    .font(.caption)
+                    .font(.system(.caption, design: .monospaced))
+                    .fontWeight(.medium)
                     .foregroundStyle(.secondary)
             }
         }
         .padding()
         .background(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: F1Design.cornerRadius, style: .continuous)
                 .fill(Color.f1CardBackground)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 16)
-                        .strokeBorder(driver.teamColor.opacity(0.3), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: F1Design.cornerRadius, style: .continuous)
+                        .strokeBorder(driver.teamColor.opacity(0.2), lineWidth: 1)
                 )
         )
         .overlay(alignment: .topTrailing) {
@@ -108,13 +112,17 @@ struct DriversView: View {
 
     private func driverPlaceholder(_ driver: Driver) -> some View {
         Circle()
-            .fill(driver.teamColor.opacity(0.2))
+            .fill(driver.teamColor.opacity(0.15))
             .frame(width: 80, height: 80)
             .overlay(
                 Text(driver.nameAcronym)
                     .font(.title3)
                     .fontWeight(.bold)
                     .foregroundStyle(driver.teamColor)
+            )
+            .overlay(
+                Circle()
+                    .strokeBorder(driver.teamColor.opacity(0.3), lineWidth: 2)
             )
     }
 }

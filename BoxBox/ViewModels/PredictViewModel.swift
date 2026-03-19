@@ -12,9 +12,11 @@ class PredictViewModel {
     var isLoading = false
     var error: String?
     var showAPIKeySheet = false
+    var showPaywall = false
 
     private let service = OpenF1Service.shared
     private let aiService = AIService.shared
+    let storeKit = StoreKitManager.shared
 
     var hasAPIKey: Bool { aiService.hasAPIKey }
 
@@ -31,12 +33,20 @@ class PredictViewModel {
         return "\(race.raceWeekendTitle) drops into \(city). Expect \(quality) qualifying, \(pressureProfile.tyreStress.lowercased()) tyre stress and \(overtaking) overtaking pressure. In other words: context first, AI second."
     }
 
+    var trialStatusText: String {
+        if storeKit.isProUnlocked { return "Pro — Unlimited predictions" }
+        let remaining = storeKit.remainingFreePredictions
+        if remaining == 0 { return "Free trial used — Upgrade to Pro" }
+        return "\(remaining) free prediction\(remaining == 1 ? "" : "s") remaining"
+    }
+
     func saveAPIKey(_ key: String) {
         aiService.apiKey = key
     }
 
     func loadNextRace() async {
         error = nil
+        await storeKit.checkEntitlements()
         do {
             async let scheduleTask = service.fetchCurrentSchedule()
             async let standingsTask = service.fetchDriverStandings()
@@ -70,6 +80,11 @@ class PredictViewModel {
             return
         }
 
+        guard storeKit.canPredict else {
+            showPaywall = true
+            return
+        }
+
         isLoading = true
         error = nil
 
@@ -85,8 +100,12 @@ class PredictViewModel {
                 trends: trendPayload,
                 pressureProfile: pressureProfile
             )
+
+            if !storeKit.isProUnlocked {
+                storeKit.incrementPredictionCount()
+            }
         } catch {
-            self.error = error.localizedDescription
+            self.error = "Something went wrong generating your prediction. Please check your API key and try again."
         }
 
         isLoading = false

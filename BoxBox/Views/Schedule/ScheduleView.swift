@@ -7,7 +7,7 @@ struct ScheduleView: View {
         NavigationStack {
             Group {
                 if viewModel.isLoading {
-                    ProgressView()
+                    F1LoadingView(message: "Loading calendar")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if let error = viewModel.error {
                     ErrorCard(message: error) {
@@ -40,24 +40,23 @@ struct ScheduleView: View {
         let isNext = race.round == viewModel.nextRaceRound
 
         return HStack(spacing: 12) {
-            RoundedRectangle(cornerRadius: 4)
-                .fill(isNext ? Color.f1Red : race.isPast ? Color.gray.opacity(0.3) : Color.f1SecondaryBackground)
-                .frame(width: 4)
+            RoundedRectangle(cornerRadius: 2)
+                .fill(isNext ? Color.f1Red : race.isPast ? Color.f1Subtle.opacity(0.5) : Color.f1SecondaryBackground)
+                .frame(width: 3)
 
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
+            VStack(alignment: .leading, spacing: 5) {
+                HStack(spacing: 6) {
                     Text("R\(race.round)")
-                        .font(.caption)
-                        .fontWeight(.bold)
+                        .font(.system(size: 11, weight: .heavy, design: .monospaced))
                         .foregroundStyle(isNext ? Color.f1Red : .secondary)
 
                     if isNext {
                         Text("NEXT")
-                            .font(.caption2)
-                            .fontWeight(.bold)
+                            .font(.system(size: 9, weight: .heavy))
+                            .tracking(0.6)
                             .foregroundStyle(.white)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 2)
+                            .padding(.horizontal, 7)
+                            .padding(.vertical, 3)
                             .background(Color.f1Red)
                             .clipShape(Capsule())
                     }

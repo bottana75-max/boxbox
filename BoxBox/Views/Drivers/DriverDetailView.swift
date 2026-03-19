@@ -9,7 +9,7 @@ struct DriverDetailView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
+            VStack(spacing: F1Design.cardSpacing) {
                 headerSection
                 infoCard
                 if let profile = viewModel.profile {
@@ -58,8 +58,8 @@ struct DriverDetailView: View {
                     .foregroundStyle(viewModel.driver.teamColor)
 
                 Text(viewModel.recentFormLabel.uppercased())
-                    .font(.caption)
-                    .fontWeight(.bold)
+                    .font(.system(size: 10, weight: .heavy))
+                    .tracking(0.6)
                     .foregroundStyle(.white)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)
@@ -73,7 +73,7 @@ struct DriverDetailView: View {
 
     private var driverPlaceholder: some View {
         Circle()
-            .fill(viewModel.driver.teamColor.opacity(0.2))
+            .fill(viewModel.driver.teamColor.opacity(0.15))
             .frame(width: 160, height: 160)
             .overlay(
                 Text(viewModel.driver.nameAcronym)
@@ -84,7 +84,7 @@ struct DriverDetailView: View {
 
     private var infoCard: some View {
         VStack(spacing: 16) {
-            sectionHeader("DRIVER INFO")
+            F1SectionHeader(title: "DRIVER INFO")
 
             HStack(spacing: 24) {
                 infoItem(label: "Acronym", value: viewModel.driver.nameAcronym)
@@ -112,19 +112,17 @@ struct DriverDetailView: View {
             }
             .buttonStyle(.plain)
         }
-        .padding()
-        .background(Color.f1CardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .f1Card()
     }
 
     private func careerSnapshotCard(_ profile: DriverProfile) -> some View {
         VStack(spacing: 12) {
-            sectionHeader("CAREER SNAPSHOT")
+            F1SectionHeader(title: "CAREER SNAPSHOT")
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                 statTile(label: "Debut", value: "\(profile.debutSeason)", accent: viewModel.driver.teamColor)
                 statTile(label: "Titles", value: "\(profile.championships)", accent: viewModel.driver.teamColor)
-                statTile(label: "Wins", value: "\(profile.careerWins)", accent: .yellow)
+                statTile(label: "Wins", value: "\(profile.careerWins)", accent: F1Design.positionColor(1))
                 statTile(label: "Podiums", value: "\(profile.careerPodiums)", accent: .white)
                 statTile(label: "Poles", value: "\(profile.careerPoles)", accent: Color.f1Red)
                 statTile(label: "Best result", value: profile.bestFinish, accent: viewModel.driver.teamColor)
@@ -138,28 +136,25 @@ struct DriverDetailView: View {
                 }
             }
         }
-        .padding()
-        .background(Color.f1CardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .f1Card()
     }
 
     private func driverStoryCard(_ profile: DriverProfile) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            sectionHeader("SCOUT NOTE")
+            F1SectionHeader(title: "SCOUT NOTE")
 
             Text(profile.blurb)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+                .lineSpacing(2)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .padding()
-        .background(Color.f1CardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .f1Card()
     }
 
     private var recentFormCard: some View {
         VStack(spacing: 12) {
-            sectionHeader("RECENT FORM")
+            F1SectionHeader(title: "RECENT FORM")
 
             HStack(spacing: 12) {
                 formTile(label: "Avg finish", value: viewModel.averageFinishText)
@@ -167,18 +162,16 @@ struct DriverDetailView: View {
                 formTile(label: "Points", value: "\(viewModel.pointsFinishes)/5")
             }
         }
-        .padding()
-        .background(Color.f1CardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .f1Card()
     }
 
     private var recentResultsCard: some View {
         VStack(spacing: 12) {
-            sectionHeader("LAST 5 RACES")
+            F1SectionHeader(title: "LAST 5 RACES")
 
             if viewModel.isLoading {
-                ProgressView()
-                    .frame(maxWidth: .infinity, minHeight: 100)
+                F1LoadingView(message: "Loading results")
+                    .frame(minHeight: 100)
             } else if let error = viewModel.error {
                 HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill")
@@ -189,10 +182,7 @@ struct DriverDetailView: View {
                 }
                 .frame(maxWidth: .infinity, minHeight: 60)
             } else if viewModel.recentResults.isEmpty {
-                Text("No results available yet")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, minHeight: 60)
+                F1EmptyView(icon: "flag.checkered", title: "No results available yet")
             } else {
                 ForEach(viewModel.recentResults, id: \.id) { result in
                     resultRow(result)
@@ -202,17 +192,7 @@ struct DriverDetailView: View {
                 }
             }
         }
-        .padding()
-        .background(Color.f1CardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-    }
-
-    private func sectionHeader(_ title: String) -> some View {
-        Text(title)
-            .font(.caption)
-            .fontWeight(.bold)
-            .foregroundStyle(Color.f1Red)
-            .frame(maxWidth: .infinity, alignment: .leading)
+        .f1Card()
     }
 
     private func infoItem(label: String, value: String) -> some View {
@@ -230,8 +210,9 @@ struct DriverDetailView: View {
     private func statTile(label: String, value: String, accent: Color) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(label.uppercased())
-                .font(.caption2)
+                .font(.system(size: 9, weight: .semibold))
                 .foregroundStyle(.secondary)
+                .tracking(0.4)
             Text(value)
                 .font(.headline)
                 .fontWeight(.bold)
@@ -244,14 +225,15 @@ struct DriverDetailView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
         .background(Color.f1SecondaryBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .clipShape(RoundedRectangle(cornerRadius: F1Design.innerCornerRadius + 2, style: .continuous))
     }
 
     private func detailRow(title: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(title.uppercased())
-                .font(.caption2)
+                .font(.system(size: 9, weight: .semibold))
                 .foregroundStyle(.secondary)
+                .tracking(0.4)
             Text(value)
                 .font(.subheadline)
                 .fontWeight(.semibold)
@@ -272,7 +254,7 @@ struct DriverDetailView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
         .background(Color.f1SecondaryBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .clipShape(RoundedRectangle(cornerRadius: F1Design.innerCornerRadius, style: .continuous))
     }
 
     private func resultRow(_ result: DriverRaceResult) -> some View {
@@ -281,7 +263,7 @@ struct DriverDetailView: View {
                 .font(.system(.title3, design: .rounded))
                 .fontWeight(.black)
                 .frame(width: 44)
-                .foregroundStyle(positionColor(result.position, isDNF: result.isDNF))
+                .foregroundStyle(F1Design.positionColor(result.position, isDNF: result.isDNF))
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(result.shortName)
@@ -302,16 +284,6 @@ struct DriverDetailView: View {
                 .foregroundStyle(.secondary)
         }
         .padding(.vertical, 4)
-    }
-
-    private func positionColor(_ position: Int, isDNF: Bool) -> Color {
-        if isDNF { return .red }
-        switch position {
-        case 1: return .yellow
-        case 2: return Color.white.opacity(0.75)
-        case 3: return Color(red: 0.8, green: 0.5, blue: 0.2)
-        default: return .white
-        }
     }
 }
 

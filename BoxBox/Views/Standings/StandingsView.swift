@@ -11,11 +11,12 @@ struct StandingsView: View {
                     Text("Constructors").tag(1)
                 }
                 .pickerStyle(.segmented)
-                .padding()
+                .padding(.horizontal)
+                .padding(.vertical, 12)
 
                 if viewModel.isLoading {
                     Spacer()
-                    ProgressView()
+                    F1LoadingView(message: "Fetching standings")
                     Spacer()
                 } else if let error = viewModel.error {
                     Spacer()
@@ -61,9 +62,9 @@ struct StandingsView: View {
                 .font(.system(.title2, design: .rounded))
                 .fontWeight(.black)
                 .frame(width: 36)
-                .foregroundStyle(standing.position <= 3 ? Color.f1Red : .white)
+                .foregroundStyle(standing.position <= 3 ? F1Design.positionColor(standing.position) : .white)
 
-            teamColorDot(for: standing.constructorName)
+            F1TeamDot(teamName: standing.constructorName)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(standing.driverName)
@@ -93,9 +94,9 @@ struct StandingsView: View {
                 .font(.system(.title2, design: .rounded))
                 .fontWeight(.black)
                 .frame(width: 36)
-                .foregroundStyle(constructor.position <= 3 ? Color.f1Red : .white)
+                .foregroundStyle(constructor.position <= 3 ? F1Design.positionColor(constructor.position) : .white)
 
-            teamColorDot(for: constructor.name)
+            F1TeamDot(teamName: constructor.name)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(constructor.name)
@@ -117,27 +118,6 @@ struct StandingsView: View {
             }
         }
         .padding(.vertical, 4)
-    }
-
-    private func teamColorDot(for teamName: String) -> some View {
-        Circle()
-            .fill(teamColor(for: teamName))
-            .frame(width: 8, height: 8)
-    }
-
-    private func teamColor(for teamName: String) -> Color {
-        let name = teamName.lowercased()
-        if name.contains("red bull") { return Color(hex: "3671C6") }
-        if name.contains("ferrari") { return Color(hex: "E8002D") }
-        if name.contains("mercedes") { return Color(hex: "27F4D2") }
-        if name.contains("mclaren") { return Color(hex: "FF8000") }
-        if name.contains("aston") { return Color(hex: "229971") }
-        if name.contains("alpine") { return Color(hex: "FF87BC") }
-        if name.contains("williams") { return Color(hex: "64C4FF") }
-        if name.contains("rb") || name.contains("alpha") { return Color(hex: "6692FF") }
-        if name.contains("sauber") || name.contains("stake") { return Color(hex: "52E252") }
-        if name.contains("haas") { return Color(hex: "B6BABD") }
-        return .gray
     }
 }
 
