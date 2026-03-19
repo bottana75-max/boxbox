@@ -14,6 +14,7 @@ class StoreKitManager {
     var isProUnlocked = false
     var product: Product?
     var purchaseError: String?
+    var didAttemptProductLoad = false
 
     var predictionCount: Int {
         UserDefaults.standard.integer(forKey: Self.predictionCountKey)
@@ -21,6 +22,21 @@ class StoreKitManager {
 
     var remainingFreePredictions: Int {
         max(0, Self.freeTrialLimit - predictionCount)
+    }
+
+    var progressText: String {
+        if isProUnlocked { return "Unlimited predictions unlocked" }
+        return "\(predictionCount)/\(Self.freeTrialLimit) free predictions used"
+    }
+
+    var paywallCTA: String {
+        product.map { "Unlock for \($0.displayPrice)" } ?? "Unlock BoxBox Pro"
+    }
+
+    var paywallFootnote: String {
+        product == nil
+            ? "StoreKit product not loaded yet. The paywall still shows the intended unlock flow so the UX doesn’t dead-end."
+            : "One-time purchase. No subscription nonsense."
     }
 
     var canPredict: Bool {
@@ -32,11 +48,15 @@ class StoreKitManager {
     }
 
     func loadProduct() async {
+        didAttemptProductLoad = true
         do {
             let products = try await Product.products(for: [Self.productID])
             product = products.first
+            if product == nil {
+                purchaseError = "Pro purchase is configured as a placeholder until the App Store product is live."
+            }
         } catch {
-            purchaseError = "Could not load product. Please try again later."
+            purchaseError = "Could not load product. Showing placeholder paywall instead."
         }
     }
 
@@ -53,7 +73,7 @@ class StoreKitManager {
 
     func purchase() async {
         guard let product else {
-            purchaseError = "Product not available. Please try again later."
+            purchaseError = "StoreKit product not available yet. Keep the paywall copy and CTA; wire the product before release."
             return
         }
 

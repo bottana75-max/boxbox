@@ -24,13 +24,18 @@ class PredictViewModel {
         Array(standings.prefix(3))
     }
 
+    var weekendContext: WeekendContext? {
+        nextRace?.weekendContext
+    }
+
     var projectedStoryline: String {
         guard let race = nextRace else { return "No upcoming race found." }
         let circuit = race.circuitInfo
         let city = circuit?.city ?? race.country
         let quality = pressureProfile.qualifyingImportance.lowercased()
         let overtaking = pressureProfile.overtaking.lowercased()
-        return "\(race.raceWeekendTitle) drops into \(city). Expect \(quality) qualifying, \(pressureProfile.tyreStress.lowercased()) tyre stress and \(overtaking) overtaking pressure. In other words: context first, AI second."
+        let weather = race.weekendContext.weatherHeadline.lowercased()
+        return "\(race.raceWeekendTitle) drops into \(city). Expect \(quality) qualifying, \(pressureProfile.tyreStress.lowercased()) tyre stress, \(overtaking) overtaking pressure and \(weather) conditions. Context first, AI second."
     }
 
     var trialStatusText: String {
@@ -40,6 +45,19 @@ class PredictViewModel {
         return "\(remaining) free prediction\(remaining == 1 ? "" : "s") remaining"
     }
 
+    var predictButtonTitle: String {
+        if isLoading { return "Analyzing context..." }
+        if !hasAPIKey { return "Add OpenAI Key" }
+        if !storeKit.canPredict { return "Unlock Pro to Predict" }
+        return "Generate AI Podium"
+    }
+
+    var predictButtonSubtitle: String {
+        if !hasAPIKey { return "Add your OpenAI key once to unlock the prediction engine." }
+        if !storeKit.canPredict { return "You’ve used the 3 free predictions. Unlock Pro to keep predicting all season." }
+        return "Uses standings, recent results, timing context and circuit profile."
+    }
+
     func saveAPIKey(_ key: String) {
         aiService.apiKey = key
     }
@@ -47,6 +65,7 @@ class PredictViewModel {
     func loadNextRace() async {
         error = nil
         await storeKit.checkEntitlements()
+        await storeKit.loadProduct()
         do {
             async let scheduleTask = service.fetchCurrentSchedule()
             async let standingsTask = service.fetchDriverStandings()

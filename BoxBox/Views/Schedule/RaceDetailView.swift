@@ -14,6 +14,7 @@ struct RaceDetailView: View {
                 if let info = viewModel.race.circuitInfo {
                     trackMapCard(info)
                     circuitStatsCard(info)
+                    weekendContextCard(viewModel.race.weekendContext)
                     circuitStoryCard(info)
                 }
                 if viewModel.race.isPast {
@@ -106,6 +107,33 @@ struct RaceDetailView: View {
                 statTile(icon: "calendar", label: "First GP", value: "\(info.firstGrandPrix)")
                 statTile(icon: "arrow.clockwise", label: "Direction", value: info.direction)
             }
+        }
+        .f1Card()
+    }
+
+    private func weekendContextCard(_ context: WeekendContext) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            F1SectionHeader(title: "LOCAL CONTEXT", subtitle: "Estimated timing and weather realism")
+
+            Text(context.localClockLabel)
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundStyle(.white)
+
+            Text(context.sessionNarrative)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .lineSpacing(2)
+
+            HStack(spacing: 10) {
+                F1StatPill(title: "Ambient", value: context.ambientTemperature, style: .subtle)
+                F1StatPill(title: "Track", value: context.trackTemperature, style: .subtle)
+                F1StatPill(title: "Rain", value: context.rainChance, style: .subtle)
+            }
+
+            Text("\(context.weatherDetail) \(context.windNote) \(context.sunsetCue)")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
         }
         .f1Card()
     }

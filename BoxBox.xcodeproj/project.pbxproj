@@ -10,6 +10,7 @@
 		0D4CB09296ED2340C38736D4 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A5856908E55AC68E7DDE7106 /* Foundation.framework */; };
 		21E567374285DF152843CA89 /* StoreKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1508E70DA0E9B06DAE605897 /* StoreKitManager.swift */; };
 		33BDE43328D166E2BB0A38EC /* TeamDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AFBC482F2D7707CFADD5A2C /* TeamDetailView.swift */; };
+		33BDE43328D166E2BB0A38ED /* DriverComparisonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AFBC482F2D7707CFADD5A2D /* DriverComparisonView.swift */; };
 		3DC4BC69AB98E397DD1F9970 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4F041C9F8234BBB4C3593CB8 /* WidgetKit.framework */; };
 		7A1DD61A45033D49067CA3E3 /* BoxBoxWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FC0810A95EFBD26870CA7B3 /* BoxBoxWidgetBundle.swift */; };
 		8341330D724CA51259D09A5E /* BoxBoxWidgetExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = CDF38FFC44E0E85C42316A44 /* BoxBoxWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -75,6 +76,7 @@
 /* Begin PBXFileReference section */
 		1508E70DA0E9B06DAE605897 /* StoreKitManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = StoreKitManager.swift; path = StoreKitManager.swift; sourceTree = "<group>"; };
 		3AFBC482F2D7707CFADD5A2C /* TeamDetailView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TeamDetailView.swift; sourceTree = "<group>"; };
+		3AFBC482F2D7707CFADD5A2D /* DriverComparisonView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DriverComparisonView.swift; sourceTree = "<group>"; };
 		4F041C9F8234BBB4C3593CB8 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/WidgetKit.framework; sourceTree = DEVELOPER_DIR; };
 		76CEFBDE356549A61B42D5C6 /* TeamDetailViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TeamDetailViewModel.swift; sourceTree = "<group>"; };
 		86FB8E3EF96A3DB37D3B65D5 /* StandingsWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = StandingsWidget.swift; path = StandingsWidget.swift; sourceTree = "<group>"; };
@@ -252,6 +254,7 @@
 				A1B2C3D40000000F /* DriversView.swift */,
 				A1B2C3D400000030 /* DriverDetailView.swift */,
 				3AFBC482F2D7707CFADD5A2C /* TeamDetailView.swift */,
+				3AFBC482F2D7707CFADD5A2D /* DriverComparisonView.swift */,
 			);
 			path = Drivers;
 			sourceTree = "<group>";
@@ -422,6 +425,7 @@
 				A1B2C3D401000035 /* DriverStandingDetailViewModel.swift in Sources */,
 				BD6DAA42D662BA4ED3BE7B65 /* TeamDetailViewModel.swift in Sources */,
 				33BDE43328D166E2BB0A38EC /* TeamDetailView.swift in Sources */,
+				33BDE43328D166E2BB0A38ED /* DriverComparisonView.swift in Sources */,
 				21E567374285DF152843CA89 /* StoreKitManager.swift in Sources */,
 				8979B858BFC10EA711997E01 /* PaywallView.swift in Sources */,
 				A1B2C3D401000036 /* DesignSystem.swift in Sources */,

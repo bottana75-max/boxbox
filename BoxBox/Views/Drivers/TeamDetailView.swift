@@ -15,8 +15,10 @@ struct TeamDetailView: View {
         ScrollView {
             VStack(spacing: F1Design.cardSpacing) {
                 headerSection
+                overviewCard
                 standingsCard
                 driversCard
+                rivalCard
                 recentResultsCard
             }
             .padding()
@@ -28,8 +30,6 @@ struct TeamDetailView: View {
             await viewModel.loadData()
         }
     }
-
-    // MARK: - Header
 
     private var headerSection: some View {
         VStack(spacing: 0) {
@@ -46,7 +46,7 @@ struct TeamDetailView: View {
                 }
             }
 
-            VStack(spacing: 8) {
+            VStack(spacing: 12) {
                 Text(viewModel.teamName.uppercased())
                     .font(.system(.title, design: .rounded))
                     .fontWeight(.black)
@@ -56,15 +56,39 @@ struct TeamDetailView: View {
                     .font(.system(size: 10, weight: .heavy))
                     .tracking(1.2)
                     .foregroundStyle(.secondary)
+
+                Text(viewModel.teamNarrative)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .lineSpacing(2)
             }
             .frame(maxWidth: .infinity)
             .padding(.vertical, 20)
+            .padding(.horizontal, 18)
         }
         .background(Color.f1CardBackground)
         .clipShape(RoundedRectangle(cornerRadius: F1Design.cornerRadius, style: .continuous))
     }
 
-    // MARK: - Standings Card
+    private var overviewCard: some View {
+        VStack(spacing: 12) {
+            F1SectionHeader(title: "TEAM SNAPSHOT", subtitle: "The premium read: form, depth and conversion")
+
+            HStack(spacing: 10) {
+                F1StatPill(title: "Driver pts", value: viewModel.totalDriverPoints.cleanNumber)
+                F1StatPill(title: "Avg grid", value: viewModel.averageGridRank)
+                F1StatPill(title: "Recent form", value: viewModel.formAverage)
+            }
+
+            HStack(spacing: 10) {
+                F1MetricTile(title: "Momentum", value: viewModel.momentumHeadline)
+                F1MetricTile(title: "Recent podiums", value: "\(viewModel.podiumCount) in last 10 finishes")
+                F1MetricTile(title: "DNF pressure", value: viewModel.dnfCount == 0 ? "Clean run" : "\(viewModel.dnfCount) recent setbacks")
+            }
+        }
+        .f1Card()
+    }
 
     private var standingsCard: some View {
         VStack(spacing: 16) {
@@ -76,36 +100,9 @@ struct TeamDetailView: View {
                     .frame(maxWidth: .infinity, minHeight: 60)
             } else if let standing = viewModel.standing {
                 HStack(spacing: 24) {
-                    VStack(spacing: 4) {
-                        Text("Position")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                        Text("P\(standing.position)")
-                            .font(.system(.title, design: .rounded))
-                            .fontWeight(.black)
-                            .foregroundStyle(F1Design.positionColor(standing.position))
-                    }
-                    .frame(maxWidth: .infinity)
-
-                    VStack(spacing: 4) {
-                        Text("Points")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                        Text("\(Int(standing.points))")
-                            .font(.system(.title, design: .rounded))
-                            .fontWeight(.black)
-                    }
-                    .frame(maxWidth: .infinity)
-
-                    VStack(spacing: 4) {
-                        Text("Wins")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                        Text("\(standing.wins)")
-                            .font(.system(.title, design: .rounded))
-                            .fontWeight(.black)
-                    }
-                    .frame(maxWidth: .infinity)
+                    statColumn(title: "Position", value: "P\(standing.position)", color: F1Design.positionColor(standing.position))
+                    statColumn(title: "Points", value: "\(Int(standing.points))", color: .white)
+                    statColumn(title: "Wins", value: "\(standing.wins)", color: teamColor)
                 }
             } else if let error = viewModel.error {
                 errorRow(error)
@@ -115,8 +112,6 @@ struct TeamDetailView: View {
         }
         .f1Card()
     }
-
-    // MARK: - Drivers Card
 
     private var driversCard: some View {
         VStack(spacing: 16) {
@@ -133,13 +128,13 @@ struct TeamDetailView: View {
                     HStack(spacing: 12) {
                         RoundedRectangle(cornerRadius: 4)
                             .fill(teamColor)
-                            .frame(width: 4, height: 40)
+                            .frame(width: 4, height: 44)
 
-                        VStack(alignment: .leading, spacing: 2) {
+                        VStack(alignment: .leading, spacing: 4) {
                             Text(driver.driverName)
                                 .font(.headline)
                                 .fontWeight(.bold)
-                            Text("P\(driver.position) in championship · \(Int(driver.points)) pts")
+                            Text("P\(driver.position) in championship · \(Int(driver.points)) pts · \(driver.wins) wins")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -151,14 +146,35 @@ struct TeamDetailView: View {
                             .fontWeight(.bold)
                             .foregroundStyle(teamColor)
                     }
-                    .padding(.vertical, 4)
+                    .f1InnerCard()
                 }
             }
         }
         .f1Card()
     }
 
-    // MARK: - Recent Results Card
+    private var rivalCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            F1SectionHeader(title: "PRESSURE CHECK", subtitle: "Nearest rival and season context")
+
+            if let rival = viewModel.nearestRival, let standing = viewModel.standing {
+                HStack(spacing: 12) {
+                    rivalTile(title: viewModel.teamName, subtitle: "Current", value: "\(standing.points.cleanNumber) pts", accent: teamColor)
+                    rivalTile(title: rival.name, subtitle: "Closest benchmark", value: "\(rival.points.cleanNumber) pts", accent: F1Design.teamColor(for: rival.name))
+                }
+                Text(viewModel.pointsGapSummary)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineSpacing(2)
+            } else if viewModel.isLoading {
+                F1LoadingView(message: "Loading battle map")
+                    .frame(minHeight: 80)
+            } else {
+                F1EmptyView(icon: "arrow.left.arrow.right", title: "Rival context not ready")
+            }
+        }
+        .f1Card()
+    }
 
     private var recentResultsCard: some View {
         VStack(spacing: 12) {
@@ -181,6 +197,41 @@ struct TeamDetailView: View {
             }
         }
         .f1Card()
+    }
+
+    private func statColumn(title: String, value: String, color: Color) -> some View {
+        VStack(spacing: 4) {
+            Text(title)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.system(.title, design: .rounded))
+                .fontWeight(.black)
+                .foregroundStyle(color)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func rivalTile(title: String, subtitle: String, value: String, accent: Color) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(subtitle.uppercased())
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .tracking(0.4)
+            Text(title)
+                .font(.headline)
+                .fontWeight(.bold)
+                .foregroundStyle(.white)
+                .lineLimit(2)
+            Text(value)
+                .font(.subheadline)
+                .fontWeight(.heavy)
+                .foregroundStyle(accent)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(Color.f1SecondaryBackground)
+        .clipShape(RoundedRectangle(cornerRadius: F1Design.innerCornerRadius + 2, style: .continuous))
     }
 
     private func resultRow(_ result: TeamRaceResult) -> some View {

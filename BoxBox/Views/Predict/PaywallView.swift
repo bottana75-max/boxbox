@@ -19,50 +19,47 @@ struct PaywallView: View {
                     .fontWeight(.black)
                     .foregroundStyle(.white)
 
-                Text("Unlimited AI race predictions")
+                Text("Unlimited AI race predictions after your first 3 free shots")
                     .font(.title3)
                     .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
 
                 VStack(spacing: 12) {
                     featureRow(icon: "brain.head.profile", text: "GPT-4o powered podium predictions")
-                    featureRow(icon: "chart.line.uptrend.xyaxis", text: "Analysis using live standings & form")
+                    featureRow(icon: "cloud.sun.fill", text: "Weekend context: timing, weather pressure and circuit cues")
+                    featureRow(icon: "chart.line.uptrend.xyaxis", text: "Analysis using live standings, recent form and track profile")
                     featureRow(icon: "infinity", text: "Unlimited predictions all season")
                 }
                 .padding(.vertical)
 
-                if let product = storeKit.product {
-                    Button {
-                        Task { await storeKit.purchase() }
-                    } label: {
-                        VStack(spacing: 4) {
-                            Text("Unlock for \(product.displayPrice)")
-                                .fontWeight(.bold)
-                            Text("One-time purchase")
-                                .font(.caption)
-                                .foregroundStyle(.white.opacity(0.8))
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding()
+                VStack(spacing: 12) {
+                    HStack(spacing: 10) {
+                        F1StatPill(title: "Used", value: "\(storeKit.predictionCount)")
+                        F1StatPill(title: "Free left", value: "\(storeKit.remainingFreePredictions)")
+                        F1StatPill(title: "Price", value: storeKit.product?.displayPrice ?? "$2.99")
                     }
-                    .buttonStyle(.borderedProminent)
-                    .tint(Color.f1Red)
-                } else {
-                    Button {
-                        Task { await storeKit.purchase() }
-                    } label: {
-                        VStack(spacing: 4) {
-                            Text("Unlock for $2.99")
-                                .fontWeight(.bold)
-                            Text("One-time purchase")
-                                .font(.caption)
-                                .foregroundStyle(.white.opacity(0.8))
-                        }
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .tint(Color.f1Red)
+
+                    Text(storeKit.paywallFootnote)
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                        .multilineTextAlignment(.center)
                 }
+
+                Button {
+                    Task { await storeKit.purchase() }
+                } label: {
+                    VStack(spacing: 4) {
+                        Text(storeKit.paywallCTA)
+                            .fontWeight(.bold)
+                        Text(storeKit.product == nil ? "Placeholder paywall flow" : "One-time purchase")
+                            .font(.caption)
+                            .foregroundStyle(.white.opacity(0.8))
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Color.f1Red)
 
                 Button {
                     Task { await storeKit.restorePurchases() }

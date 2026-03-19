@@ -11,6 +11,9 @@ struct PredictView: View {
                     if let race = viewModel.nextRace {
                         nextRaceHeader(race)
                         predictionBriefingCard(race)
+                        if let context = viewModel.weekendContext {
+                            weatherContextCard(context)
+                        }
                         contendersCard
                         weekendPlanCard(race)
                     }
@@ -102,6 +105,39 @@ struct PredictView: View {
         .f1Card()
     }
 
+    private func weatherContextCard(_ context: WeekendContext) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            F1SectionHeader(title: "WEEKEND CONTEXT", subtitle: "Estimated local timing + realistic weather pressure")
+
+            Text(context.localClockLabel)
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundStyle(.white)
+
+            Text(context.sessionNarrative)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .lineSpacing(2)
+
+            HStack(spacing: 10) {
+                F1StatPill(title: "Ambient", value: context.ambientTemperature)
+                F1StatPill(title: "Track", value: context.trackTemperature)
+                F1StatPill(title: "Rain", value: context.rainChance)
+            }
+
+            HStack(spacing: 10) {
+                F1MetricTile(title: "Weather", value: context.weatherHeadline)
+                F1MetricTile(title: "Risk", value: context.riskLabel)
+                F1MetricTile(title: "Sunset", value: context.sunsetCue)
+            }
+
+            Text("\(context.weatherDetail) \(context.windNote)")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+        }
+        .f1Card()
+    }
+
     private var contendersCard: some View {
         VStack(alignment: .leading, spacing: F1Design.innerSpacing) {
             F1SectionHeader(title: "LEADING CONTENDERS", subtitle: "Standings + recent form feed the prediction model")
@@ -189,12 +225,12 @@ struct PredictView: View {
                         ProgressView()
                             .tint(.white)
                     } else {
-                        Image(systemName: "sparkles")
+                        Image(systemName: viewModel.storeKit.canPredict ? "sparkles" : "lock.fill")
                     }
-                    Text(viewModel.isLoading ? "Analyzing context..." : "Generate AI Podium")
+                    Text(viewModel.predictButtonTitle)
                         .fontWeight(.bold)
                 }
-                Text(viewModel.hasAPIKey ? "Uses standings, recent results and circuit profile." : "Add your OpenAI key once to unlock the prediction engine.")
+                Text(viewModel.predictButtonSubtitle)
                     .font(.caption)
                     .foregroundStyle(.white.opacity(0.85))
             }
@@ -271,21 +307,40 @@ struct PredictView: View {
     }
 
     private var trialStatusBanner: some View {
-        HStack {
-            Image(systemName: viewModel.storeKit.isProUnlocked ? "checkmark.seal.fill" : "sparkles")
-                .foregroundStyle(Color.f1Red)
-            Text(viewModel.trialStatusText)
-                .font(.caption)
-                .fontWeight(.medium)
-                .foregroundStyle(.white)
-            Spacer()
-            if !viewModel.storeKit.isProUnlocked && viewModel.storeKit.remainingFreePredictions == 0 {
-                Button("Upgrade") {
-                    viewModel.showPaywall = true
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Image(systemName: viewModel.storeKit.isProUnlocked ? "checkmark.seal.fill" : "sparkles")
+                    .foregroundStyle(Color.f1Red)
+                Text(viewModel.trialStatusText)
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.white)
+                Spacer()
+                if !viewModel.storeKit.isProUnlocked && viewModel.storeKit.remainingFreePredictions == 0 {
+                    Button("Upgrade") {
+                        viewModel.showPaywall = true
+                    }
+                    .font(.caption)
+                    .fontWeight(.bold)
+                    .foregroundStyle(Color.f1Red)
                 }
-                .font(.caption)
-                .fontWeight(.bold)
-                .foregroundStyle(Color.f1Red)
+            }
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text(viewModel.storeKit.progressText.uppercased())
+                    .font(.system(size: 10, weight: .heavy))
+                    .tracking(0.6)
+                    .foregroundStyle(.secondary)
+
+                GeometryReader { geometry in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(Color.f1SecondaryBackground)
+                        Capsule()
+                            .fill(Color.f1Red)
+                            .frame(width: geometry.size.width * min(1, CGFloat(viewModel.storeKit.predictionCount) / CGFloat(StoreKitManager.freeTrialLimit)))
+                    }
+                }
+                .frame(height: 8)
             }
         }
         .f1Card()
