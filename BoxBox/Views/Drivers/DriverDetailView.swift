@@ -86,15 +86,23 @@ struct DriverDetailView: View {
                 }
             }
 
-            HStack(spacing: 8) {
-                RoundedRectangle(cornerRadius: 4)
-                    .fill(viewModel.driver.teamColor)
-                    .frame(width: 4, height: 20)
-                Text(viewModel.driver.teamName)
-                    .font(.headline)
-                    .foregroundStyle(viewModel.driver.teamColor)
-                Spacer()
+            NavigationLink {
+                TeamDetailView(teamName: viewModel.driver.teamName, teamColour: viewModel.driver.teamColour)
+            } label: {
+                HStack(spacing: 8) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(viewModel.driver.teamColor)
+                        .frame(width: 4, height: 20)
+                    Text(viewModel.driver.teamName)
+                        .font(.headline)
+                        .foregroundStyle(viewModel.driver.teamColor)
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
+            .buttonStyle(.plain)
         }
         .padding()
         .background(Color.f1CardBackground)
