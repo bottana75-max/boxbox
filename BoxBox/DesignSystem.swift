@@ -21,19 +21,23 @@ enum F1Design {
     }
 
     // Centralized team colour lookup by constructor name
-    static func teamColor(for teamName: String) -> Color {
+    static func teamHex(for teamName: String) -> String {
         let name = teamName.lowercased()
-        if name.contains("red bull") { return Color(hex: "3671C6") }
-        if name.contains("ferrari") { return Color(hex: "E8002D") }
-        if name.contains("mercedes") { return Color(hex: "27F4D2") }
-        if name.contains("mclaren") { return Color(hex: "FF8000") }
-        if name.contains("aston") { return Color(hex: "229971") }
-        if name.contains("alpine") { return Color(hex: "FF87BC") }
-        if name.contains("williams") { return Color(hex: "64C4FF") }
-        if name.contains("rb") || name.contains("alpha") { return Color(hex: "6692FF") }
-        if name.contains("sauber") || name.contains("stake") { return Color(hex: "52E252") }
-        if name.contains("haas") { return Color(hex: "B6BABD") }
-        return .gray
+        if name.contains("red bull") { return "3671C6" }
+        if name.contains("ferrari") { return "E8002D" }
+        if name.contains("mercedes") { return "27F4D2" }
+        if name.contains("mclaren") { return "FF8000" }
+        if name.contains("aston") { return "229971" }
+        if name.contains("alpine") { return "FF87BC" }
+        if name.contains("williams") { return "64C4FF" }
+        if name.contains("rb") || name.contains("alpha") { return "6692FF" }
+        if name.contains("sauber") || name.contains("stake") { return "52E252" }
+        if name.contains("haas") { return "B6BABD" }
+        return "8A8A8A"
+    }
+
+    static func teamColor(for teamName: String) -> Color {
+        Color(hex: teamHex(for: teamName))
     }
 }
 
