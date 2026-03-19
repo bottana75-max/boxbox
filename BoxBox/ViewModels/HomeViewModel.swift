@@ -11,7 +11,7 @@ class HomeViewModel {
     var error: String?
     var countdown: String = ""
 
-    private var timer: Timer?
+    private var countdownTask: Task<Void, Never>?
     private let service = OpenF1Service.shared
 
     func loadData() async {
@@ -47,11 +47,12 @@ class HomeViewModel {
     }
 
     func startCountdownTimer() {
-        timer?.invalidate()
+        countdownTask?.cancel()
         updateCountdown()
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                self?.updateCountdown()
+        countdownTask = Task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(1))
+                updateCountdown()
             }
         }
     }
@@ -71,6 +72,6 @@ class HomeViewModel {
     }
 
     nonisolated deinit {
-        // Timer will be invalidated automatically
+        countdownTask?.cancel()
     }
 }

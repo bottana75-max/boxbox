@@ -9,7 +9,7 @@ class RaceDetailViewModel {
     var error: String?
     var countdown: String = ""
 
-    private var timer: Timer?
+    private var countdownTask: Task<Void, Never>?
 
     init(race: Race) {
         self.race = race
@@ -32,10 +32,12 @@ class RaceDetailViewModel {
     }
 
     func startCountdownTimer() {
-        timer?.invalidate()
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            Task { @MainActor in
-                self?.updateCountdown()
+        countdownTask?.cancel()
+        updateCountdown()
+        countdownTask = Task {
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(1))
+                updateCountdown()
             }
         }
     }
@@ -60,6 +62,6 @@ class RaceDetailViewModel {
     }
 
     nonisolated deinit {
-        // Timer will be invalidated automatically
+        countdownTask?.cancel()
     }
 }
