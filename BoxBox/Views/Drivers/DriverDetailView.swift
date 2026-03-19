@@ -24,6 +24,9 @@ struct DriverDetailView: View {
         .background(Color.f1Background)
         .navigationTitle(viewModel.driver.fullName)
         .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(for: Race.self) { race in
+            RaceDetailView(race: race)
+        }
         .task {
             await viewModel.loadResults()
         }
@@ -52,10 +55,12 @@ struct DriverDetailView: View {
             )
 
             VStack(spacing: 6) {
-                Text("#\(viewModel.driver.driverNumber)")
-                    .font(.system(.largeTitle, design: .rounded))
-                    .fontWeight(.black)
-                    .foregroundStyle(viewModel.driver.teamColor)
+                if viewModel.driver.driverNumber > 0 {
+                    Text("#\(viewModel.driver.driverNumber)")
+                        .font(.system(.largeTitle, design: .rounded))
+                        .fontWeight(.black)
+                        .foregroundStyle(viewModel.driver.teamColor)
+                }
 
                 Text(viewModel.recentFormLabel.uppercased())
                     .font(.system(size: 10, weight: .heavy))
@@ -88,7 +93,9 @@ struct DriverDetailView: View {
 
             HStack(spacing: 24) {
                 infoItem(label: "Acronym", value: viewModel.driver.nameAcronym)
-                infoItem(label: "Number", value: "#\(viewModel.driver.driverNumber)")
+                if viewModel.driver.driverNumber > 0 {
+                    infoItem(label: "Number", value: "#\(viewModel.driver.driverNumber)")
+                }
                 if !viewModel.driver.countryCode.isEmpty {
                     infoItem(label: "Country", value: viewModel.driver.countryCode)
                 }
@@ -117,15 +124,11 @@ struct DriverDetailView: View {
 
     private func careerSnapshotCard(_ profile: DriverProfile) -> some View {
         VStack(spacing: 12) {
-            F1SectionHeader(title: "CAREER SNAPSHOT")
+            F1SectionHeader(title: "CAREER SNAPSHOT", subtitle: "Stable bio details only")
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                 statTile(label: "Debut", value: "\(profile.debutSeason)", accent: viewModel.driver.teamColor)
-                statTile(label: "Titles", value: profile.championships.map { "\($0)" } ?? "—", accent: viewModel.driver.teamColor)
-                statTile(label: "Wins", value: profile.careerWins.map { "\($0)" } ?? "—", accent: F1Design.positionColor(1))
-                statTile(label: "Podiums", value: profile.careerPodiums.map { "\($0)" } ?? "—", accent: .white)
-                statTile(label: "Poles", value: profile.careerPoles.map { "\($0)" } ?? "—", accent: Color.f1Red)
-                statTile(label: "Best result", value: profile.bestFinish, accent: viewModel.driver.teamColor)
+                statTile(label: "Career stage", value: profile.careerStage, accent: .white)
             }
 
             VStack(alignment: .leading, spacing: 8) {
@@ -167,7 +170,7 @@ struct DriverDetailView: View {
 
     private var recentResultsCard: some View {
         VStack(spacing: 12) {
-            F1SectionHeader(title: "LAST 5 RACES")
+            F1SectionHeader(title: "LAST 5 RACES", subtitle: "Tap a race for the full weekend page")
 
             if viewModel.isLoading {
                 F1LoadingView(message: "Loading results")
@@ -185,7 +188,10 @@ struct DriverDetailView: View {
                 F1EmptyView(icon: "flag.checkered", title: "No results available yet")
             } else {
                 ForEach(viewModel.recentResults, id: \.id) { result in
-                    resultRow(result)
+                    NavigationLink(value: result.race) {
+                        resultRow(result)
+                    }
+                    .buttonStyle(.plain)
                     if result.id != viewModel.recentResults.last?.id {
                         Divider().overlay(Color.f1SecondaryBackground)
                     }
@@ -278,10 +284,15 @@ struct DriverDetailView: View {
 
             Spacer()
 
-            Text("\(Int(result.points)) pts")
-                .font(.subheadline)
-                .fontWeight(.semibold)
-                .foregroundStyle(.secondary)
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("\(Int(result.points)) pts")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.secondary)
+                Image(systemName: "chevron.right")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
         }
         .padding(.vertical, 4)
     }

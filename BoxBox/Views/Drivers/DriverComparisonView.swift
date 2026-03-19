@@ -24,7 +24,7 @@ struct DriverComparisonView: View {
                     title: "PROFILE",
                     rows: [
                         .init(label: "Team", left: leftDriver.teamName, right: rightDriver.teamName),
-                        .init(label: "Number", left: "#\(leftDriver.driverNumber)", right: "#\(rightDriver.driverNumber)"),
+                        .init(label: "Number", left: leftDriver.driverNumber > 0 ? "#\(leftDriver.driverNumber)" : "—", right: rightDriver.driverNumber > 0 ? "#\(rightDriver.driverNumber)" : "—"),
                         .init(label: "Country", left: leftProfile?.nationality ?? leftDriver.countryCode, right: rightProfile?.nationality ?? rightDriver.countryCode),
                         .init(label: "Career stage", left: leftProfile?.careerStage ?? "—", right: rightProfile?.careerStage ?? "—")
                     ]
@@ -132,22 +132,20 @@ struct DriverComparisonView: View {
     }
 
     private var verdictText: String {
-        let leftStage = leftProfile?.careerStage ?? ""
-        let rightStage = rightProfile?.careerStage ?? ""
-        let leftDebut = leftProfile?.debutSeason ?? 0
-        let rightDebut = rightProfile?.debutSeason ?? 0
-
-        if leftStage != rightStage, !leftStage.isEmpty, !rightStage.isEmpty {
-            return "\(leftDriver.nameAcronym) arrives with a profile closer to \(leftStage.lowercased()), while \(rightDriver.nameAcronym) reads more like \(rightStage.lowercased()). The difference is less about hype and more about what each driver has already proven at the sharp end."
-        }
+        let leftDebut = leftProfile?.debutSeason ?? 9999
+        let rightDebut = rightProfile?.debutSeason ?? 9999
 
         if leftDebut != rightDebut {
             return leftDebut < rightDebut
-                ? "\(leftDriver.nameAcronym) brings the longer F1 sample, which usually means a clearer read on race management and bad-weekend damage control. \(rightDriver.nameAcronym) may still have the steeper upside curve."
-                : "\(rightDriver.nameAcronym) brings the longer F1 sample, which usually means a clearer read on race management and bad-weekend damage control. \(leftDriver.nameAcronym) may still have the steeper upside curve."
+                ? "\(leftDriver.nameAcronym) carries the longer F1 track record. Experience should matter if this matchup comes down to tyre management, racecraft and adapting through a messy weekend."
+                : "\(rightDriver.nameAcronym) brings the deeper F1 sample. If both cars land in the same performance window, that experience usually sharpens the race-day calls."
         }
 
-        return "This one is close on paper. The real separator is context: qualifying sharpness, tyre life and whether either driver is being flattered or exposed by the current car."
+        if leftDriver.teamName != rightDriver.teamName {
+            return "This one is context-heavy: different cars, different operating windows, different pressure. The smarter read is who extracts more relative to the package each weekend, not who simply starts with the faster machinery."
+        }
+
+        return "This one is tight on paper. The real separator is execution: qualifying sharpness, tyre life and whether either driver can keep the weekend inside the car's best window."
     }
 }
 

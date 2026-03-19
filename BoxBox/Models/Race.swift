@@ -581,7 +581,7 @@ struct RaceResult: Identifiable, Codable, Hashable {
 
 struct TeamRaceResult: Identifiable {
     let id: String
-    let raceName: String
+    let race: Race
     let driverCode: String
     let position: Int
     let points: Double
@@ -591,6 +591,10 @@ struct TeamRaceResult: Identifiable {
         status != "Finished" && !status.starts(with: "+")
     }
 
+    var raceName: String {
+        race.raceName
+    }
+
     var shortName: String {
         raceName.replacingOccurrences(of: " Grand Prix", with: "")
     }
@@ -598,13 +602,17 @@ struct TeamRaceResult: Identifiable {
 
 struct DriverRaceResult: Identifiable {
     let id: String
-    let raceName: String
+    let race: Race
     let position: Int
     let points: Double
     let status: String
 
     var isDNF: Bool {
         status != "Finished" && !status.starts(with: "+")
+    }
+
+    var raceName: String {
+        race.raceName
     }
 
     var shortName: String {

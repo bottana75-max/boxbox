@@ -28,6 +28,9 @@ struct RaceDetailView: View {
         .background(Color.f1Background)
         .navigationTitle(viewModel.race.raceName)
         .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(for: Driver.self) { driver in
+            DriverDetailView(driver: driver)
+        }
         .task {
             await viewModel.loadData()
         }
@@ -159,7 +162,7 @@ struct RaceDetailView: View {
 
     private var resultsSection: some View {
         VStack(spacing: 12) {
-            F1SectionHeader(title: "TOP 10 RESULTS")
+            F1SectionHeader(title: "TOP 10 RESULTS", subtitle: "Tap a driver for the full profile")
 
             if viewModel.isLoading {
                 F1LoadingView(message: "Loading results")
@@ -174,7 +177,10 @@ struct RaceDetailView: View {
                 .frame(maxWidth: .infinity, minHeight: 100)
             } else {
                 ForEach(viewModel.results.prefix(10)) { result in
-                    resultRow(result)
+                    NavigationLink(value: Driver.fallback(driverCode: result.driverCode, driverName: result.driverName, teamName: result.constructor)) {
+                        resultRow(result)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
         }
@@ -210,6 +216,10 @@ struct RaceDetailView: View {
                 Image(systemName: "exclamationmark.circle")
                     .font(.caption)
                     .foregroundStyle(.orange)
+            } else {
+                Image(systemName: "chevron.right")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
             }
         }
         .padding(.vertical, 4)
@@ -285,7 +295,7 @@ struct RaceDetailView: View {
     }
 
     private func circuitNarrative(for info: CircuitInfo) -> String {
-        "\(info.city) is a \(info.speedClass.lowercased()) stop with \(info.turns) corners across \(info.formattedLength). With \(info.drsZones) DRS zone\(info.drsZones == 1 ? "" : "s"), this weekend is usually decided by qualifying position, tyre life and how cleanly drivers survive the opening laps. Translation: this is enough context to judge predictions instead of tapping an AI button blind."
+        "\(info.city) is a \(info.speedClass.lowercased()) stop with \(info.turns) corners across \(info.formattedLength). With \(info.drsZones) DRS zone\(info.drsZones == 1 ? "" : "s"), the clean read for this weekend is track position, tyre life and how well drivers survive the opening laps. Expect qualifying to shape the race more than raw headline pace alone."
     }
 }
 

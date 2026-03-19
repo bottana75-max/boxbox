@@ -18,6 +18,19 @@ actor OpenF1Service {
         return drivers.filter { seen.insert($0.driverNumber).inserted }
     }
 
+    func resolveDriver(for driver: Driver) async throws -> Driver {
+        guard driver.driverNumber == 0 || driver.headshotUrl == nil || driver.countryCode.isEmpty else {
+            return driver
+        }
+
+        let drivers = try await fetchDrivers()
+        return drivers.first(where: {
+            $0.nameAcronym.uppercased() == driver.nameAcronym.uppercased()
+                || $0.matches(code: driver.nameAcronym, fullName: driver.fullName)
+                || ($0.teamName == driver.teamName && $0.fullName.lowercased() == driver.fullName.lowercased())
+        }) ?? driver
+    }
+
     struct DriverPosition: Codable {
         let position: Int
         let driverNumber: Int
@@ -109,7 +122,7 @@ actor OpenF1Service {
             guard let result = race.Results?.first else { return nil }
             return DriverRaceResult(
                 id: "\(race.round)-\(result.Driver.driverId)",
-                raceName: race.raceName,
+                race: mapRace(race),
                 position: Int(result.position) ?? 0,
                 points: Double(result.points) ?? 0,
                 status: result.status
@@ -141,7 +154,7 @@ actor OpenF1Service {
             (race.Results ?? []).map { r in
                 TeamRaceResult(
                     id: "\(race.round)-\(r.Driver.driverId)",
-                    raceName: race.raceName,
+                    race: mapRace(race),
                     driverCode: r.Driver.code ?? String(r.Driver.familyName.prefix(3)).uppercased(),
                     position: Int(r.position) ?? 0,
                     points: Double(r.points) ?? 0,

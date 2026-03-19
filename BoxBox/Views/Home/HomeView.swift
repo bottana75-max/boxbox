@@ -121,16 +121,16 @@ struct HomeView: View {
     @ViewBuilder
     private var titleFightCard: some View {
         if let leader = viewModel.championshipLeader, !viewModel.titleChasers.isEmpty {
-            NavigationLink(value: Driver.fallback(driverCode: leader.driverCode, driverName: leader.driverName, teamName: leader.constructorName)) {
-                VStack(alignment: .leading, spacing: F1Design.innerSpacing) {
-                    HStack {
-                        F1SectionHeader(title: "TITLE FIGHT")
-                        Spacer()
-                        Text(viewModel.titleFightGapText)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
+            VStack(alignment: .leading, spacing: F1Design.innerSpacing) {
+                HStack {
+                    F1SectionHeader(title: "TITLE FIGHT")
+                    Spacer()
+                    Text(viewModel.titleFightGapText)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
 
+                NavigationLink(value: Driver.fallback(driverCode: leader.driverCode, driverName: leader.driverName, teamName: leader.constructorName)) {
                     HStack(alignment: .top) {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(leader.driverName)
@@ -154,9 +154,13 @@ struct HomeView: View {
                                 .foregroundStyle(.secondary)
                         }
                     }
+                    .f1InnerCard()
+                }
+                .buttonStyle(.plain)
 
-                    VStack(spacing: 8) {
-                        ForEach(Array(viewModel.titleChasers.prefix(3).enumerated()), id: \.element.id) { _, standing in
+                VStack(spacing: 8) {
+                    ForEach(Array(viewModel.titleChasers.prefix(3).enumerated()), id: \.element.id) { _, standing in
+                        NavigationLink(value: Driver.fallback(driverCode: standing.driverCode, driverName: standing.driverName, teamName: standing.constructorName)) {
                             HStack(spacing: 12) {
                                 Text("P\(standing.position)")
                                     .font(.caption)
@@ -174,17 +178,23 @@ struct HomeView: View {
                                         .foregroundStyle(.secondary)
                                 }
                                 Spacer()
-                                Text("\(standing.points.cleanNumber) pts")
-                                    .font(.caption)
-                                    .fontWeight(.medium)
-                                    .foregroundStyle(.secondary)
+                                VStack(alignment: .trailing, spacing: 2) {
+                                    Text("\(standing.points.cleanNumber) pts")
+                                        .font(.caption)
+                                        .fontWeight(.medium)
+                                        .foregroundStyle(.secondary)
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption2)
+                                        .foregroundStyle(.secondary)
+                                }
                             }
+                            .f1InnerCard()
                         }
+                        .buttonStyle(.plain)
                     }
                 }
-                .f1Card()
             }
-            .buttonStyle(.plain)
+            .f1Card()
         }
     }
 
@@ -239,52 +249,61 @@ struct HomeView: View {
     @ViewBuilder
     private var weekendTimelineCard: some View {
         if let race = viewModel.nextRace, !race.weekendSessions.isEmpty {
-            VStack(alignment: .leading, spacing: F1Design.innerSpacing) {
-                F1SectionHeader(title: "WEEKEND FLOW", subtitle: "Session cadence for the race weekend")
+            NavigationLink(value: race) {
+                VStack(alignment: .leading, spacing: F1Design.innerSpacing) {
+                    F1SectionHeader(title: "WEEKEND FLOW", subtitle: "Session cadence for the race weekend")
 
-                ForEach(race.weekendSessions) { session in
-                    HStack(spacing: 14) {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(session.label)
-                                .font(.subheadline)
-                                .fontWeight(.bold)
-                                .foregroundStyle(.white)
-                            Text(session.subtitle)
-                                .font(.caption2)
-                                .foregroundStyle(.tertiary)
+                    ForEach(race.weekendSessions) { session in
+                        HStack(spacing: 14) {
+                            VStack(alignment: .leading, spacing: 3) {
+                                Text(session.label)
+                                    .font(.subheadline)
+                                    .fontWeight(.bold)
+                                    .foregroundStyle(.white)
+                                Text(session.subtitle)
+                                    .font(.caption2)
+                                    .foregroundStyle(.tertiary)
+                            }
+                            Spacer()
+                            VStack(alignment: .trailing, spacing: 3) {
+                                Text(session.relativeLabel.uppercased())
+                                    .font(.system(size: 9, weight: .heavy))
+                                    .tracking(0.4)
+                                    .foregroundStyle(session.isUpcoming ? Color.f1Red : .secondary)
+                                Text(session.timeLabel)
+                                    .font(.caption)
+                                    .foregroundStyle(.white)
+                            }
                         }
-                        Spacer()
-                        VStack(alignment: .trailing, spacing: 3) {
-                            Text(session.relativeLabel.uppercased())
-                                .font(.system(size: 9, weight: .heavy))
-                                .tracking(0.4)
-                                .foregroundStyle(session.isUpcoming ? Color.f1Red : .secondary)
-                            Text(session.timeLabel)
-                                .font(.caption)
-                                .foregroundStyle(.white)
-                        }
+                        .f1InnerCard()
                     }
-                    .f1InnerCard()
                 }
+                .f1Card()
             }
-            .f1Card()
+            .buttonStyle(.plain)
         }
     }
 
     @ViewBuilder
     private var lastRaceCard: some View {
         if let race = viewModel.lastRace, !viewModel.lastRaceResults.isEmpty {
-            NavigationLink(value: race) {
-                VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 12) {
+                NavigationLink(value: race) {
                     HStack {
                         F1SectionHeader(title: "LAST RACE")
                         Spacer()
                         Text(race.raceWeekendTitle)
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                        Image(systemName: "chevron.right")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
                     }
+                }
+                .buttonStyle(.plain)
 
-                    ForEach(viewModel.lastRaceResults.prefix(5)) { result in
+                ForEach(viewModel.lastRaceResults.prefix(5)) { result in
+                    NavigationLink(value: Driver.fallback(driverCode: result.driverCode, driverName: result.driverName, teamName: result.constructor)) {
                         HStack(spacing: 12) {
                             F1PositionBadge(position: result.position)
                                 .frame(width: 34)
@@ -300,16 +319,22 @@ struct HomeView: View {
 
                             Spacer()
 
-                            Text("\(Int(result.points)) pts")
-                                .font(.subheadline)
-                                .fontWeight(.semibold)
-                                .foregroundStyle(.secondary)
+                            VStack(alignment: .trailing, spacing: 2) {
+                                Text("\(Int(result.points)) pts")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(.secondary)
+                                Image(systemName: "chevron.right")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
+                        .f1InnerCard()
                     }
+                    .buttonStyle(.plain)
                 }
-                .f1Card()
             }
-            .buttonStyle(.plain)
+            .f1Card()
         }
     }
 }

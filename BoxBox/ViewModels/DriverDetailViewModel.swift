@@ -3,7 +3,7 @@ import Foundation
 @MainActor
 @Observable
 class DriverDetailViewModel {
-    let driver: Driver
+    var driver: Driver
     var recentResults: [DriverRaceResult] = []
     var isLoading = false
     var error: String?
@@ -47,8 +47,9 @@ class DriverDetailViewModel {
         isLoading = true
         error = nil
         do {
+            driver = try await OpenF1Service.shared.resolveDriver(for: driver)
             guard let driverId = try await OpenF1Service.shared.findDriverId(for: driver) else {
-                error = "Driver not found in standings"
+                error = "Driver data is not available right now"
                 isLoading = false
                 return
             }

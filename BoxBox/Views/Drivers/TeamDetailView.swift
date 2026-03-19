@@ -29,6 +29,9 @@ struct TeamDetailView: View {
         .navigationDestination(for: Driver.self) { driver in
             DriverDetailView(driver: driver)
         }
+        .navigationDestination(for: Race.self) { race in
+            RaceDetailView(race: race)
+        }
         .task {
             await viewModel.loadData()
         }
@@ -76,7 +79,7 @@ struct TeamDetailView: View {
 
     private var overviewCard: some View {
         VStack(spacing: 12) {
-            F1SectionHeader(title: "TEAM SNAPSHOT", subtitle: "The premium read: form, depth and conversion")
+            F1SectionHeader(title: "TEAM SNAPSHOT", subtitle: "Form, depth and recent conversion")
 
             HStack(spacing: 10) {
                 F1StatPill(title: "Driver pts", value: viewModel.totalDriverPoints.cleanNumber)
@@ -188,7 +191,7 @@ struct TeamDetailView: View {
 
     private var recentResultsCard: some View {
         VStack(spacing: 12) {
-            F1SectionHeader(title: "RECENT RESULTS")
+            F1SectionHeader(title: "RECENT RESULTS", subtitle: "Tap a race for the full circuit page")
 
             if viewModel.isLoading {
                 F1LoadingView(message: "Loading results")
@@ -199,7 +202,10 @@ struct TeamDetailView: View {
                 F1EmptyView(icon: "flag.checkered", title: "No results available yet")
             } else {
                 ForEach(viewModel.recentResults) { result in
-                    resultRow(result)
+                    NavigationLink(value: result.race) {
+                        resultRow(result)
+                    }
+                    .buttonStyle(.plain)
                     if result.id != viewModel.recentResults.last?.id {
                         Divider().overlay(Color.f1SecondaryBackground)
                     }
@@ -271,10 +277,15 @@ struct TeamDetailView: View {
 
             Spacer()
 
-            Text("\(Int(result.points)) pts")
-                .font(.subheadline)
-                .fontWeight(.semibold)
-                .foregroundStyle(.secondary)
+            VStack(alignment: .trailing, spacing: 2) {
+                Text("\(Int(result.points)) pts")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.secondary)
+                Image(systemName: "chevron.right")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
         }
         .padding(.vertical, 4)
     }
