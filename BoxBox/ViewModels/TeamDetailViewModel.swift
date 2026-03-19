@@ -86,7 +86,7 @@ class TeamDetailViewModel {
 
     var teamNarrative: String {
         let leadDriver = strongestFinisher?.driverName ?? teamName
-        return "\(teamName) comes in with \(pointsGapSummary) The current read: \(momentumHeadline.lowercased()), led by \(leadDriver)."
+        return "\(teamName) arrives \(pointsGapSummary) Recent form suggests \(momentumHeadline.lowercased()), with \(leadDriver) leading the current push."
     }
 
     init(teamName: String, teamColour: String) {
