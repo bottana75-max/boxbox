@@ -7,7 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0D4CB09296ED2340C38736D4 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A5856908E55AC68E7DDE7106 /* Foundation.framework */; };
+		21E567374285DF152843CA89 /* StoreKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1508E70DA0E9B06DAE605897 /* StoreKitManager.swift */; };
 		33BDE43328D166E2BB0A38EC /* TeamDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AFBC482F2D7707CFADD5A2C /* TeamDetailView.swift */; };
+		3DC4BC69AB98E397DD1F9970 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4F041C9F8234BBB4C3593CB8 /* WidgetKit.framework */; };
+		7A1DD61A45033D49067CA3E3 /* BoxBoxWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FC0810A95EFBD26870CA7B3 /* BoxBoxWidgetBundle.swift */; };
+		8341330D724CA51259D09A5E /* BoxBoxWidgetExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = CDF38FFC44E0E85C42316A44 /* BoxBoxWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		8979B858BFC10EA711997E01 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F95989627549CD3CC318DB /* PaywallView.swift */; };
+		99E2F004A02B90ED1CD25438 /* StandingsWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86FB8E3EF96A3DB37D3B65D5 /* StandingsWidget.swift */; };
 		A1B2C3D401000001 /* BoxBoxApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000001 /* BoxBoxApp.swift */; };
 		A1B2C3D401000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000002 /* ContentView.swift */; };
 		A1B2C3D401000003 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000003 /* Assets.xcassets */; };
@@ -35,11 +42,43 @@
 		A1B2C3D401000034 /* RaceDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000034 /* RaceDetailViewModel.swift */; };
 		A1B2C3D401000035 /* DriverStandingDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000035 /* DriverStandingDetailViewModel.swift */; };
 		BD6DAA42D662BA4ED3BE7B65 /* TeamDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76CEFBDE356549A61B42D5C6 /* TeamDetailViewModel.swift */; };
+		BFBECDD5325F9A63E6456812 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC42CA8437C937C1A1704BDF /* SwiftUI.framework */; };
+		A1B2C3D401000036 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000036 /* DesignSystem.swift */; };
+		F7598994CDA8645D57B9E7E7 /* NextRaceWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0BB7F7338ADE1257CC49FB7 /* NextRaceWidget.swift */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		5BC77C0A08A76425F91EEB19 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A1B2C3D4A0000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9270B742AF946322FF62C8AB;
+			remoteInfo = BoxBoxWidgetExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		68E2D6280F4C9A17D9BF5324 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				8341330D724CA51259D09A5E /* BoxBoxWidgetExtension.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		1508E70DA0E9B06DAE605897 /* StoreKitManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = StoreKitManager.swift; path = BoxBox/Services/StoreKitManager.swift; sourceTree = "<group>"; };
 		3AFBC482F2D7707CFADD5A2C /* TeamDetailView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TeamDetailView.swift; sourceTree = "<group>"; };
+		4F041C9F8234BBB4C3593CB8 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/WidgetKit.framework; sourceTree = DEVELOPER_DIR; };
 		76CEFBDE356549A61B42D5C6 /* TeamDetailViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TeamDetailViewModel.swift; sourceTree = "<group>"; };
+		86FB8E3EF96A3DB37D3B65D5 /* StandingsWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = StandingsWidget.swift; path = BoxBoxWidget/StandingsWidget.swift; sourceTree = "<group>"; };
+		93F95989627549CD3CC318DB /* PaywallView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PaywallView.swift; path = BoxBox/Views/Predict/PaywallView.swift; sourceTree = "<group>"; };
+		9FC0810A95EFBD26870CA7B3 /* BoxBoxWidgetBundle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BoxBoxWidgetBundle.swift; path = BoxBoxWidget/BoxBoxWidgetBundle.swift; sourceTree = "<group>"; };
 		A1B2C3D400000001 /* BoxBoxApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoxBoxApp.swift; sourceTree = "<group>"; };
 		A1B2C3D400000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A1B2C3D400000003 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -67,10 +106,26 @@
 		A1B2C3D400000033 /* DriverDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriverDetailViewModel.swift; sourceTree = "<group>"; };
 		A1B2C3D400000034 /* RaceDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RaceDetailViewModel.swift; sourceTree = "<group>"; };
 		A1B2C3D400000035 /* DriverStandingDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriverStandingDetailViewModel.swift; sourceTree = "<group>"; };
+		A1B2C3D400000036 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
 		A1B2C3D4F0000001 /* BoxBox.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BoxBox.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A5416964D16F05B9E87671FE /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = Info.plist; path = BoxBoxWidget/Info.plist; sourceTree = "<group>"; };
+		A5856908E55AC68E7DDE7106 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		AC42CA8437C937C1A1704BDF /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/SwiftUI.framework; sourceTree = DEVELOPER_DIR; };
+		CDF38FFC44E0E85C42316A44 /* BoxBoxWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BoxBoxWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		E0BB7F7338ADE1257CC49FB7 /* NextRaceWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NextRaceWidget.swift; path = BoxBoxWidget/NextRaceWidget.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		6820BAA58FD18A490FDC24BD /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0D4CB09296ED2340C38736D4 /* Foundation.framework in Frameworks */,
+				3DC4BC69AB98E397DD1F9970 /* WidgetKit.framework in Frameworks */,
+				BFBECDD5325F9A63E6456812 /* SwiftUI.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A1B2C3D4E0000001 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -82,12 +137,35 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		29F110A43D226ECFE9468ED1 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				A5856908E55AC68E7DDE7106 /* Foundation.framework */,
+				4F041C9F8234BBB4C3593CB8 /* WidgetKit.framework */,
+				AC42CA8437C937C1A1704BDF /* SwiftUI.framework */,
+			);
+			name = iOS;
+			sourceTree = "<group>";
+		};
+		3195B2B5B9F05AC175633112 /* BoxBoxWidget */ = {
+			isa = PBXGroup;
+			children = (
+				9FC0810A95EFBD26870CA7B3 /* BoxBoxWidgetBundle.swift */,
+				E0BB7F7338ADE1257CC49FB7 /* NextRaceWidget.swift */,
+				86FB8E3EF96A3DB37D3B65D5 /* StandingsWidget.swift */,
+				A5416964D16F05B9E87671FE /* Info.plist */,
+			);
+			name = BoxBoxWidget;
+			path = BoxBoxWidget;
+			sourceTree = "<group>";
+		};
 		A1B2C3D4D0000001 = {
 			isa = PBXGroup;
 			children = (
 				A1B2C3D4D0000002 /* BoxBox */,
 				A1B2C3D4D0000003 /* Products */,
 				A1B2C3D4D000000D /* Frameworks */,
+				3195B2B5B9F05AC175633112 /* BoxBoxWidget */,
 			);
 			sourceTree = "<group>";
 		};
@@ -96,6 +174,7 @@
 			children = (
 				A1B2C3D400000001 /* BoxBoxApp.swift */,
 				A1B2C3D400000002 /* ContentView.swift */,
+				A1B2C3D400000036 /* DesignSystem.swift */,
 				A1B2C3D400000003 /* Assets.xcassets */,
 				A1B2C3D400000014 /* Info.plist */,
 				A1B2C3D4D0000004 /* Models */,
@@ -110,6 +189,7 @@
 			isa = PBXGroup;
 			children = (
 				A1B2C3D4F0000001 /* BoxBox.app */,
+				CDF38FFC44E0E85C42316A44 /* BoxBoxWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -130,6 +210,7 @@
 			children = (
 				A1B2C3D400000008 /* AIService.swift */,
 				A1B2C3D400000009 /* OpenF1Service.swift */,
+				1508E70DA0E9B06DAE605897 /* StoreKitManager.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -184,6 +265,7 @@
 			isa = PBXGroup;
 			children = (
 				A1B2C3D400000011 /* PredictView.swift */,
+				93F95989627549CD3CC318DB /* PaywallView.swift */,
 			);
 			path = Predict;
 			sourceTree = "<group>";
@@ -210,6 +292,7 @@
 			isa = PBXGroup;
 			children = (
 				A1B2C3D400000020 /* SwiftData.framework */,
+				29F110A43D226ECFE9468ED1 /* iOS */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -217,6 +300,23 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		9270B742AF946322FF62C8AB /* BoxBoxWidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C130025A4C63803168AAD31E /* Build configuration list for PBXNativeTarget "BoxBoxWidgetExtension" */;
+			buildPhases = (
+				C840C6F647E2D931CEB958D4 /* Sources */,
+				6820BAA58FD18A490FDC24BD /* Frameworks */,
+				172BBCB7BA5521FF33462151 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = BoxBoxWidgetExtension;
+			productName = BoxBoxWidgetExtension;
+			productReference = CDF38FFC44E0E85C42316A44 /* BoxBoxWidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 		A1B2C3D4C0000001 /* BoxBox */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = A1B2C3D4B0000003 /* Build configuration list for PBXNativeTarget "BoxBox" */;
@@ -224,10 +324,12 @@
 				A1B2C3D4E0000002 /* Sources */,
 				A1B2C3D4E0000001 /* Frameworks */,
 				A1B2C3D4E0000003 /* Resources */,
+				68E2D6280F4C9A17D9BF5324 /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				E9C43E2CCA94CFB50F15FE1C /* PBXTargetDependency */,
 			);
 			name = BoxBox;
 			productName = BoxBox;
@@ -263,11 +365,19 @@
 			projectRoot = "";
 			targets = (
 				A1B2C3D4C0000001 /* BoxBox */,
+				9270B742AF946322FF62C8AB /* BoxBoxWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		172BBCB7BA5521FF33462151 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A1B2C3D4E0000003 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -309,12 +419,81 @@
 				A1B2C3D401000035 /* DriverStandingDetailViewModel.swift in Sources */,
 				BD6DAA42D662BA4ED3BE7B65 /* TeamDetailViewModel.swift in Sources */,
 				33BDE43328D166E2BB0A38EC /* TeamDetailView.swift in Sources */,
+				21E567374285DF152843CA89 /* StoreKitManager.swift in Sources */,
+				8979B858BFC10EA711997E01 /* PaywallView.swift in Sources */,
+				A1B2C3D401000036 /* DesignSystem.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C840C6F647E2D931CEB958D4 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7A1DD61A45033D49067CA3E3 /* BoxBoxWidgetBundle.swift in Sources */,
+				F7598994CDA8645D57B9E7E7 /* NextRaceWidget.swift in Sources */,
+				99E2F004A02B90ED1CD25438 /* StandingsWidget.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		E9C43E2CCA94CFB50F15FE1C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = BoxBoxWidgetExtension;
+			target = 9270B742AF946322FF62C8AB /* BoxBoxWidgetExtension */;
+			targetProxy = 5BC77C0A08A76425F91EEB19 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		66D43BB1A19CE602737F16DA /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BoxBoxWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.boxbox.app.widget;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		88ADC30F376C7EAAD48FBA2C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BoxBoxWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.boxbox.app.widget;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
 		A1B2C3D4B1000001 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -515,6 +694,15 @@
 			buildConfigurations = (
 				A1B2C3D4B1000003 /* Debug */,
 				A1B2C3D4B1000004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C130025A4C63803168AAD31E /* Build configuration list for PBXNativeTarget "BoxBoxWidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				88ADC30F376C7EAAD48FBA2C /* Release */,
+				66D43BB1A19CE602737F16DA /* Debug */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
