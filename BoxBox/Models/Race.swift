@@ -36,46 +36,67 @@ struct CircuitInfo {
     let laps: Int
     let lengthKm: Double
     let city: String
+    let turns: Int
+    let drsZones: Int
+    let lapRecord: String
+    let firstGrandPrix: Int
+    let direction: String
+    let speedClass: String
+    let trackMapPoints: [TrackMapPoint]
 
     var formattedLength: String {
         String(format: "%.3f km", lengthKm)
     }
 
-    private static let data: [(keywords: [String], city: String, laps: Int, lengthKm: Double)] = [
-        (["Albert Park", "Australia"], "Melbourne", 58, 5.278),
-        (["Shanghai", "China"], "Shanghai", 56, 5.451),
-        (["Suzuka", "Japan"], "Suzuka", 53, 5.807),
-        (["Bahrain", "Sakhir"], "Sakhir", 57, 5.412),
-        (["Jeddah", "Saudi Arabia"], "Jeddah", 50, 6.174),
-        (["Miami"], "Miami", 57, 5.412),
-        (["Imola", "Emilia Romagna"], "Imola", 63, 4.909),
-        (["Monaco"], "Monte Carlo", 78, 3.337),
-        (["Catalunya", "Spain", "Barcelona"], "Barcelona", 66, 4.657),
-        (["Montreal", "Canada", "Gilles Villeneuve"], "Montreal", 70, 4.361),
-        (["Spielberg", "Austria", "Red Bull Ring"], "Spielberg", 71, 4.318),
-        (["Silverstone", "Britain", "British"], "Silverstone", 52, 5.891),
-        (["Budapest", "Hungary", "Hungaroring"], "Budapest", 70, 4.381),
-        (["Spa", "Belgium"], "Stavelot", 44, 7.004),
-        (["Zandvoort", "Netherlands", "Dutch"], "Zandvoort", 72, 4.259),
-        (["Monza", "Italy", "Italian"], "Monza", 53, 5.793),
-        (["Baku", "Azerbaijan"], "Baku", 51, 6.003),
-        (["Marina Bay", "Singapore"], "Singapore", 62, 4.940),
-        (["Austin", "COTA", "Americas"], "Austin", 56, 5.513),
-        (["Mexico", "Hermanos"], "Mexico City", 71, 4.304),
-        (["Interlagos", "Brazil", "São Paulo"], "São Paulo", 71, 4.309),
-        (["Las Vegas"], "Las Vegas", 50, 6.201),
-        (["Lusail", "Qatar"], "Lusail", 57, 5.380),
-        (["Yas Marina", "Abu Dhabi"], "Abu Dhabi", 58, 5.281),
+    var totalDistanceKm: String {
+        String(format: "%.1f km", lengthKm * Double(laps))
+    }
+
+    private static let data: [(keywords: [String], info: CircuitInfo)] = [
+        (["Albert Park", "Australia"], CircuitInfo(laps: 58, lengthKm: 5.278, city: "Melbourne", turns: 14, drsZones: 4, lapRecord: "1:19.813", firstGrandPrix: 1996, direction: "Clockwise", speedClass: "Balanced", trackMapPoints: [.init(8, 60), .init(18, 22), .init(45, 12), .init(74, 18), .init(88, 34), .init(80, 56), .init(61, 62), .init(57, 78), .init(36, 86), .init(18, 76)])),
+        (["Shanghai", "China"], CircuitInfo(laps: 56, lengthKm: 5.451, city: "Shanghai", turns: 16, drsZones: 2, lapRecord: "1:32.238", firstGrandPrix: 2004, direction: "Clockwise", speedClass: "Balanced", trackMapPoints: [.init(16, 28), .init(28, 10), .init(54, 14), .init(72, 30), .init(82, 56), .init(68, 78), .init(36, 80), .init(18, 66), .init(28, 46), .init(48, 50), .init(60, 36)])),
+        (["Suzuka", "Japan"], CircuitInfo(laps: 53, lengthKm: 5.807, city: "Suzuka", turns: 18, drsZones: 1, lapRecord: "1:30.983", firstGrandPrix: 1987, direction: "Figure-8", speedClass: "High speed", trackMapPoints: [.init(12, 58), .init(22, 30), .init(46, 18), .init(66, 34), .init(55, 52), .init(34, 52), .init(44, 72), .init(72, 72), .init(86, 48), .init(74, 22)])),
+        (["Bahrain", "Sakhir"], CircuitInfo(laps: 57, lengthKm: 5.412, city: "Sakhir", turns: 15, drsZones: 3, lapRecord: "1:31.447", firstGrandPrix: 2004, direction: "Clockwise", speedClass: "Traction", trackMapPoints: [.init(10, 58), .init(24, 18), .init(48, 12), .init(70, 20), .init(82, 40), .init(72, 58), .init(54, 56), .init(58, 78), .init(34, 84), .init(18, 72)])),
+        (["Jeddah", "Saudi Arabia"], CircuitInfo(laps: 50, lengthKm: 6.174, city: "Jeddah", turns: 27, drsZones: 3, lapRecord: "1:30.734", firstGrandPrix: 2021, direction: "Anti-clockwise", speedClass: "Street high speed", trackMapPoints: [.init(10, 82), .init(18, 48), .init(30, 22), .init(54, 16), .init(76, 24), .init(88, 44), .init(82, 74), .init(58, 84), .init(40, 68), .init(24, 70)])),
+        (["Miami"], CircuitInfo(laps: 57, lengthKm: 5.412, city: "Miami", turns: 19, drsZones: 3, lapRecord: "1:29.708", firstGrandPrix: 2022, direction: "Anti-clockwise", speedClass: "Street balanced", trackMapPoints: [.init(12, 52), .init(26, 18), .init(54, 16), .init(84, 30), .init(86, 58), .init(64, 74), .init(42, 70), .init(30, 84), .init(16, 72)])),
+        (["Imola", "Emilia Romagna"], CircuitInfo(laps: 63, lengthKm: 4.909, city: "Imola", turns: 19, drsZones: 1, lapRecord: "1:15.484", firstGrandPrix: 1980, direction: "Anti-clockwise", speedClass: "Old-school", trackMapPoints: [.init(12, 58), .init(22, 24), .init(48, 14), .init(72, 22), .init(86, 46), .init(70, 64), .init(44, 70), .init(34, 86), .init(16, 78)])),
+        (["Monaco"], CircuitInfo(laps: 78, lengthKm: 3.337, city: "Monte Carlo", turns: 19, drsZones: 1, lapRecord: "1:12.909", firstGrandPrix: 1950, direction: "Clockwise", speedClass: "Street precision", trackMapPoints: [.init(18, 62), .init(26, 34), .init(44, 24), .init(64, 32), .init(74, 48), .init(66, 62), .init(48, 60), .init(42, 78), .init(22, 82)])),
+        (["Catalunya", "Spain", "Barcelona"], CircuitInfo(laps: 66, lengthKm: 4.657, city: "Barcelona", turns: 14, drsZones: 2, lapRecord: "1:16.330", firstGrandPrix: 1991, direction: "Clockwise", speedClass: "Aero test", trackMapPoints: [.init(10, 54), .init(22, 18), .init(50, 14), .init(78, 24), .init(84, 52), .init(68, 70), .init(40, 76), .init(24, 64)])),
+        (["Montreal", "Canada", "Gilles Villeneuve"], CircuitInfo(laps: 70, lengthKm: 4.361, city: "Montreal", turns: 14, drsZones: 3, lapRecord: "1:13.078", firstGrandPrix: 1978, direction: "Clockwise", speedClass: "Stop-start", trackMapPoints: [.init(12, 44), .init(20, 20), .init(46, 12), .init(72, 24), .init(86, 48), .init(76, 70), .init(44, 78), .init(18, 64)])),
+        (["Spielberg", "Austria", "Red Bull Ring"], CircuitInfo(laps: 71, lengthKm: 4.318, city: "Spielberg", turns: 10, drsZones: 3, lapRecord: "1:05.619", firstGrandPrix: 1970, direction: "Clockwise", speedClass: "Power", trackMapPoints: [.init(18, 70), .init(28, 20), .init(62, 14), .init(82, 34), .init(72, 62), .init(42, 78)])),
+        (["Silverstone", "Britain", "British"], CircuitInfo(laps: 52, lengthKm: 5.891, city: "Silverstone", turns: 18, drsZones: 2, lapRecord: "1:27.097", firstGrandPrix: 1950, direction: "Clockwise", speedClass: "High speed", trackMapPoints: [.init(10, 54), .init(20, 22), .init(44, 12), .init(74, 18), .init(88, 38), .init(80, 64), .init(52, 76), .init(28, 68), .init(22, 46), .init(38, 42), .init(52, 54)])),
+        (["Budapest", "Hungary", "Hungaroring"], CircuitInfo(laps: 70, lengthKm: 4.381, city: "Budapest", turns: 14, drsZones: 1, lapRecord: "1:16.627", firstGrandPrix: 1986, direction: "Clockwise", speedClass: "Technical", trackMapPoints: [.init(12, 60), .init(22, 24), .init(46, 16), .init(76, 26), .init(84, 50), .init(70, 70), .init(46, 80), .init(20, 72)])),
+        (["Spa", "Belgium"], CircuitInfo(laps: 44, lengthKm: 7.004, city: "Stavelot", turns: 19, drsZones: 2, lapRecord: "1:46.286", firstGrandPrix: 1950, direction: "Clockwise", speedClass: "Forest high speed", trackMapPoints: [.init(12, 66), .init(24, 18), .init(54, 10), .init(82, 20), .init(88, 48), .init(76, 74), .init(42, 86), .init(18, 76)])),
+        (["Zandvoort", "Netherlands", "Dutch"], CircuitInfo(laps: 72, lengthKm: 4.259, city: "Zandvoort", turns: 14, drsZones: 2, lapRecord: "1:11.097", firstGrandPrix: 1952, direction: "Clockwise", speedClass: "Banked flow", trackMapPoints: [.init(16, 58), .init(24, 26), .init(46, 12), .init(74, 22), .init(82, 48), .init(68, 74), .init(36, 80), .init(18, 70)])),
+        (["Monza", "Italy", "Italian"], CircuitInfo(laps: 53, lengthKm: 5.793, city: "Monza", turns: 11, drsZones: 2, lapRecord: "1:21.046", firstGrandPrix: 1950, direction: "Clockwise", speedClass: "Low downforce", trackMapPoints: [.init(10, 44), .init(20, 18), .init(58, 16), .init(86, 24), .init(84, 50), .init(52, 56), .init(44, 80), .init(18, 74)])),
+        (["Baku", "Azerbaijan"], CircuitInfo(laps: 51, lengthKm: 6.003, city: "Baku", turns: 20, drsZones: 2, lapRecord: "1:43.009", firstGrandPrix: 2016, direction: "Anti-clockwise", speedClass: "Street speed trap", trackMapPoints: [.init(10, 50), .init(16, 20), .init(38, 12), .init(68, 16), .init(86, 28), .init(88, 58), .init(64, 72), .init(42, 74), .init(32, 88), .init(16, 74)])),
+        (["Marina Bay", "Singapore"], CircuitInfo(laps: 62, lengthKm: 4.940, city: "Singapore", turns: 19, drsZones: 3, lapRecord: "1:35.867", firstGrandPrix: 2008, direction: "Anti-clockwise", speedClass: "Street technical", trackMapPoints: [.init(12, 62), .init(22, 26), .init(52, 16), .init(78, 24), .init(86, 50), .init(70, 72), .init(46, 82), .init(22, 74)])),
+        (["Austin", "COTA", "Americas"], CircuitInfo(laps: 56, lengthKm: 5.513, city: "Austin", turns: 20, drsZones: 2, lapRecord: "1:36.169", firstGrandPrix: 2012, direction: "Anti-clockwise", speedClass: "Technical-power mix", trackMapPoints: [.init(12, 66), .init(22, 18), .init(46, 10), .init(74, 22), .init(84, 48), .init(72, 72), .init(44, 84), .init(20, 76)])),
+        (["Mexico", "Hermanos"], CircuitInfo(laps: 71, lengthKm: 4.304, city: "Mexico City", turns: 17, drsZones: 3, lapRecord: "1:17.774", firstGrandPrix: 1963, direction: "Clockwise", speedClass: "Altitude", trackMapPoints: [.init(10, 48), .init(20, 18), .init(50, 14), .init(82, 26), .init(88, 56), .init(72, 72), .init(40, 78), .init(18, 66)])),
+        (["Interlagos", "Brazil", "São Paulo"], CircuitInfo(laps: 71, lengthKm: 4.309, city: "São Paulo", turns: 15, drsZones: 2, lapRecord: "1:10.540", firstGrandPrix: 1973, direction: "Anti-clockwise", speedClass: "Old-school", trackMapPoints: [.init(12, 64), .init(20, 22), .init(50, 12), .init(82, 22), .init(84, 56), .init(58, 70), .init(40, 86), .init(18, 76)])),
+        (["Las Vegas"], CircuitInfo(laps: 50, lengthKm: 6.201, city: "Las Vegas", turns: 17, drsZones: 2, lapRecord: "1:35.490", firstGrandPrix: 2023, direction: "Clockwise", speedClass: "Street power", trackMapPoints: [.init(12, 40), .init(20, 16), .init(66, 16), .init(88, 34), .init(82, 66), .init(44, 76), .init(18, 64)])),
+        (["Lusail", "Qatar"], CircuitInfo(laps: 57, lengthKm: 5.380, city: "Lusail", turns: 16, drsZones: 1, lapRecord: "1:22.384", firstGrandPrix: 2021, direction: "Clockwise", speedClass: "Fast sweepers", trackMapPoints: [.init(14, 56), .init(24, 22), .init(52, 12), .init(80, 22), .init(86, 52), .init(70, 74), .init(38, 82), .init(18, 70)])),
+        (["Yas Marina", "Abu Dhabi"], CircuitInfo(laps: 58, lengthKm: 5.281, city: "Abu Dhabi", turns: 16, drsZones: 2, lapRecord: "1:26.103", firstGrandPrix: 2009, direction: "Anti-clockwise", speedClass: "Technical-power mix", trackMapPoints: [.init(10, 54), .init(22, 18), .init(54, 12), .init(82, 24), .init(88, 54), .init(68, 76), .init(42, 82), .init(20, 68)])),
     ]
 
     static func lookup(circuitName: String, country: String) -> CircuitInfo? {
         let search = "\(circuitName) \(country)".lowercased()
         for entry in data {
             if entry.keywords.contains(where: { search.contains($0.lowercased()) }) {
-                return CircuitInfo(laps: entry.laps, lengthKm: entry.lengthKm, city: entry.city)
+                return entry.info
             }
         }
         return nil
+    }
+}
+
+struct TrackMapPoint: Hashable, Codable {
+    let x: Double
+    let y: Double
+
+    init(_ x: Double, _ y: Double) {
+        self.x = x
+        self.y = y
     }
 }
 

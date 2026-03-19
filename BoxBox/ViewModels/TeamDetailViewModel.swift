@@ -12,7 +12,7 @@ class TeamDetailViewModel {
     var isLoading = false
     var error: String?
 
-    nonisolated(unsafe) var loadTask: Task<Void, Never>?
+    @ObservationIgnored private var loadTask: Task<Void, Never>?
 
     var constructorId: String {
         let mapping: [String: String] = [

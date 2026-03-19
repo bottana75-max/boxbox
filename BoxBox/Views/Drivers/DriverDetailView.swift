@@ -12,6 +12,11 @@ struct DriverDetailView: View {
             VStack(spacing: 20) {
                 headerSection
                 infoCard
+                if let profile = viewModel.profile {
+                    careerSnapshotCard(profile)
+                    driverStoryCard(profile)
+                }
+                recentFormCard
                 recentResultsCard
             }
             .padding()
@@ -23,8 +28,6 @@ struct DriverDetailView: View {
             await viewModel.loadResults()
         }
     }
-
-    // MARK: - Header
 
     private var headerSection: some View {
         VStack(spacing: 16) {
@@ -48,10 +51,21 @@ struct DriverDetailView: View {
                     .frame(width: 166, height: 166)
             )
 
-            Text("#\(viewModel.driver.driverNumber)")
-                .font(.system(.largeTitle, design: .rounded))
-                .fontWeight(.black)
-                .foregroundStyle(viewModel.driver.teamColor)
+            VStack(spacing: 6) {
+                Text("#\(viewModel.driver.driverNumber)")
+                    .font(.system(.largeTitle, design: .rounded))
+                    .fontWeight(.black)
+                    .foregroundStyle(viewModel.driver.teamColor)
+
+                Text(viewModel.recentFormLabel.uppercased())
+                    .font(.caption)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(viewModel.driver.teamColor.opacity(0.22))
+                    .clipShape(Capsule())
+            }
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 8)
@@ -68,15 +82,9 @@ struct DriverDetailView: View {
             )
     }
 
-    // MARK: - Info Card
-
     private var infoCard: some View {
         VStack(spacing: 16) {
-            Text("DRIVER INFO")
-                .font(.caption)
-                .fontWeight(.bold)
-                .foregroundStyle(Color.f1Red)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            sectionHeader("DRIVER INFO")
 
             HStack(spacing: 24) {
                 infoItem(label: "Acronym", value: viewModel.driver.nameAcronym)
@@ -109,27 +117,64 @@ struct DriverDetailView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 
-    private func infoItem(label: String, value: String) -> some View {
-        VStack(spacing: 4) {
-            Text(label)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-            Text(value)
-                .font(.headline)
-                .fontWeight(.bold)
+    private func careerSnapshotCard(_ profile: DriverProfile) -> some View {
+        VStack(spacing: 12) {
+            sectionHeader("CAREER SNAPSHOT")
+
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
+                statTile(label: "Debut", value: "\(profile.debutSeason)", accent: viewModel.driver.teamColor)
+                statTile(label: "Titles", value: "\(profile.championships)", accent: viewModel.driver.teamColor)
+                statTile(label: "Wins", value: "\(profile.careerWins)", accent: .yellow)
+                statTile(label: "Podiums", value: "\(profile.careerPodiums)", accent: .white)
+                statTile(label: "Poles", value: "\(profile.careerPoles)", accent: Color.f1Red)
+                statTile(label: "Best result", value: profile.bestFinish, accent: viewModel.driver.teamColor)
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                detailRow(title: "Nationality", value: profile.nationality)
+                detailRow(title: "Born", value: "\(profile.dateOfBirth) · \(profile.placeOfBirth)")
+                if let juniorTitle = profile.juniorTitle {
+                    detailRow(title: "Junior CV", value: juniorTitle)
+                }
+            }
         }
-        .frame(maxWidth: .infinity)
+        .padding()
+        .background(Color.f1CardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 
-    // MARK: - Recent Results Card
+    private func driverStoryCard(_ profile: DriverProfile) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionHeader("SCOUT NOTE")
+
+            Text(profile.blurb)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding()
+        .background(Color.f1CardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+
+    private var recentFormCard: some View {
+        VStack(spacing: 12) {
+            sectionHeader("RECENT FORM")
+
+            HStack(spacing: 12) {
+                formTile(label: "Avg finish", value: viewModel.averageFinishText)
+                formTile(label: "Podiums", value: "\(viewModel.podiumFinishes)/5")
+                formTile(label: "Points", value: "\(viewModel.pointsFinishes)/5")
+            }
+        }
+        .padding()
+        .background(Color.f1CardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
 
     private var recentResultsCard: some View {
         VStack(spacing: 12) {
-            Text("RECENT RESULTS")
-                .font(.caption)
-                .fontWeight(.bold)
-                .foregroundStyle(Color.f1Red)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            sectionHeader("LAST 5 RACES")
 
             if viewModel.isLoading {
                 ProgressView()
@@ -149,7 +194,7 @@ struct DriverDetailView: View {
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, minHeight: 60)
             } else {
-                ForEach(viewModel.recentResults) { result in
+                ForEach(viewModel.recentResults, id: \.id) { result in
                     resultRow(result)
                     if result.id != viewModel.recentResults.last?.id {
                         Divider().overlay(Color.f1SecondaryBackground)
@@ -160,6 +205,74 @@ struct DriverDetailView: View {
         .padding()
         .background(Color.f1CardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+
+    private func sectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(.caption)
+            .fontWeight(.bold)
+            .foregroundStyle(Color.f1Red)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func infoItem(label: String, value: String) -> some View {
+        VStack(spacing: 4) {
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.headline)
+                .fontWeight(.bold)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private func statTile(label: String, value: String, accent: Color) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(label.uppercased())
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.headline)
+                .fontWeight(.bold)
+                .foregroundStyle(.white)
+                .minimumScaleFactor(0.75)
+            Capsule()
+                .fill(accent)
+                .frame(width: 28, height: 4)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding()
+        .background(Color.f1SecondaryBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+    }
+
+    private func detailRow(title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(title.uppercased())
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.subheadline)
+                .fontWeight(.semibold)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func formTile(label: String, value: String) -> some View {
+        VStack(spacing: 6) {
+            Text(value)
+                .font(.system(.title2, design: .rounded))
+                .fontWeight(.black)
+                .foregroundStyle(.white)
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 12)
+        .background(Color.f1SecondaryBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
     private func resultRow(_ result: DriverRaceResult) -> some View {
