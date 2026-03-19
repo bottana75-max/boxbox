@@ -11,15 +11,11 @@ class PredictViewModel {
     var pressureProfile = CircuitPressureProfile.from(info: nil)
     var isLoading = false
     var error: String?
-    var showAPIKeySheet = false
     var showPaywall = false
 
     private let service = OpenF1Service.shared
     private let aiService = AIService.shared
     let storeKit = StoreKitManager.shared
-
-    var hasAPIKey: Bool { aiService.hasAPIKey }
-    var savedAPIKey: String { aiService.apiKey ?? "" }
 
     var favoriteDrivers: [DriverStanding] {
         Array(standings.prefix(3))
@@ -40,31 +36,23 @@ class PredictViewModel {
     }
 
     var trialStatusText: String {
-        if storeKit.isUnlimited { return "Pro unlocked — unlimited predictions" }
+        if storeKit.isUnlimited { return "Pro unlocked - unlimited predictions" }
         let remaining = max(0, storeKit.credits)
-        if remaining == 0 { return "Free trial finished — unlock Pro to keep predicting" }
+        if remaining == 0 { return "Free trial finished - unlock Pro to keep predicting" }
         return "\(remaining) free prediction\(remaining == 1 ? "" : "s") remaining"
     }
 
     var predictButtonTitle: String {
         if isLoading { return "Analyzing context..." }
         if nextRace == nil { return "No Race To Predict Yet" }
-        if !hasAPIKey { return "Add OpenAI Key" }
-        if !storeKit.canPredict { return "Unlock Pro to Predict" }
+        if !storeKit.canPredict { return "Get More Predictions" }
         return "Generate AI Podium"
     }
 
     var predictButtonSubtitle: String {
-        if nextRace == nil { return "We’ll light this up as soon as the next grand prix is on the board." }
-        if !hasAPIKey { return "Add your OpenAI key once to unlock the prediction engine." }
-        if !storeKit.canPredict { return "You’ve used the 3 free predictions. Unlock Pro to keep predicting all season." }
-        return "Uses standings, recent results, timing context and circuit profile."
-    }
-
-    func saveAPIKey(_ key: String) {
-        let trimmedKey = key.trimmingCharacters(in: .whitespacesAndNewlines)
-        aiService.apiKey = trimmedKey.isEmpty ? nil : trimmedKey
-        error = nil
+        if nextRace == nil { return "We'll light this up as soon as the next grand prix is on the board." }
+        if !storeKit.canPredict { return "You've used all your predictions. Unlock more to keep predicting." }
+        return "Uses standings, recent results and circuit profile."
     }
 
     func loadNextRace(forceRefresh: Bool = false) async {
@@ -102,11 +90,6 @@ class PredictViewModel {
     func predict() async {
         guard let nextRace else {
             error = "The next grand prix is not available yet. Pull to refresh and try again shortly."
-            return
-        }
-
-        guard aiService.hasAPIKey else {
-            showAPIKeySheet = true
             return
         }
 

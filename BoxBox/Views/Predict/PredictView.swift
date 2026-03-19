@@ -2,7 +2,7 @@ import SwiftUI
 
 struct PredictView: View {
     @State private var viewModel = PredictViewModel()
-    @State private var apiKeyInput = ""
+    
 
     var body: some View {
         NavigationStack {
@@ -40,19 +40,6 @@ struct PredictView: View {
             }
             .background(Color.f1Background)
             .navigationTitle("AI Predictor")
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        apiKeyInput = viewModel.savedAPIKey
-                        viewModel.showAPIKeySheet = true
-                    } label: {
-                        Image(systemName: viewModel.hasAPIKey ? "key.fill" : "key")
-                    }
-                }
-            }
-            .sheet(isPresented: $viewModel.showAPIKeySheet) {
-                apiKeySheet
-            }
             .sheet(isPresented: $viewModel.showPaywall) {
                 PaywallView()
             }
@@ -61,7 +48,6 @@ struct PredictView: View {
             }
         }
         .task {
-            apiKeyInput = viewModel.savedAPIKey
             await viewModel.loadNextRace()
         }
     }
@@ -397,61 +383,6 @@ struct PredictView: View {
         .f1Card()
     }
 
-    private var apiKeySheet: some View {
-        NavigationStack {
-            VStack(spacing: 20) {
-                Image(systemName: "key.fill")
-                    .font(.system(size: 48))
-                    .foregroundStyle(Color.f1Red)
-
-                Text("OpenAI API Key")
-                    .font(.title2)
-                    .fontWeight(.bold)
-
-                Text("Enter your OpenAI API key to enable AI race predictions. Your key stays on this device and can be updated anytime.")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-
-                SecureField("sk-...", text: $apiKeyInput)
-                    .textFieldStyle(.roundedBorder)
-                    .autocorrectionDisabled()
-                    .textInputAutocapitalization(.never)
-
-                if viewModel.hasAPIKey {
-                    Label("A key is already saved on this device.", systemImage: "checkmark.circle.fill")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                Button {
-                    viewModel.saveAPIKey(apiKeyInput)
-                    viewModel.showAPIKeySheet = false
-                } label: {
-                    Text(viewModel.hasAPIKey && apiKeyInput == viewModel.savedAPIKey ? "Done" : "Save Key")
-                        .fontWeight(.bold)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                }
-                .buttonStyle(.borderedProminent)
-                .tint(Color.f1Red)
-                .disabled(apiKeyInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-
-                Spacer()
-            }
-            .padding()
-            .background(Color.f1Background)
-            .navigationTitle("Settings")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") {
-                        viewModel.showAPIKeySheet = false
-                    }
-                }
-            }
-        }
-    }
 }
 
 #Preview {
