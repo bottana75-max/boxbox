@@ -50,6 +50,9 @@ struct StandingsView: View {
             }
             .background(Color.f1Background)
             .navigationTitle("Standings")
+            .refreshable {
+                await viewModel.loadData()
+            }
         }
         .task {
             await viewModel.loadData()

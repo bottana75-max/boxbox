@@ -30,6 +30,9 @@ struct ScheduleView: View {
             }
             .background(Color.f1Background)
             .navigationTitle("Schedule")
+            .refreshable {
+                await viewModel.loadData()
+            }
         }
         .task {
             await viewModel.loadData()

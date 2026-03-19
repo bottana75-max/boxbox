@@ -23,6 +23,7 @@ struct PaywallView: View {
                     .font(.title3)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
 
                 VStack(spacing: 12) {
                     featureRow(icon: "brain.head.profile", text: "GPT-4o powered podium predictions")
@@ -36,13 +37,20 @@ struct PaywallView: View {
                     HStack(spacing: 10) {
                         F1StatPill(title: "Used", value: "\(storeKit.predictionCount)")
                         F1StatPill(title: "Free left", value: "\(storeKit.remainingFreePredictions)")
-                        F1StatPill(title: "Price", value: storeKit.product?.displayPrice ?? "$2.99")
+                        F1StatPill(title: "Price", value: storeKit.product?.displayPrice ?? "—")
                     }
 
                     Text(storeKit.paywallFootnote)
                         .font(.caption)
                         .foregroundStyle(.tertiary)
                         .multilineTextAlignment(.center)
+
+                    if let purchaseStatusNote = storeKit.purchaseStatusNote {
+                        Label(purchaseStatusNote, systemImage: "info.circle")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
                 }
 
                 Button {
@@ -51,7 +59,7 @@ struct PaywallView: View {
                     VStack(spacing: 4) {
                         Text(storeKit.paywallCTA)
                             .fontWeight(.bold)
-                        Text(storeKit.product == nil ? "Placeholder paywall flow" : "One-time purchase")
+                        Text("One-time purchase")
                             .font(.caption)
                             .foregroundStyle(.white.opacity(0.8))
                     }
@@ -60,6 +68,8 @@ struct PaywallView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(Color.f1Red)
+                .disabled(storeKit.product == nil)
+                .opacity(storeKit.product == nil ? 0.7 : 1)
 
                 Button {
                     Task { await storeKit.restorePurchases() }

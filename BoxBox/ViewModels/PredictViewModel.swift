@@ -19,6 +19,7 @@ class PredictViewModel {
     let storeKit = StoreKitManager.shared
 
     var hasAPIKey: Bool { aiService.hasAPIKey }
+    var savedAPIKey: String { aiService.apiKey ?? "" }
 
     var favoriteDrivers: [DriverStanding] {
         Array(standings.prefix(3))
@@ -39,30 +40,38 @@ class PredictViewModel {
     }
 
     var trialStatusText: String {
-        if storeKit.isProUnlocked { return "Pro — Unlimited predictions" }
+        if storeKit.isProUnlocked { return "Pro unlocked — unlimited predictions" }
         let remaining = storeKit.remainingFreePredictions
-        if remaining == 0 { return "Free trial used — Upgrade to Pro" }
+        if remaining == 0 { return "Free trial finished — unlock Pro to keep predicting" }
         return "\(remaining) free prediction\(remaining == 1 ? "" : "s") remaining"
     }
 
     var predictButtonTitle: String {
         if isLoading { return "Analyzing context..." }
+        if nextRace == nil { return "No Race To Predict Yet" }
         if !hasAPIKey { return "Add OpenAI Key" }
         if !storeKit.canPredict { return "Unlock Pro to Predict" }
         return "Generate AI Podium"
     }
 
     var predictButtonSubtitle: String {
+        if nextRace == nil { return "We’ll light this up as soon as the next grand prix is on the board." }
         if !hasAPIKey { return "Add your OpenAI key once to unlock the prediction engine." }
         if !storeKit.canPredict { return "You’ve used the 3 free predictions. Unlock Pro to keep predicting all season." }
         return "Uses standings, recent results, timing context and circuit profile."
     }
 
     func saveAPIKey(_ key: String) {
-        aiService.apiKey = key
+        let trimmedKey = key.trimmingCharacters(in: .whitespacesAndNewlines)
+        aiService.apiKey = trimmedKey.isEmpty ? nil : trimmedKey
+        error = nil
     }
 
-    func loadNextRace() async {
+    func loadNextRace(forceRefresh: Bool = false) async {
+        if !forceRefresh {
+            isLoading = true
+        }
+
         error = nil
         await storeKit.checkEntitlements()
         await storeKit.loadProduct()
@@ -86,11 +95,13 @@ class PredictViewModel {
         } catch {
             self.error = error.localizedDescription
         }
+
+        isLoading = false
     }
 
     func predict() async {
         guard let nextRace else {
-            error = "No upcoming race found"
+            error = "The next grand prix is not available yet. Pull to refresh and try again shortly."
             return
         }
 
@@ -124,7 +135,7 @@ class PredictViewModel {
                 storeKit.incrementPredictionCount()
             }
         } catch {
-            self.error = "Something went wrong generating your prediction. Please check your API key and try again."
+            self.error = "Something went wrong generating your prediction. Check your API key, connection and try again."
         }
 
         isLoading = false

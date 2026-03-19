@@ -29,14 +29,25 @@ class StoreKitManager {
         return "\(predictionCount)/\(Self.freeTrialLimit) free predictions used"
     }
 
+    var progressValue: Double {
+        if isProUnlocked { return 1 }
+        return min(1, Double(predictionCount) / Double(Self.freeTrialLimit))
+    }
+
     var paywallCTA: String {
         product.map { "Unlock for \($0.displayPrice)" } ?? "Unlock BoxBox Pro"
     }
 
     var paywallFootnote: String {
-        product == nil
-            ? "StoreKit product not loaded yet. The paywall still shows the intended unlock flow so the UX doesn’t dead-end."
-            : "One-time purchase. No subscription nonsense."
+        if let product {
+            return "One-time purchase for \(product.displayPrice). No subscription nonsense."
+        }
+        return "One-time purchase. Price appears automatically as soon as the App Store product is available."
+    }
+
+    var purchaseStatusNote: String? {
+        guard didAttemptProductLoad, product == nil else { return nil }
+        return "Purchases are temporarily unavailable on this build. You can still explore the prediction flow and restore if you’ve already bought Pro."
     }
 
     var canPredict: Bool {
@@ -49,14 +60,15 @@ class StoreKitManager {
 
     func loadProduct() async {
         didAttemptProductLoad = true
+        purchaseError = nil
         do {
             let products = try await Product.products(for: [Self.productID])
             product = products.first
             if product == nil {
-                purchaseError = "Pro purchase is configured as a placeholder until the App Store product is live."
+                purchaseError = "Purchases are not available yet on this build. Please try again later."
             }
         } catch {
-            purchaseError = "Could not load product. Showing placeholder paywall instead."
+            purchaseError = "Could not reach the App Store right now. Please try again later."
         }
     }
 
@@ -73,7 +85,7 @@ class StoreKitManager {
 
     func purchase() async {
         guard let product else {
-            purchaseError = "StoreKit product not available yet. Keep the paywall copy and CTA; wire the product before release."
+            purchaseError = "Purchases are not available right now. Please try again later."
             return
         }
 

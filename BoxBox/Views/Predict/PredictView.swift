@@ -8,7 +8,9 @@ struct PredictView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: F1Design.cardSpacing) {
-                    if let race = viewModel.nextRace {
+                    if viewModel.isLoading && viewModel.nextRace == nil {
+                        F1LoadingView(message: "Loading prediction desk")
+                    } else if let race = viewModel.nextRace {
                         nextRaceHeader(race)
                         predictionBriefingCard(race)
                         if let context = viewModel.weekendContext {
@@ -16,6 +18,8 @@ struct PredictView: View {
                         }
                         contendersCard
                         weekendPlanCard(race)
+                    } else {
+                        emptyStateCard
                     }
 
                     trialStatusBanner
@@ -28,7 +32,7 @@ struct PredictView: View {
 
                     if let error = viewModel.error {
                         ErrorCard(message: error) {
-                            Task { await viewModel.predict() }
+                            Task { await viewModel.loadNextRace(forceRefresh: true) }
                         }
                     }
                 }
@@ -39,9 +43,10 @@ struct PredictView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
+                        apiKeyInput = viewModel.savedAPIKey
                         viewModel.showAPIKeySheet = true
                     } label: {
-                        Image(systemName: "key.fill")
+                        Image(systemName: viewModel.hasAPIKey ? "key.fill" : "key")
                     }
                 }
             }
@@ -51,8 +56,12 @@ struct PredictView: View {
             .sheet(isPresented: $viewModel.showPaywall) {
                 PaywallView()
             }
+            .refreshable {
+                await viewModel.loadNextRace(forceRefresh: true)
+            }
         }
         .task {
+            apiKeyInput = viewModel.savedAPIKey
             await viewModel.loadNextRace()
         }
     }
@@ -79,7 +88,7 @@ struct PredictView: View {
 
             HStack(spacing: 10) {
                 F1MetricTile(title: "Date", value: race.formattedDate)
-                F1MetricTile(title: "Track", value: race.circuitInfo?.speedClass ?? "Unknown")
+                F1MetricTile(title: "Track", value: race.circuitInfo?.speedClass ?? "TBD")
                 F1MetricTile(title: "Tyres", value: viewModel.pressureProfile.tyreStress)
             }
         }
@@ -142,42 +151,47 @@ struct PredictView: View {
         VStack(alignment: .leading, spacing: F1Design.innerSpacing) {
             F1SectionHeader(title: "LEADING CONTENDERS", subtitle: "Standings + recent form feed the prediction model")
 
-            ForEach(Array(viewModel.favoriteDrivers.enumerated()), id: \.element.id) { index, driver in
-                let trend = viewModel.trends.first(where: { $0.id == driver.id })
-                HStack(spacing: 12) {
-                    Text("P\(index + 1)")
-                        .font(.caption)
-                        .fontWeight(.heavy)
-                        .foregroundStyle(Color.f1Red)
-                        .frame(width: 30)
-
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(driver.driverName)
-                            .font(.headline)
-                            .foregroundStyle(.white)
-                        Text(driver.constructorName)
+            if viewModel.favoriteDrivers.isEmpty {
+                F1EmptyView(icon: "person.3.fill", title: "Standings are still loading", subtitle: "Pull to refresh and we’ll rebuild the contender board.")
+                    .f1InnerCard()
+            } else {
+                ForEach(Array(viewModel.favoriteDrivers.enumerated()), id: \.element.id) { index, driver in
+                    let trend = viewModel.trends.first(where: { $0.id == driver.id })
+                    HStack(spacing: 12) {
+                        Text("P\(index + 1)")
                             .font(.caption)
-                            .foregroundStyle(.secondary)
-                        if let trend {
-                            Text("\(trend.recentSummary) · \(trend.momentumLabel)")
+                            .fontWeight(.heavy)
+                            .foregroundStyle(Color.f1Red)
+                            .frame(width: 30)
+
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(driver.driverName)
+                                .font(.headline)
+                                .foregroundStyle(.white)
+                            Text(driver.constructorName)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            if let trend {
+                                Text("\(trend.recentSummary) · \(trend.momentumLabel)")
+                                    .font(.caption2)
+                                    .foregroundStyle(.tertiary)
+                            }
+                        }
+
+                        Spacer()
+
+                        VStack(alignment: .trailing, spacing: 4) {
+                            Text("\(driver.points.cleanNumber)")
+                                .font(.headline)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.white)
+                            Text("pts")
                                 .font(.caption2)
-                                .foregroundStyle(.tertiary)
+                                .foregroundStyle(.secondary)
                         }
                     }
-
-                    Spacer()
-
-                    VStack(alignment: .trailing, spacing: 4) {
-                        Text("\(driver.points.cleanNumber)")
-                            .font(.headline)
-                            .fontWeight(.bold)
-                            .foregroundStyle(.white)
-                        Text("pts")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
+                    .f1InnerCard()
                 }
-                .f1InnerCard()
             }
         }
         .f1Card()
@@ -187,29 +201,34 @@ struct PredictView: View {
         VStack(alignment: .leading, spacing: F1Design.innerSpacing) {
             F1SectionHeader(title: "SESSION RADAR", subtitle: "Weekend cadence and timing")
 
-            ForEach(race.weekendSessions) { session in
-                HStack {
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(session.label)
-                            .font(.subheadline)
-                            .fontWeight(.bold)
-                            .foregroundStyle(.white)
-                        Text(session.subtitle)
-                            .font(.caption2)
-                            .foregroundStyle(.tertiary)
+            if race.weekendSessions.isEmpty {
+                F1EmptyView(icon: "calendar", title: "Session times not ready", subtitle: "We’ll populate the weekend plan when the next race timing lands.")
+                    .f1InnerCard()
+            } else {
+                ForEach(race.weekendSessions) { session in
+                    HStack {
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(session.label)
+                                .font(.subheadline)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.white)
+                            Text(session.subtitle)
+                                .font(.caption2)
+                                .foregroundStyle(.tertiary)
+                        }
+                        Spacer()
+                        VStack(alignment: .trailing, spacing: 3) {
+                            Text(session.relativeLabel.uppercased())
+                                .font(.system(size: 9, weight: .heavy))
+                                .tracking(0.4)
+                                .foregroundStyle(session.isUpcoming ? Color.f1Red : .secondary)
+                            Text(session.timeLabel)
+                                .font(.caption)
+                                .foregroundStyle(.white)
+                        }
                     }
-                    Spacer()
-                    VStack(alignment: .trailing, spacing: 3) {
-                        Text(session.relativeLabel.uppercased())
-                            .font(.system(size: 9, weight: .heavy))
-                            .tracking(0.4)
-                            .foregroundStyle(session.isUpcoming ? Color.f1Red : .secondary)
-                        Text(session.timeLabel)
-                            .font(.caption)
-                            .foregroundStyle(.white)
-                    }
+                    .f1InnerCard()
                 }
-                .f1InnerCard()
             }
         }
         .f1Card()
@@ -225,7 +244,7 @@ struct PredictView: View {
                         ProgressView()
                             .tint(.white)
                     } else {
-                        Image(systemName: viewModel.storeKit.canPredict ? "sparkles" : "lock.fill")
+                        Image(systemName: buttonIcon)
                     }
                     Text(viewModel.predictButtonTitle)
                         .fontWeight(.bold)
@@ -233,6 +252,7 @@ struct PredictView: View {
                 Text(viewModel.predictButtonSubtitle)
                     .font(.caption)
                     .foregroundStyle(.white.opacity(0.85))
+                    .multilineTextAlignment(.center)
             }
             .frame(maxWidth: .infinity)
             .padding()
@@ -240,6 +260,11 @@ struct PredictView: View {
         .buttonStyle(.borderedProminent)
         .tint(Color.f1Red)
         .disabled(viewModel.isLoading)
+    }
+
+    private var buttonIcon: String {
+        if viewModel.nextRace == nil { return "calendar.badge.exclamationmark" }
+        return viewModel.storeKit.canPredict ? "sparkles" : "lock.fill"
     }
 
     private func podiumCard(_ prediction: Prediction) -> some View {
@@ -308,7 +333,7 @@ struct PredictView: View {
 
     private var trialStatusBanner: some View {
         VStack(alignment: .leading, spacing: 10) {
-            HStack {
+            HStack(alignment: .top) {
                 Image(systemName: viewModel.storeKit.isProUnlocked ? "checkmark.seal.fill" : "sparkles")
                     .foregroundStyle(Color.f1Red)
                 Text(viewModel.trialStatusText)
@@ -337,11 +362,25 @@ struct PredictView: View {
                         Capsule().fill(Color.f1SecondaryBackground)
                         Capsule()
                             .fill(Color.f1Red)
-                            .frame(width: geometry.size.width * min(1, CGFloat(viewModel.storeKit.predictionCount) / CGFloat(StoreKitManager.freeTrialLimit)))
+                            .frame(width: geometry.size.width * viewModel.storeKit.progressValue)
                     }
                 }
                 .frame(height: 8)
             }
+        }
+        .f1Card()
+    }
+
+    private var emptyStateCard: some View {
+        VStack(alignment: .leading, spacing: F1Design.innerSpacing) {
+            F1SectionHeader(title: "PREDICTION DESK", subtitle: "No race loaded yet")
+
+            F1EmptyView(
+                icon: "sparkles.rectangle.stack",
+                title: "Waiting for the next grand prix",
+                subtitle: "Pull to refresh once the next race weekend is available and BoxBox will rebuild the briefing automatically."
+            )
+            .frame(minHeight: 120)
         }
         .f1Card()
     }
@@ -357,7 +396,7 @@ struct PredictView: View {
                     .font(.title2)
                     .fontWeight(.bold)
 
-                Text("Enter your OpenAI API key to enable AI race predictions. Your key is stored locally on your device.")
+                Text("Enter your OpenAI API key to enable AI race predictions. Your key stays on this device and can be updated anytime.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
@@ -367,18 +406,24 @@ struct PredictView: View {
                     .autocorrectionDisabled()
                     .textInputAutocapitalization(.never)
 
+                if viewModel.hasAPIKey {
+                    Label("A key is already saved on this device.", systemImage: "checkmark.circle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
                 Button {
                     viewModel.saveAPIKey(apiKeyInput)
                     viewModel.showAPIKeySheet = false
                 } label: {
-                    Text("Save Key")
+                    Text(viewModel.hasAPIKey && apiKeyInput == viewModel.savedAPIKey ? "Done" : "Save Key")
                         .fontWeight(.bold)
                         .frame(maxWidth: .infinity)
                         .padding()
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(Color.f1Red)
-                .disabled(apiKeyInput.isEmpty)
+                .disabled(apiKeyInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
 
                 Spacer()
             }

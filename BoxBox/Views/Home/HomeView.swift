@@ -13,6 +13,17 @@ struct HomeView: View {
                         ErrorCard(message: error) {
                             Task { await viewModel.loadData() }
                         }
+                    } else if viewModel.nextRace == nil && viewModel.lastRace == nil {
+                        VStack(alignment: .leading, spacing: F1Design.innerSpacing) {
+                            F1SectionHeader(title: "PADDOCK STATUS", subtitle: "Nothing loaded yet")
+                            F1EmptyView(
+                                icon: "antenna.radiowaves.left.and.right.slash",
+                                title: "Race data is not ready yet",
+                                subtitle: "Pull to refresh and BoxBox will repopulate the home dashboard as soon as the schedule feed is back."
+                            )
+                            .frame(minHeight: 140)
+                        }
+                        .f1Card()
                     } else {
                         nextRaceCard
                         titleFightCard
@@ -24,6 +35,9 @@ struct HomeView: View {
                 .padding()
             }
             .background(Color.f1Background)
+            .refreshable {
+                await viewModel.loadData()
+            }
             .navigationTitle("BoxBox")
             .toolbarColorScheme(.dark, for: .navigationBar)
             .navigationDestination(for: Race.self) { race in

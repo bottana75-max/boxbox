@@ -55,6 +55,9 @@ struct DriversView: View {
             }
             .background(Color.f1Background)
             .navigationTitle("Drivers")
+            .refreshable {
+                await viewModel.loadData()
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(viewModel.isCompareMode ? "Done" : "Compare") {
