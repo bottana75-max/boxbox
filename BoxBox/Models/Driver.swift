@@ -27,7 +27,7 @@ struct Driver: Identifiable, Codable, Hashable {
         self.nameAcronym = try container.decode(String.self, forKey: .nameAcronym)
         self.teamName = try container.decode(String.self, forKey: .teamName)
         self.teamColour = try container.decodeIfPresent(String.self, forKey: .teamColour) ?? "FFFFFF"
-        self.countryCode = try container.decode(String.self, forKey: .countryCode)
+        self.countryCode = try container.decodeIfPresent(String.self, forKey: .countryCode) ?? ""
         self.headshotUrl = try container.decodeIfPresent(String.self, forKey: .headshotUrl)
         self.id = "\(self.driverNumber)-\(self.nameAcronym)"
     }
