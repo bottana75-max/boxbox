@@ -5,6 +5,48 @@ struct PaywallView: View {
     @Environment(\.dismiss) private var dismiss
     var storeKit = StoreKitManager.shared
 
+    private var featuredProduct: Product? {
+        storeKit.products.first { $0.id == "com.bottana.boxbox.unlimited" } ?? storeKit.products.last ?? storeKit.products.first
+    }
+
+    private var usedPredictions: Int {
+        max(0, 3 - storeKit.credits)
+    }
+
+    private var freeLeft: Int {
+        storeKit.isUnlimited ? 0 : max(0, storeKit.credits)
+    }
+
+    private var priceLabel: String {
+        featuredProduct?.displayPrice ?? "—"
+    }
+
+    private var paywallFootnote: String {
+        if storeKit.isUnlimited {
+            return "BoxBox Pro unlocked. Unlimited predictions are active on this device."
+        }
+        if featuredProduct == nil {
+            return "Purchases are temporarily unavailable on this build. You can still restore previous purchases."
+        }
+        return "One-time unlock for unlimited AI predictions. No subscription."
+    }
+
+    private var purchaseStatusNote: String? {
+        if let error = storeKit.purchaseError {
+            return error
+        }
+        if storeKit.didAttemptProductLoad && storeKit.products.isEmpty {
+            return "The App Store product is not available right now."
+        }
+        return nil
+    }
+
+    private var paywallCTA: String {
+        if storeKit.isUnlimited { return "BoxBox Pro Unlocked" }
+        if featuredProduct == nil { return "Unlock Unavailable" }
+        return "Unlock BoxBox Pro"
+    }
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 24) {
@@ -26,26 +68,26 @@ struct PaywallView: View {
                     .fixedSize(horizontal: false, vertical: true)
 
                 VStack(spacing: 12) {
-                    featureRow(icon: "brain.head.profile", text: "GPT-4o powered podium predictions")
+                    featureRow(icon: "brain.head.profile", text: "AI-powered podium predictions")
                     featureRow(icon: "cloud.sun.fill", text: "Weekend context: timing, weather pressure and circuit cues")
-                    featureRow(icon: "chart.line.uptrend.xyaxis", text: "Analysis using live standings, recent form and track profile")
+                    featureRow(icon: "chart.line.uptrend.xyaxis", text: "Analysis using standings, recent form and track profile")
                     featureRow(icon: "infinity", text: "Unlimited predictions all season")
                 }
                 .padding(.vertical)
 
                 VStack(spacing: 12) {
                     HStack(spacing: 10) {
-                        F1StatPill(title: "Used", value: "\(storeKit.predictionCount)")
-                        F1StatPill(title: "Free left", value: "\(storeKit.remainingFreePredictions)")
-                        F1StatPill(title: "Price", value: storeKit.product?.displayPrice ?? "—")
+                        F1StatPill(title: "Used", value: "\(usedPredictions)")
+                        F1StatPill(title: "Free left", value: "\(freeLeft)")
+                        F1StatPill(title: "Price", value: priceLabel)
                     }
 
-                    Text(storeKit.paywallFootnote)
+                    Text(paywallFootnote)
                         .font(.caption)
                         .foregroundStyle(.tertiary)
                         .multilineTextAlignment(.center)
 
-                    if let purchaseStatusNote = storeKit.purchaseStatusNote {
+                    if let purchaseStatusNote {
                         Label(purchaseStatusNote, systemImage: "info.circle")
                             .font(.caption)
                             .foregroundStyle(.secondary)
@@ -54,12 +96,13 @@ struct PaywallView: View {
                 }
 
                 Button {
-                    Task { await storeKit.purchase() }
+                    guard let featuredProduct else { return }
+                    Task { await storeKit.purchase(featuredProduct) }
                 } label: {
                     VStack(spacing: 4) {
-                        Text(storeKit.paywallCTA)
+                        Text(paywallCTA)
                             .fontWeight(.bold)
-                        Text("One-time purchase")
+                        Text(storeKit.isUnlimited ? "Ready to race" : "One-time purchase")
                             .font(.caption)
                             .foregroundStyle(.white.opacity(0.8))
                     }
@@ -68,8 +111,8 @@ struct PaywallView: View {
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(Color.f1Red)
-                .disabled(storeKit.product == nil)
-                .opacity(storeKit.product == nil ? 0.7 : 1)
+                .disabled(featuredProduct == nil || storeKit.isUnlimited)
+                .opacity((featuredProduct == nil || storeKit.isUnlimited) ? 0.7 : 1)
 
                 Button {
                     Task { await storeKit.restorePurchases() }
@@ -96,12 +139,9 @@ struct PaywallView: View {
                     Button("Done") { dismiss() }
                 }
             }
-            .onChange(of: storeKit.isProUnlocked) {
-                if storeKit.isProUnlocked { dismiss() }
-            }
         }
         .task {
-            await storeKit.loadProduct()
+            await storeKit.loadProducts()
         }
     }
 
