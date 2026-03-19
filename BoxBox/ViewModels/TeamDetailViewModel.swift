@@ -86,7 +86,7 @@ class TeamDetailViewModel {
 
     var teamNarrative: String {
         let leadDriver = strongestFinisher?.driverName ?? teamName
-        return "\(teamName) comes in with \(pointsGapSummary) The current read: \(momentumHeadline.lowercased()), led by \(leadDriver). This page is supposed to feel like a premium team sheet, not just a standings dump."
+        return "\(teamName) comes in with \(pointsGapSummary) The current read: \(momentumHeadline.lowercased()), led by \(leadDriver)."
     }
 
     init(teamName: String, teamColour: String) {

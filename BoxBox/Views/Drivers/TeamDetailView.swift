@@ -26,6 +26,9 @@ struct TeamDetailView: View {
         .background(Color.f1Background)
         .navigationTitle(viewModel.teamName)
         .navigationBarTitleDisplayMode(.inline)
+        .navigationDestination(for: Driver.self) { driver in
+            DriverDetailView(driver: driver)
+        }
         .task {
             await viewModel.loadData()
         }
@@ -125,28 +128,35 @@ struct TeamDetailView: View {
                 F1EmptyView(icon: "person.2", title: "No driver data available")
             } else {
                 ForEach(viewModel.teamDrivers) { driver in
-                    HStack(spacing: 12) {
-                        RoundedRectangle(cornerRadius: 4)
-                            .fill(teamColor)
-                            .frame(width: 4, height: 44)
+                    NavigationLink(value: Driver.fallback(driverCode: driver.driverCode, driverName: driver.driverName, teamName: viewModel.teamName)) {
+                        HStack(spacing: 12) {
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(teamColor)
+                                .frame(width: 4, height: 44)
 
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(driver.driverName)
-                                .font(.headline)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(driver.driverName)
+                                    .font(.headline)
+                                    .fontWeight(.bold)
+                                Text("P\(driver.position) in championship · \(Int(driver.points)) pts · \(driver.wins) wins")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            Spacer()
+
+                            Text(driver.driverCode)
+                                .font(.system(.title3, design: .monospaced))
                                 .fontWeight(.bold)
-                            Text("P\(driver.position) in championship · \(Int(driver.points)) pts · \(driver.wins) wins")
+                                .foregroundStyle(teamColor)
+
+                            Image(systemName: "chevron.right")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
-
-                        Spacer()
-
-                        Text(driver.driverCode)
-                            .font(.system(.title3, design: .monospaced))
-                            .fontWeight(.bold)
-                            .foregroundStyle(teamColor)
+                        .f1InnerCard()
                     }
-                    .f1InnerCard()
+                    .buttonStyle(.plain)
                 }
             }
         }

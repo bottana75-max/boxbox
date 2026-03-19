@@ -43,8 +43,8 @@ struct HomeView: View {
             .navigationDestination(for: Race.self) { race in
                 RaceDetailView(race: race)
             }
-            .navigationDestination(for: DriverStanding.self) { standing in
-                DriverStandingDetailView(standing: standing)
+            .navigationDestination(for: Driver.self) { driver in
+                DriverDetailView(driver: driver)
             }
         }
         .task {
@@ -121,7 +121,7 @@ struct HomeView: View {
     @ViewBuilder
     private var titleFightCard: some View {
         if let leader = viewModel.championshipLeader, !viewModel.titleChasers.isEmpty {
-            NavigationLink(value: leader) {
+            NavigationLink(value: Driver.fallback(driverCode: leader.driverCode, driverName: leader.driverName, teamName: leader.constructorName)) {
                 VStack(alignment: .leading, spacing: F1Design.innerSpacing) {
                     HStack {
                         F1SectionHeader(title: "TITLE FIGHT")
@@ -195,38 +195,41 @@ struct HomeView: View {
                 F1SectionHeader(title: "FORM WATCH", subtitle: "Recent momentum across the last 3 completed races")
 
                 ForEach(viewModel.driverTrends.prefix(3)) { trend in
-                    HStack(spacing: 12) {
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack(spacing: 8) {
-                                Text(trend.driverCode)
+                    NavigationLink(value: Driver.fallback(driverCode: trend.driverCode, driverName: trend.driverName, teamName: trend.constructorName)) {
+                        HStack(spacing: 12) {
+                            VStack(alignment: .leading, spacing: 4) {
+                                HStack(spacing: 8) {
+                                    Text(trend.driverCode)
+                                        .font(.caption)
+                                        .fontWeight(.heavy)
+                                        .foregroundStyle(Color.f1Red)
+                                    Text(trend.driverName)
+                                        .font(.headline)
+                                        .foregroundStyle(.white)
+                                }
+                                Text(trend.constructorName)
                                     .font(.caption)
-                                    .fontWeight(.heavy)
-                                    .foregroundStyle(Color.f1Red)
-                                Text(trend.driverName)
-                                    .font(.headline)
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(.secondary)
+                                Text(trend.recentSummary)
+                                    .font(.caption2)
+                                    .foregroundStyle(.tertiary)
                             }
-                            Text(trend.constructorName)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text(trend.recentSummary)
-                                .font(.caption2)
-                                .foregroundStyle(.tertiary)
-                        }
 
-                        Spacer()
+                            Spacer()
 
-                        VStack(alignment: .trailing, spacing: 6) {
-                            Label(trend.momentumLabel, systemImage: trend.trendIcon)
-                                .font(.caption)
-                                .fontWeight(.semibold)
-                                .foregroundStyle(.white)
-                            Text("Avg P\(String(format: "%.1f", trend.averageFinish))")
-                                .font(.system(.caption2, design: .monospaced))
-                                .foregroundStyle(.secondary)
+                            VStack(alignment: .trailing, spacing: 6) {
+                                Label(trend.momentumLabel, systemImage: trend.trendIcon)
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(.white)
+                                Text("Avg P\(String(format: "%.1f", trend.averageFinish))")
+                                    .font(.system(.caption2, design: .monospaced))
+                                    .foregroundStyle(.secondary)
+                            }
                         }
+                        .f1InnerCard()
                     }
-                    .f1InnerCard()
+                    .buttonStyle(.plain)
                 }
             }
             .f1Card()

@@ -121,10 +121,10 @@ struct DriverDetailView: View {
 
             LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
                 statTile(label: "Debut", value: "\(profile.debutSeason)", accent: viewModel.driver.teamColor)
-                statTile(label: "Titles", value: "\(profile.championships)", accent: viewModel.driver.teamColor)
-                statTile(label: "Wins", value: "\(profile.careerWins)", accent: F1Design.positionColor(1))
-                statTile(label: "Podiums", value: "\(profile.careerPodiums)", accent: .white)
-                statTile(label: "Poles", value: "\(profile.careerPoles)", accent: Color.f1Red)
+                statTile(label: "Titles", value: profile.championships.map { "\($0)" } ?? "—", accent: viewModel.driver.teamColor)
+                statTile(label: "Wins", value: profile.careerWins.map { "\($0)" } ?? "—", accent: F1Design.positionColor(1))
+                statTile(label: "Podiums", value: profile.careerPodiums.map { "\($0)" } ?? "—", accent: .white)
+                statTile(label: "Poles", value: profile.careerPoles.map { "\($0)" } ?? "—", accent: Color.f1Red)
                 statTile(label: "Best result", value: profile.bestFinish, accent: viewModel.driver.teamColor)
             }
 
