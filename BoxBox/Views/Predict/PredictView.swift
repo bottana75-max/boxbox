@@ -352,7 +352,7 @@ struct PredictView: View {
             }
 
             VStack(alignment: .leading, spacing: 6) {
-                Text(viewModel.storeKit.progressText.uppercased())
+                Text(progressText.uppercased())
                     .font(.system(size: 10, weight: .heavy))
                     .tracking(0.6)
                     .foregroundStyle(.secondary)
@@ -362,13 +362,25 @@ struct PredictView: View {
                         Capsule().fill(Color.f1SecondaryBackground)
                         Capsule()
                             .fill(Color.f1Red)
-                            .frame(width: geometry.size.width * viewModel.storeKit.progressValue)
+                            .frame(width: geometry.size.width * progressValue)
                     }
                 }
                 .frame(height: 8)
             }
         }
         .f1Card()
+    }
+
+    private var progressText: String {
+        if viewModel.storeKit.isUnlimited { return "Pro unlocked" }
+        let used = max(0, 3 - viewModel.storeKit.credits)
+        return "Free trial used: \(used)/3"
+    }
+
+    private var progressValue: CGFloat {
+        if viewModel.storeKit.isUnlimited { return 1 }
+        let used = max(0, min(3, 3 - viewModel.storeKit.credits))
+        return CGFloat(Double(used) / 3.0)
     }
 
     private var emptyStateCard: some View {
