@@ -31,6 +31,15 @@ struct Race: Identifiable, Codable, Hashable {
         raceName.replacingOccurrences(of: " Grand Prix", with: "")
     }
 
+    var month: Int {
+        guard let raceDate else { return 1 }
+        return Calendar(identifier: .gregorian).component(.month, from: raceDate)
+    }
+
+    var weekendContext: WeekendContext {
+        WeekendContext.build(for: self)
+    }
+
     var daysUntilRace: Int? {
         guard let raceDate else { return nil }
         return Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: Date()), to: Calendar.current.startOfDay(for: raceDate)).day

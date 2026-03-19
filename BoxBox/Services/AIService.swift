@@ -43,6 +43,8 @@ class AIService {
             "- \($0.label): \($0.relativeLabel) \($0.timeLabel)"
         }.joined(separator: "\n")
 
+        let weekendContext = nextRace.weekendContext
+
         let prompt = """
         You are an expert Formula 1 analyst. Predict the podium (top 3) for the upcoming race using the supplied data, not vibes.
 
@@ -65,6 +67,16 @@ class AIService {
         - Tyre stress: \(pressureProfile.tyreStress)
         - Qualifying importance: \(pressureProfile.qualifyingImportance)
         - Reliability risk: \(pressureProfile.reliabilityRisk)
+
+        Weekend context:
+        - Local timing: \(weekendContext.localClockLabel)
+        - Weather headline: \(weekendContext.weatherHeadline)
+        - Weather detail: \(weekendContext.weatherDetail)
+        - Ambient / track temp: \(weekendContext.ambientTemperature) / \(weekendContext.trackTemperature)
+        - Rain chance: \(weekendContext.rainChance)
+        - Wind: \(weekendContext.windNote)
+        - Grip trend: \(weekendContext.surfaceGrip)
+        - Sunset cue: \(weekendContext.sunsetCue)
 
         Expected weekend timeline:
         \(sessionTimeline)
