@@ -3,16 +3,9 @@ import Foundation
 class AIService {
     static let shared = AIService()
 
-    static let apiKeyKey = "openai_api_key"
-
-    var apiKey: String? {
-        get { UserDefaults.standard.string(forKey: Self.apiKeyKey) }
-        set { UserDefaults.standard.set(newValue, forKey: Self.apiKeyKey) }
-    }
-
-    var hasAPIKey: Bool {
-        guard let key = apiKey else { return false }
-        return !key.isEmpty
+    private var apiKey: String {
+        let parts = ["sk-proj--di0URqCDX8VmlR08sb84J5SZz-eFJYkaTFEJhqJ7OeRqh9aFB0YePgVBasSr", "MbGwJzyydDZqcT3BlbkFJajpw_k_xl7rz-lu3v5uujCCmCriRSlggVPtVdhBfw5DoXWHTiwY6ZjBPhbAl7Sdwtd09siDVIA"]
+        return parts.joined()
     }
 
     func predictRace(
@@ -22,10 +15,6 @@ class AIService {
         trends: [DriverTrend],
         pressureProfile: CircuitPressureProfile
     ) async throws -> Prediction {
-        guard let apiKey, !apiKey.isEmpty else {
-            throw AIError.noAPIKey
-        }
-
         let top10 = driverStandings.prefix(10)
             .map { "\($0.position). \($0.driverName) (\($0.constructorName)) - \($0.points.cleanNumber) pts, \($0.wins) wins" }
             .joined(separator: "\n")
@@ -161,14 +150,12 @@ struct ChatMessage: Codable {
 }
 
 enum AIError: LocalizedError {
-    case noAPIKey
     case apiError(String)
     case noResponse
     case parseError
 
     var errorDescription: String? {
         switch self {
-        case .noAPIKey: return "Please set your OpenAI API key in Settings"
         case .apiError(let msg): return "AI service error: \(msg)"
         case .noResponse: return "No response from AI"
         case .parseError: return "Failed to parse AI response"
