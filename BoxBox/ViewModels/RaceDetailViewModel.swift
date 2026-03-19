@@ -9,7 +9,7 @@ class RaceDetailViewModel {
     var error: String?
     var countdown: String = ""
 
-    private var countdownTask: Task<Void, Never>?
+    nonisolated(unsafe) private var countdownTask: Task<Void, Never>?
 
     init(race: Race) {
         self.race = race
