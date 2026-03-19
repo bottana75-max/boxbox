@@ -6,98 +6,81 @@ import StoreKit
 class StoreKitManager {
     static let shared = StoreKitManager()
 
-    private static let productID = "com.boxbox.unlock"
-    private static let predictionCountKey = "prediction_count"
-    private static let purchasedKey = "boxbox_pro_purchased"
-    static let freeTrialLimit = 3
+    private static let creditsKey = "prediction_credits"
+    private static let initializedKey = "prediction_credits_initialized"
+    private static let unlimitedKey = "prediction_unlimited"
+    private static let initialCredits = 3
 
-    var isProUnlocked = false
-    var product: Product?
+    static let productIDs: [String] = [
+        "com.bottana.boxbox.credits5",
+        "com.bottana.boxbox.credits20",
+        "com.bottana.boxbox.unlimited"
+    ]
+
+    var products: [Product] = []
     var purchaseError: String?
     var didAttemptProductLoad = false
 
-    var predictionCount: Int {
-        UserDefaults.standard.integer(forKey: Self.predictionCountKey)
+    var credits: Int {
+        UserDefaults.standard.integer(forKey: Self.creditsKey)
     }
 
-    var remainingFreePredictions: Int {
-        max(0, Self.freeTrialLimit - predictionCount)
-    }
-
-    var progressText: String {
-        if isProUnlocked { return "Unlimited predictions unlocked" }
-        return "\(predictionCount)/\(Self.freeTrialLimit) free predictions used"
-    }
-
-    var progressValue: Double {
-        if isProUnlocked { return 1 }
-        return min(1, Double(predictionCount) / Double(Self.freeTrialLimit))
-    }
-
-    var paywallCTA: String {
-        product.map { "Unlock for \($0.displayPrice)" } ?? "Unlock BoxBox Pro"
-    }
-
-    var paywallFootnote: String {
-        if let product {
-            return "One-time purchase for \(product.displayPrice). No subscription nonsense."
-        }
-        return "One-time purchase. Price appears automatically as soon as the App Store product is available."
-    }
-
-    var purchaseStatusNote: String? {
-        guard didAttemptProductLoad, product == nil else { return nil }
-        return "Purchases are temporarily unavailable on this build. You can still explore the prediction flow and restore if you’ve already bought Pro."
+    var isUnlimited: Bool {
+        UserDefaults.standard.bool(forKey: Self.unlimitedKey)
     }
 
     var canPredict: Bool {
-        isProUnlocked || predictionCount < Self.freeTrialLimit
+        isUnlimited || credits > 0
+    }
+
+    var creditsLabel: String {
+        if isUnlimited { return "Unlimited" }
+        return "\(credits) prediction\(credits == 1 ? "" : "s") remaining"
     }
 
     private init() {
-        isProUnlocked = UserDefaults.standard.bool(forKey: Self.purchasedKey)
+        initializeCreditsIfNeeded()
     }
 
-    func loadProduct() async {
+    private func initializeCreditsIfNeeded() {
+        let defaults = UserDefaults.standard
+        if !defaults.bool(forKey: Self.initializedKey) {
+            defaults.set(Self.initialCredits, forKey: Self.creditsKey)
+            defaults.set(true, forKey: Self.initializedKey)
+        }
+    }
+
+    func consumeCredit() {
+        guard !isUnlimited else { return }
+        let current = UserDefaults.standard.integer(forKey: Self.creditsKey)
+        UserDefaults.standard.set(max(0, current - 1), forKey: Self.creditsKey)
+    }
+
+    func loadProducts() async {
         didAttemptProductLoad = true
         purchaseError = nil
         do {
-            let products = try await Product.products(for: [Self.productID])
-            product = products.first
-            if product == nil {
-                purchaseError = "Purchases are not available yet on this build. Please try again later."
+            let loaded = try await Product.products(for: Self.productIDs)
+            products = loaded.sorted { a, b in
+                Self.productIDs.firstIndex(of: a.id)! < Self.productIDs.firstIndex(of: b.id)!
+            }
+            if products.isEmpty {
+                purchaseError = "Purchases are not available yet on this build."
             }
         } catch {
             purchaseError = "Could not reach the App Store right now. Please try again later."
         }
     }
 
-    func checkEntitlements() async {
-        for await result in Transaction.currentEntitlements {
-            if case .verified(let transaction) = result,
-               transaction.productID == Self.productID {
-                isProUnlocked = true
-                UserDefaults.standard.set(true, forKey: Self.purchasedKey)
-                return
-            }
-        }
-    }
-
-    func purchase() async {
-        guard let product else {
-            purchaseError = "Purchases are not available right now. Please try again later."
-            return
-        }
-
+    func purchase(_ product: Product) async {
         purchaseError = nil
-
         do {
             let result = try await product.purchase()
             switch result {
             case .success(let verification):
-                if case .verified = verification {
-                    isProUnlocked = true
-                    UserDefaults.standard.set(true, forKey: Self.purchasedKey)
+                if case .verified(let transaction) = verification {
+                    applyCredits(for: transaction.productID)
+                    await transaction.finish()
                 } else {
                     purchaseError = "Purchase could not be verified. Please contact support."
                 }
@@ -115,14 +98,33 @@ class StoreKitManager {
 
     func restorePurchases() async {
         purchaseError = nil
-        await checkEntitlements()
-        if !isProUnlocked {
+        var restored = false
+        for await result in Transaction.currentEntitlements {
+            if case .verified(let transaction) = result {
+                if transaction.productID == "com.bottana.boxbox.unlimited" {
+                    UserDefaults.standard.set(true, forKey: Self.unlimitedKey)
+                    restored = true
+                }
+            }
+        }
+        if !restored {
             purchaseError = "No previous purchase found."
         }
     }
 
-    func incrementPredictionCount() {
-        let current = UserDefaults.standard.integer(forKey: Self.predictionCountKey)
-        UserDefaults.standard.set(current + 1, forKey: Self.predictionCountKey)
+    private func applyCredits(for productID: String) {
+        let defaults = UserDefaults.standard
+        switch productID {
+        case "com.bottana.boxbox.credits5":
+            let current = defaults.integer(forKey: Self.creditsKey)
+            defaults.set(current + 5, forKey: Self.creditsKey)
+        case "com.bottana.boxbox.credits20":
+            let current = defaults.integer(forKey: Self.creditsKey)
+            defaults.set(current + 20, forKey: Self.creditsKey)
+        case "com.bottana.boxbox.unlimited":
+            defaults.set(true, forKey: Self.unlimitedKey)
+        default:
+            break
+        }
     }
 }
