@@ -334,14 +334,14 @@ struct PredictView: View {
     private var trialStatusBanner: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top) {
-                Image(systemName: viewModel.storeKit.isProUnlocked ? "checkmark.seal.fill" : "sparkles")
+                Image(systemName: viewModel.storeKit.isUnlimited ? "checkmark.seal.fill" : "sparkles")
                     .foregroundStyle(Color.f1Red)
                 Text(viewModel.trialStatusText)
                     .font(.caption)
                     .fontWeight(.medium)
                     .foregroundStyle(.white)
                 Spacer()
-                if !viewModel.storeKit.isProUnlocked && viewModel.storeKit.remainingFreePredictions == 0 {
+                if !viewModel.storeKit.isUnlimited && viewModel.storeKit.credits == 0 {
                     Button("Upgrade") {
                         viewModel.showPaywall = true
                     }
