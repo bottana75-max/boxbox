@@ -59,7 +59,7 @@ class RaceDetailViewModel {
         countdown = "\(d)d \(h)h \(m)m \(s)s"
     }
 
-    deinit {
-        timer?.invalidate()
+    nonisolated deinit {
+        // Timer will be invalidated automatically
     }
 }
