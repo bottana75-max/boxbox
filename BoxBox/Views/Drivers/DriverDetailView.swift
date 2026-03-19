@@ -12,7 +12,7 @@ struct DriverDetailView: View {
             VStack(spacing: 20) {
                 headerSection
                 infoCard
-                positionsCard
+                recentResultsCard
             }
             .padding()
         }
@@ -20,7 +20,7 @@ struct DriverDetailView: View {
         .navigationTitle(viewModel.driver.fullName)
         .navigationBarTitleDisplayMode(.inline)
         .task {
-            await viewModel.loadPositions()
+            await viewModel.loadResults()
         }
     }
 
@@ -81,7 +81,9 @@ struct DriverDetailView: View {
             HStack(spacing: 24) {
                 infoItem(label: "Acronym", value: viewModel.driver.nameAcronym)
                 infoItem(label: "Number", value: "#\(viewModel.driver.driverNumber)")
-                infoItem(label: "Country", value: viewModel.driver.countryCode)
+                if !viewModel.driver.countryCode.isEmpty {
+                    infoItem(label: "Country", value: viewModel.driver.countryCode)
+                }
             }
 
             HStack(spacing: 8) {
@@ -111,11 +113,11 @@ struct DriverDetailView: View {
         .frame(maxWidth: .infinity)
     }
 
-    // MARK: - Positions Card
+    // MARK: - Recent Results Card
 
-    private var positionsCard: some View {
+    private var recentResultsCard: some View {
         VStack(spacing: 12) {
-            Text("LATEST RACE")
+            Text("RECENT RESULTS")
                 .font(.caption)
                 .fontWeight(.bold)
                 .foregroundStyle(Color.f1Red)
@@ -133,45 +135,18 @@ struct DriverDetailView: View {
                         .foregroundStyle(.secondary)
                 }
                 .frame(maxWidth: .infinity, minHeight: 60)
-            } else if let finalPos = viewModel.finalPosition {
-                HStack(spacing: 24) {
-                    VStack(spacing: 4) {
-                        Text("Finish")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                        Text("P\(finalPos)")
-                            .font(.system(.largeTitle, design: .rounded))
-                            .fontWeight(.black)
-                            .foregroundStyle(positionColor(finalPos))
-                    }
-
-                    Divider()
-                        .frame(height: 50)
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Position Changes")
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                        HStack(spacing: 6) {
-                            ForEach(Array(viewModel.positionChanges.prefix(8).enumerated()), id: \.offset) { _, change in
-                                Text("P\(change.position)")
-                                    .font(.caption2)
-                                    .fontWeight(.semibold)
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 3)
-                                    .background(positionColor(change.position).opacity(0.2))
-                                    .foregroundStyle(positionColor(change.position))
-                                    .clipShape(Capsule())
-                            }
-                        }
-                    }
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
-            } else {
-                Text("No position data available")
+            } else if viewModel.recentResults.isEmpty {
+                Text("No results available yet")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, minHeight: 60)
+            } else {
+                ForEach(viewModel.recentResults) { result in
+                    resultRow(result)
+                    if result.id != viewModel.recentResults.last?.id {
+                        Divider().overlay(Color.f1SecondaryBackground)
+                    }
+                }
             }
         }
         .padding()
@@ -179,7 +154,37 @@ struct DriverDetailView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 
-    private func positionColor(_ position: Int) -> Color {
+    private func resultRow(_ result: DriverRaceResult) -> some View {
+        HStack(spacing: 12) {
+            Text("P\(result.position)")
+                .font(.system(.title3, design: .rounded))
+                .fontWeight(.black)
+                .frame(width: 44)
+                .foregroundStyle(positionColor(result.position, isDNF: result.isDNF))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(result.shortName)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                if result.isDNF {
+                    Text(result.status)
+                        .font(.caption2)
+                        .foregroundStyle(.red)
+                }
+            }
+
+            Spacer()
+
+            Text("\(Int(result.points)) pts")
+                .font(.subheadline)
+                .fontWeight(.semibold)
+                .foregroundStyle(.secondary)
+        }
+        .padding(.vertical, 4)
+    }
+
+    private func positionColor(_ position: Int, isDNF: Bool) -> Color {
+        if isDNF { return .red }
         switch position {
         case 1: return .yellow
         case 2: return Color.white.opacity(0.75)

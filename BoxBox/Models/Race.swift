@@ -25,6 +25,58 @@ struct Race: Identifiable, Codable, Hashable {
         formatter.dateFormat = "MMM d, yyyy"
         return formatter.string(from: raceDate)
     }
+
+    /// Circuit info from hardcoded data (laps, length in km)
+    var circuitInfo: CircuitInfo? {
+        CircuitInfo.lookup(circuitName: circuitName, country: country)
+    }
+}
+
+struct CircuitInfo {
+    let laps: Int
+    let lengthKm: Double
+    let city: String
+
+    var formattedLength: String {
+        String(format: "%.3f km", lengthKm)
+    }
+
+    private static let data: [(keywords: [String], city: String, laps: Int, lengthKm: Double)] = [
+        (["Albert Park", "Australia"], "Melbourne", 58, 5.278),
+        (["Shanghai", "China"], "Shanghai", 56, 5.451),
+        (["Suzuka", "Japan"], "Suzuka", 53, 5.807),
+        (["Bahrain", "Sakhir"], "Sakhir", 57, 5.412),
+        (["Jeddah", "Saudi Arabia"], "Jeddah", 50, 6.174),
+        (["Miami"], "Miami", 57, 5.412),
+        (["Imola", "Emilia Romagna"], "Imola", 63, 4.909),
+        (["Monaco"], "Monte Carlo", 78, 3.337),
+        (["Catalunya", "Spain", "Barcelona"], "Barcelona", 66, 4.657),
+        (["Montreal", "Canada", "Gilles Villeneuve"], "Montreal", 70, 4.361),
+        (["Spielberg", "Austria", "Red Bull Ring"], "Spielberg", 71, 4.318),
+        (["Silverstone", "Britain", "British"], "Silverstone", 52, 5.891),
+        (["Budapest", "Hungary", "Hungaroring"], "Budapest", 70, 4.381),
+        (["Spa", "Belgium"], "Stavelot", 44, 7.004),
+        (["Zandvoort", "Netherlands", "Dutch"], "Zandvoort", 72, 4.259),
+        (["Monza", "Italy", "Italian"], "Monza", 53, 5.793),
+        (["Baku", "Azerbaijan"], "Baku", 51, 6.003),
+        (["Marina Bay", "Singapore"], "Singapore", 62, 4.940),
+        (["Austin", "COTA", "Americas"], "Austin", 56, 5.513),
+        (["Mexico", "Hermanos"], "Mexico City", 71, 4.304),
+        (["Interlagos", "Brazil", "São Paulo"], "São Paulo", 71, 4.309),
+        (["Las Vegas"], "Las Vegas", 50, 6.201),
+        (["Lusail", "Qatar"], "Lusail", 57, 5.380),
+        (["Yas Marina", "Abu Dhabi"], "Abu Dhabi", 58, 5.281),
+    ]
+
+    static func lookup(circuitName: String, country: String) -> CircuitInfo? {
+        let search = "\(circuitName) \(country)".lowercased()
+        for entry in data {
+            if entry.keywords.contains(where: { search.contains($0.lowercased()) }) {
+                return CircuitInfo(laps: entry.laps, lengthKm: entry.lengthKm, city: entry.city)
+            }
+        }
+        return nil
+    }
 }
 
 struct RaceResult: Identifiable, Codable {
@@ -35,6 +87,26 @@ struct RaceResult: Identifiable, Codable {
     let constructor: String
     let points: Double
     let status: String
+}
+
+// MARK: - Driver Race Result (for DriverDetailView)
+
+struct DriverRaceResult: Identifiable {
+    let id: String
+    let raceName: String
+    let position: Int
+    let points: Double
+    let status: String
+
+    var isDNF: Bool {
+        status != "Finished" && !status.starts(with: "+")
+    }
+
+    /// Short race name (e.g. "Australian Grand Prix" → "Australia")
+    var shortName: String {
+        raceName
+            .replacingOccurrences(of: " Grand Prix", with: "")
+    }
 }
 
 // MARK: - Jolpica API Response Models

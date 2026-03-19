@@ -4,8 +4,7 @@ import Foundation
 @Observable
 class DriverDetailViewModel {
     let driver: Driver
-    var finalPosition: Int?
-    var positionChanges: [(position: Int, date: String)] = []
+    var recentResults: [DriverRaceResult] = []
     var isLoading = false
     var error: String?
 
@@ -13,27 +12,20 @@ class DriverDetailViewModel {
         self.driver = driver
     }
 
-    func loadPositions() async {
+    func loadResults() async {
         isLoading = true
         error = nil
         do {
-            let positions = try await OpenF1Service.shared.fetchDriverPositions(driverNumber: driver.driverNumber)
-            if positions.isEmpty {
-                finalPosition = nil
-            } else {
-                finalPosition = positions.last?.position
-                // Keep unique position changes for display
-                var seen = Set<Int>()
-                var changes: [(position: Int, date: String)] = []
-                for p in positions {
-                    if seen.insert(p.position).inserted {
-                        changes.append((position: p.position, date: p.date))
-                    }
-                }
-                positionChanges = changes
+            // Try to find the Jolpica driverId for this driver
+            guard let driverId = try await OpenF1Service.shared.findDriverId(for: driver) else {
+                error = "Driver not found in standings"
+                isLoading = false
+                return
             }
+            let results = try await OpenF1Service.shared.fetchDriverResults(driverId: driverId)
+            recentResults = Array(results.suffix(5))
         } catch {
-            self.error = "Position data not available"
+            self.error = "Recent results not available"
         }
         isLoading = false
     }

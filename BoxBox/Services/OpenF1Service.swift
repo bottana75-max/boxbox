@@ -129,6 +129,41 @@ actor OpenF1Service {
         }
     }
 
+    func fetchDriverResults(driverId: String) async throws -> [DriverRaceResult] {
+        let url = URL(string: "\(jolpicaBase)/current/drivers/\(driverId)/results.json?limit=10")!
+        let (data, _) = try await URLSession.shared.data(from: url)
+        let response = try decoder.decode(JolpicaRaceResponse.self, from: data)
+        let races = response.MRData.RaceTable.Races
+        guard !races.isEmpty else {
+            throw F1Error.noData
+        }
+        return races.compactMap { race -> DriverRaceResult? in
+            guard let result = race.Results?.first else { return nil }
+            return DriverRaceResult(
+                id: "\(race.round)-\(result.Driver.driverId)",
+                raceName: race.raceName,
+                position: Int(result.position) ?? 0,
+                points: Double(result.points) ?? 0,
+                status: result.status
+            )
+        }
+    }
+
+    /// Try to find the Jolpica driverId for an OpenF1 driver by matching driver number or name
+    func findDriverId(for driver: Driver) async throws -> String? {
+        let standings = try await fetchDriverStandings()
+        // Match by driver code first
+        if let match = standings.first(where: { $0.driverCode == driver.nameAcronym }) {
+            return match.id
+        }
+        // Match by name similarity
+        let driverName = driver.fullName.lowercased()
+        if let match = standings.first(where: { driverName.contains($0.driverName.split(separator: " ").last?.lowercased() ?? "") }) {
+            return match.id
+        }
+        return nil
+    }
+
     func fetchConstructorStandings() async throws -> [Constructor] {
         let url = URL(string: "\(jolpicaBase)/current/constructorStandings.json")!
         let (data, _) = try await URLSession.shared.data(from: url)
