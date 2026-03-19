@@ -27,6 +27,12 @@
 		A1B2C3D401000012 /* ScheduleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000012 /* ScheduleView.swift */; };
 		A1B2C3D401000013 /* StandingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000013 /* StandingsView.swift */; };
 		A1B2C3D401000020 /* SwiftData.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000020 /* SwiftData.framework */; };
+		A1B2C3D401000030 /* DriverDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000030 /* DriverDetailView.swift */; };
+		A1B2C3D401000031 /* RaceDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000031 /* RaceDetailView.swift */; };
+		A1B2C3D401000032 /* DriverStandingDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000032 /* DriverStandingDetailView.swift */; };
+		A1B2C3D401000033 /* DriverDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000033 /* DriverDetailViewModel.swift */; };
+		A1B2C3D401000034 /* RaceDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000034 /* RaceDetailViewModel.swift */; };
+		A1B2C3D401000035 /* DriverStandingDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000035 /* DriverStandingDetailViewModel.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -51,6 +57,12 @@
 		A1B2C3D400000013 /* StandingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StandingsView.swift; sourceTree = "<group>"; };
 		A1B2C3D400000014 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A1B2C3D400000020 /* SwiftData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftData.framework; path = System/Library/Frameworks/SwiftData.framework; sourceTree = SDKROOT; };
+		A1B2C3D400000030 /* DriverDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriverDetailView.swift; sourceTree = "<group>"; };
+		A1B2C3D400000031 /* RaceDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RaceDetailView.swift; sourceTree = "<group>"; };
+		A1B2C3D400000032 /* DriverStandingDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriverStandingDetailView.swift; sourceTree = "<group>"; };
+		A1B2C3D400000033 /* DriverDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriverDetailViewModel.swift; sourceTree = "<group>"; };
+		A1B2C3D400000034 /* RaceDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RaceDetailViewModel.swift; sourceTree = "<group>"; };
+		A1B2C3D400000035 /* DriverStandingDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriverStandingDetailViewModel.swift; sourceTree = "<group>"; };
 		A1B2C3D4F0000001 /* BoxBox.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BoxBox.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -122,10 +134,13 @@
 			isa = PBXGroup;
 			children = (
 				A1B2C3D40000000A /* DriversViewModel.swift */,
+				A1B2C3D400000033 /* DriverDetailViewModel.swift */,
 				A1B2C3D40000000B /* HomeViewModel.swift */,
 				A1B2C3D40000000C /* PredictViewModel.swift */,
 				A1B2C3D40000000D /* ScheduleViewModel.swift */,
+				A1B2C3D400000034 /* RaceDetailViewModel.swift */,
 				A1B2C3D40000000E /* StandingsViewModel.swift */,
+				A1B2C3D400000035 /* DriverStandingDetailViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -146,6 +161,7 @@
 			isa = PBXGroup;
 			children = (
 				A1B2C3D40000000F /* DriversView.swift */,
+				A1B2C3D400000030 /* DriverDetailView.swift */,
 			);
 			path = Drivers;
 			sourceTree = "<group>";
@@ -170,6 +186,7 @@
 			isa = PBXGroup;
 			children = (
 				A1B2C3D400000012 /* ScheduleView.swift */,
+				A1B2C3D400000031 /* RaceDetailView.swift */,
 			);
 			path = Schedule;
 			sourceTree = "<group>";
@@ -178,6 +195,7 @@
 			isa = PBXGroup;
 			children = (
 				A1B2C3D400000013 /* StandingsView.swift */,
+				A1B2C3D400000032 /* DriverStandingDetailView.swift */,
 			);
 			path = Standings;
 			sourceTree = "<group>";
@@ -277,6 +295,12 @@
 				A1B2C3D401000011 /* PredictView.swift in Sources */,
 				A1B2C3D401000012 /* ScheduleView.swift in Sources */,
 				A1B2C3D401000013 /* StandingsView.swift in Sources */,
+				A1B2C3D401000030 /* DriverDetailView.swift in Sources */,
+				A1B2C3D401000031 /* RaceDetailView.swift in Sources */,
+				A1B2C3D401000032 /* DriverStandingDetailView.swift in Sources */,
+				A1B2C3D401000033 /* DriverDetailViewModel.swift in Sources */,
+				A1B2C3D401000034 /* RaceDetailViewModel.swift in Sources */,
+				A1B2C3D401000035 /* DriverStandingDetailViewModel.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

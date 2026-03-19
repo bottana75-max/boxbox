@@ -21,6 +21,46 @@ actor OpenF1Service {
         return drivers.filter { seen.insert($0.driverNumber).inserted }
     }
 
+    // MARK: - OpenF1 Position Data
+
+    struct DriverPosition: Codable {
+        let position: Int
+        let driverNumber: Int
+        let date: String
+
+        enum CodingKeys: String, CodingKey {
+            case position
+            case driverNumber = "driver_number"
+            case date
+        }
+    }
+
+    func fetchDriverPositions(driverNumber: Int) async throws -> [DriverPosition] {
+        let url = URL(string: "\(openF1Base)/positions?driver_number=\(driverNumber)&session_key=latest")!
+        let (data, _) = try await URLSession.shared.data(from: url)
+        return try decoder.decode([DriverPosition].self, from: data)
+    }
+
+    func fetchRaceResults(round: Int) async throws -> [RaceResult] {
+        let url = URL(string: "\(jolpicaBase)/current/\(round)/results.json")!
+        let (data, _) = try await URLSession.shared.data(from: url)
+        let response = try decoder.decode(JolpicaRaceResponse.self, from: data)
+        guard let jolpicaRace = response.MRData.RaceTable.Races.first else {
+            throw F1Error.noData
+        }
+        return (jolpicaRace.Results ?? []).map { r in
+            RaceResult(
+                id: "\(r.position)-\(r.Driver.driverId)",
+                position: Int(r.position) ?? 0,
+                driverName: "\(r.Driver.givenName) \(r.Driver.familyName)",
+                driverCode: r.Driver.code ?? String(r.Driver.familyName.prefix(3)).uppercased(),
+                constructor: r.Constructor.name,
+                points: Double(r.points) ?? 0,
+                status: r.status
+            )
+        }
+    }
+
     // MARK: - Jolpica Endpoints
 
     func fetchCurrentSchedule() async throws -> [Race] {
@@ -109,7 +149,7 @@ actor OpenF1Service {
     }
 }
 
-struct DriverStanding: Identifiable, Codable {
+struct DriverStanding: Identifiable, Codable, Hashable {
     let id: String
     let position: Int
     let driverName: String

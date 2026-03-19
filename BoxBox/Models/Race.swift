@@ -1,6 +1,6 @@
 import Foundation
 
-struct Race: Identifiable, Codable {
+struct Race: Identifiable, Codable, Hashable {
     let id: String
     let raceName: String
     let circuitName: String

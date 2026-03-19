@@ -23,10 +23,16 @@ struct DriversView: View {
                     ScrollView {
                         LazyVGrid(columns: columns, spacing: 12) {
                             ForEach(viewModel.drivers) { driver in
-                                driverCard(driver)
+                                NavigationLink(value: driver) {
+                                    driverCard(driver)
+                                }
+                                .buttonStyle(.plain)
                             }
                         }
                         .padding()
+                    }
+                    .navigationDestination(for: Driver.self) { driver in
+                        DriverDetailView(driver: driver)
                     }
                 }
             }
