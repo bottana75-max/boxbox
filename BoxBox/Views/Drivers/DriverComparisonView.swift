@@ -14,11 +14,10 @@ struct DriverComparisonView: View {
                 comparisonCard(
                     title: "CAREER SNAPSHOT",
                     rows: [
-                        .init(label: "Titles", left: stat(leftProfile?.championships), right: stat(rightProfile?.championships)),
-                        .init(label: "Wins", left: stat(leftProfile?.careerWins), right: stat(rightProfile?.careerWins)),
-                        .init(label: "Podiums", left: stat(leftProfile?.careerPodiums), right: stat(rightProfile?.careerPodiums)),
-                        .init(label: "Poles", left: stat(leftProfile?.careerPoles), right: stat(rightProfile?.careerPoles)),
-                        .init(label: "Debut", left: stat(leftProfile?.debutSeason), right: stat(rightProfile?.debutSeason))
+                        .init(label: "Career stage", left: leftProfile?.careerStage ?? "—", right: rightProfile?.careerStage ?? "—"),
+                        .init(label: "Debut", left: stat(leftProfile?.debutSeason), right: stat(rightProfile?.debutSeason)),
+                        .init(label: "Junior CV", left: leftProfile?.juniorTitle ?? "—", right: rightProfile?.juniorTitle ?? "—"),
+                        .init(label: "Birthplace", left: leftProfile?.placeOfBirth ?? "—", right: rightProfile?.placeOfBirth ?? "—")
                     ]
                 )
                 comparisonCard(
@@ -27,7 +26,7 @@ struct DriverComparisonView: View {
                         .init(label: "Team", left: leftDriver.teamName, right: rightDriver.teamName),
                         .init(label: "Number", left: "#\(leftDriver.driverNumber)", right: "#\(rightDriver.driverNumber)"),
                         .init(label: "Country", left: leftProfile?.nationality ?? leftDriver.countryCode, right: rightProfile?.nationality ?? rightDriver.countryCode),
-                        .init(label: "Best result", left: leftProfile?.bestFinish ?? "—", right: rightProfile?.bestFinish ?? "—")
+                        .init(label: "Career stage", left: leftProfile?.careerStage ?? "—", right: rightProfile?.careerStage ?? "—")
                     ]
                 )
                 scoutVerdictCard
@@ -133,21 +132,19 @@ struct DriverComparisonView: View {
     }
 
     private var verdictText: String {
-        let leftTitles = leftProfile?.championships ?? 0
-        let rightTitles = rightProfile?.championships ?? 0
-        let leftWins = leftProfile?.careerWins ?? 0
-        let rightWins = rightProfile?.careerWins ?? 0
+        let leftStage = leftProfile?.careerStage ?? ""
+        let rightStage = rightProfile?.careerStage ?? ""
+        let leftDebut = leftProfile?.debutSeason ?? 0
+        let rightDebut = rightProfile?.debutSeason ?? 0
 
-        if leftTitles != rightTitles {
-            return leftTitles > rightTitles
-                ? "\(leftDriver.nameAcronym) brings the heavier title résumé, but the interesting bit is whether current-team trajectory lets that edge still matter every weekend."
-                : "\(rightDriver.nameAcronym) owns the stronger championship résumé. If the current car is close, that experience usually decides the sharper weekends."
+        if leftStage != rightStage, !leftStage.isEmpty, !rightStage.isEmpty {
+            return "\(leftDriver.nameAcronym) arrives with a profile closer to \(leftStage.lowercased()), while \(rightDriver.nameAcronym) reads more like \(rightStage.lowercased()). The difference is less about hype and more about what each driver has already proven at the sharp end."
         }
 
-        if leftWins != rightWins {
-            return leftWins > rightWins
-                ? "\(leftDriver.nameAcronym) has converted front-running chances more often. The gap is about proven Sunday execution, not just raw speed."
-                : "\(rightDriver.nameAcronym) has the better win conversion profile. If both cars land in the same window, that usually travels well."
+        if leftDebut != rightDebut {
+            return leftDebut < rightDebut
+                ? "\(leftDriver.nameAcronym) brings the longer F1 sample, which usually means a clearer read on race management and bad-weekend damage control. \(rightDriver.nameAcronym) may still have the steeper upside curve."
+                : "\(rightDriver.nameAcronym) brings the longer F1 sample, which usually means a clearer read on race management and bad-weekend damage control. \(leftDriver.nameAcronym) may still have the steeper upside curve."
         }
 
         return "This one is close on paper. The real separator is context: qualifying sharpness, tyre life and whether either driver is being flattered or exposed by the current car."

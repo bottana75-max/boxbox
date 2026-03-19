@@ -3,9 +3,26 @@ import Foundation
 class AIService {
     static let shared = AIService()
 
-    private var apiKey: String {
-        let parts = ["sk-proj--di0URqCDX8VmlR08sb84J5SZz-eFJYkaTFEJhqJ7OeRqh9aFB0YePgVBasSr", "MbGwJzyydDZqcT3BlbkFJajpw_k_xl7rz-lu3v5uujCCmCriRSlggVPtVdhBfw5DoXWHTiwY6ZjBPhbAl7Sdwtd09siDVIA"]
-        return parts.joined()
+    private static let apiKeyDefaultsKey = "openai_api_key"
+
+    var apiKey: String? {
+        get {
+            let value = UserDefaults.standard.string(forKey: Self.apiKeyDefaultsKey)?.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard let value, !value.isEmpty else { return nil }
+            return value
+        }
+        set {
+            let trimmed = newValue?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            if trimmed.isEmpty {
+                UserDefaults.standard.removeObject(forKey: Self.apiKeyDefaultsKey)
+            } else {
+                UserDefaults.standard.set(trimmed, forKey: Self.apiKeyDefaultsKey)
+            }
+        }
+    }
+
+    var hasAPIKey: Bool {
+        apiKey != nil
     }
 
     func predictRace(
@@ -94,6 +111,10 @@ class AIService {
             "temperature": 0.7,
             "max_tokens": 300
         ]
+
+        guard let apiKey else {
+            throw AIError.apiError("Missing API key")
+        }
 
         var request = URLRequest(url: URL(string: "https://api.openai.com/v1/chat/completions")!)
         request.httpMethod = "POST"

@@ -40,8 +40,8 @@ class PredictViewModel {
     }
 
     var trialStatusText: String {
-        if storeKit.isProUnlocked { return "Pro unlocked — unlimited predictions" }
-        let remaining = storeKit.remainingFreePredictions
+        if storeKit.isUnlimited { return "Pro unlocked — unlimited predictions" }
+        let remaining = max(0, storeKit.credits)
         if remaining == 0 { return "Free trial finished — unlock Pro to keep predicting" }
         return "\(remaining) free prediction\(remaining == 1 ? "" : "s") remaining"
     }
@@ -73,8 +73,8 @@ class PredictViewModel {
         }
 
         error = nil
-        await storeKit.checkEntitlements()
-        await storeKit.loadProduct()
+        await storeKit.restorePurchases()
+        await storeKit.loadProducts()
         do {
             async let scheduleTask = service.fetchCurrentSchedule()
             async let standingsTask = service.fetchDriverStandings()
@@ -131,8 +131,8 @@ class PredictViewModel {
                 pressureProfile: pressureProfile
             )
 
-            if !storeKit.isProUnlocked {
-                storeKit.incrementPredictionCount()
+            if !storeKit.isUnlimited {
+                storeKit.consumeCredit()
             }
         } catch {
             self.error = "Something went wrong generating your prediction. Check your API key, connection and try again."
