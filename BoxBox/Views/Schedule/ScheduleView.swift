@@ -16,11 +16,16 @@ struct ScheduleView: View {
                     .padding()
                 } else {
                     List(viewModel.races) { race in
-                        raceRow(race)
-                            .listRowBackground(Color.f1CardBackground)
+                        NavigationLink(value: race) {
+                            raceRow(race)
+                        }
+                        .listRowBackground(Color.f1CardBackground)
                     }
                     .listStyle(.plain)
                     .scrollContentBackground(.hidden)
+                    .navigationDestination(for: Race.self) { race in
+                        RaceDetailView(race: race)
+                    }
                 }
             }
             .background(Color.f1Background)
