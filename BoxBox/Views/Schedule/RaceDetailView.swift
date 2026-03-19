@@ -11,6 +11,7 @@ struct RaceDetailView: View {
         ScrollView {
             VStack(spacing: 20) {
                 raceHeader
+                circuitInfoCard
                 if viewModel.race.isPast {
                     resultsSection
                 } else {
@@ -70,6 +71,47 @@ struct RaceDetailView: View {
         .padding()
         .background(Color.f1CardBackground)
         .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+
+    // MARK: - Circuit Info
+
+    @ViewBuilder
+    private var circuitInfoCard: some View {
+        if let info = viewModel.race.circuitInfo {
+            VStack(spacing: 12) {
+                Text("CIRCUIT INFO")
+                    .font(.caption)
+                    .fontWeight(.bold)
+                    .foregroundStyle(Color.f1Red)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                HStack(spacing: 0) {
+                    circuitStat(icon: "road.lanes", label: "Laps", value: "\(info.laps)")
+                    Divider().frame(height: 40).overlay(Color.f1SecondaryBackground)
+                    circuitStat(icon: "ruler", label: "Length", value: info.formattedLength)
+                    Divider().frame(height: 40).overlay(Color.f1SecondaryBackground)
+                    circuitStat(icon: "mappin.circle", label: "City", value: info.city)
+                }
+            }
+            .padding()
+            .background(Color.f1CardBackground)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+        }
+    }
+
+    private func circuitStat(icon: String, label: String, value: String) -> some View {
+        VStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundStyle(Color.f1Red)
+            Text(value)
+                .font(.subheadline)
+                .fontWeight(.bold)
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
     }
 
     // MARK: - Results

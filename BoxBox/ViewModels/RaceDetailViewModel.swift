@@ -50,7 +50,7 @@ class RaceDetailViewModel {
         let now = Date()
         if raceDate <= now {
             countdown = "Race started!"
-            timer?.invalidate()
+            countdownTask?.cancel()
             return
         }
         let components = Calendar.current.dateComponents([.day, .hour, .minute, .second], from: now, to: raceDate)
