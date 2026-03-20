@@ -193,7 +193,10 @@ struct DriversView: View {
                         .lineLimit(1)
                 }
             }
+
+            Spacer(minLength: 0)
         }
+        .frame(maxWidth: .infinity, minHeight: F1Design.gridCardMinHeight, maxHeight: .infinity, alignment: .topLeading)
         .f1Card(accent: isSelected ? .f1Red : driver.teamColor.opacity(0.8))
         .overlay(alignment: .topTrailing) {
             RoundedRectangle(cornerRadius: 2)

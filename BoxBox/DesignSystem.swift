@@ -9,6 +9,10 @@ enum F1Design {
     static let innerSpacing: CGFloat = 14
     static let contentPadding: CGFloat = 16
     static let sectionSpacing: CGFloat = 24
+    static let metricTileMinHeight: CGFloat = 82
+    static let statPillMinHeight: CGFloat = 74
+    static let listRowMinHeight: CGFloat = 72
+    static let gridCardMinHeight: CGFloat = 188
 
     static let cardGradient = LinearGradient(
         colors: [
@@ -216,8 +220,9 @@ struct F1StatPill: View {
                 .foregroundStyle(.white)
                 .lineLimit(2)
                 .minimumScaleFactor(0.75)
+            Spacer(minLength: 0)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: F1Design.statPillMinHeight, maxHeight: .infinity, alignment: .leading)
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
         .background(style == .standard ? Color.black.opacity(0.16) : Color.f1SecondaryBackground)
@@ -247,8 +252,9 @@ struct F1MetricTile: View {
                 .foregroundStyle(.white)
                 .lineLimit(2)
                 .minimumScaleFactor(0.75)
+            Spacer(minLength: 0)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: F1Design.metricTileMinHeight, maxHeight: .infinity, alignment: .leading)
         .padding(12)
         .background(Color.f1SecondaryBackground)
         .overlay {
@@ -323,6 +329,7 @@ struct F1ListRow<Content: View>: View {
             }
             content
         }
+        .frame(maxWidth: .infinity, minHeight: F1Design.listRowMinHeight, alignment: .leading)
         .padding(.vertical, 4)
     }
 }

@@ -274,8 +274,9 @@ struct RaceDetailView: View {
                 .fontWeight(.bold)
                 .foregroundStyle(.white)
                 .minimumScaleFactor(0.8)
+            Spacer(minLength: 0)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, minHeight: F1Design.metricTileMinHeight + 6, maxHeight: .infinity, alignment: .leading)
         .padding()
         .background(Color.f1SecondaryBackground)
         .overlay {
