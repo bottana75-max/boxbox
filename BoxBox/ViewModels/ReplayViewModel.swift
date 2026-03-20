@@ -11,6 +11,7 @@ final class ReplayViewModel {
     var lapAnchors: [ReplayLapAnchor] = []
     var raceStartSnapshotIndex = 0
     var projection: ReplayProjectionMetadata?
+    var displayTrackPoints: [TrackMapPoint] = []
     var selectedIndex = 0
     var isPlaying = false
     var isLoadingDrivers = false
@@ -61,13 +62,28 @@ final class ReplayViewModel {
         race.circuitInfo?.laps ?? lapAnchors.last?.lapNumber ?? 0
     }
 
-    var currentLapLabel: String {
-        guard let currentLap else { return totalLaps > 0 ? "Lap -- / \(totalLaps)" : "Lap unavailable" }
-        return totalLaps > 0 ? "Lap \(currentLap) / \(totalLaps)" : "Lap \(currentLap)"
+    var currentPhaseLabel: String {
+        currentSnapshot?.phase.label ?? (totalLaps > 0 ? "Lap -- / \(totalLaps)" : "Lap unavailable")
+    }
+
+    var currentPhaseShortLabel: String {
+        currentSnapshot?.phase.shortLabel ?? "Replay"
+    }
+
+    var currentTimeLabel: String {
+        currentSnapshot.map { "Replay \($0.elapsedTime.replayClock)" } ?? "Replay --:--"
+    }
+
+    var hasPreRaceContext: Bool {
+        raceStartSnapshotIndex > 0
     }
 
     var canJumpToRaceStart: Bool {
         !snapshots.isEmpty && raceStartSnapshotIndex != selectedIndex
+    }
+
+    var canJumpToFormation: Bool {
+        hasPreRaceContext && selectedIndex != 0
     }
 
     var canStepToPreviousLap: Bool {
@@ -152,7 +168,8 @@ final class ReplayViewModel {
                 lapAnchors = payload.lapAnchors
                 raceStartSnapshotIndex = payload.raceStartSnapshotIndex
                 projection = payload.projection
-                selectedIndex = 0
+                displayTrackPoints = payload.displayTrackPoints
+                selectedIndex = min(payload.raceStartSnapshotIndex, max(payload.snapshots.count - 1, 0))
                 if snapshots.isEmpty {
                     error = "Replay data is not available for this race yet."
                 }
@@ -203,6 +220,12 @@ final class ReplayViewModel {
         selectedIndex = raceStartSnapshotIndex
     }
 
+    func jumpToFormation() {
+        guard hasPreRaceContext, !snapshots.isEmpty else { return }
+        pause()
+        selectedIndex = 0
+    }
+
     func stepToLap(direction: Int) {
         guard direction != 0, let current = currentLap else { return }
         pause()
@@ -217,5 +240,15 @@ final class ReplayViewModel {
     nonisolated deinit {
         loadTask?.cancel()
         playbackTask?.cancel()
+    }
+}
+
+extension TimeInterval {
+    var replayClock: String {
+        let totalSeconds = Int(self)
+        let hours = totalSeconds / 3600
+        let minutes = (totalSeconds % 3600) / 60
+        let seconds = totalSeconds % 60
+        return hours > 0 ? String(format: "%d:%02d:%02d", hours, minutes, seconds) : String(format: "%d:%02d", minutes, seconds)
     }
 }

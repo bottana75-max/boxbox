@@ -57,7 +57,7 @@ struct TrackReplayView: View {
                 F1StatPill(title: "Coverage", value: "Full race", style: .subtle)
             }
 
-            Text("Race-start jump skips the pre-start idle telemetry when OpenF1 publishes samples before lights out.")
+            Text("Replay now opens at the real race start when we can infer it. If OpenF1 includes pre-start samples, you can still jump back to the warm-up / formation context without scrubbing from zero.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -138,16 +138,19 @@ struct TrackReplayView: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(snapshot.elapsedTime.replayClock)
+                    Text(viewModel.currentPhaseLabel)
                         .font(.system(size: 28, weight: .black, design: .rounded))
                         .foregroundStyle(.white)
                     Text(snapshot.headline)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
+                    Text(viewModel.currentTimeLabel)
+                        .font(.caption.monospacedDigit())
+                        .foregroundStyle(.secondary)
                 }
                 Spacer()
                 VStack(alignment: .trailing, spacing: 6) {
-                    Text(viewModel.currentLapLabel)
+                    Text(viewModel.currentPhaseShortLabel)
                         .font(.caption.weight(.bold))
                         .foregroundStyle(.white)
                     Text((viewModel.projection?.isCached ?? false) ? "Cached replay • \(viewModel.selectedDriverNumbers.count) drivers" : "\(viewModel.selectedDriverNumbers.count) drivers loaded")
@@ -156,10 +159,10 @@ struct TrackReplayView: View {
                 }
             }
 
-            ReplayCircuitMapView(trackPoints: viewModel.race.circuitInfo?.trackMapPoints ?? [], markers: snapshot.markers)
+            ReplayCircuitMapView(trackPoints: viewModel.displayTrackPoints, markers: snapshot.markers)
                 .frame(height: 250)
 
-            Text("Markers update only when a fresh OpenF1 location sample exists (held for up to \(Int(viewModel.projection?.freshnessWindow ?? 4))s). Projected positions are snapped back to the circuit path to keep alignment steadier without inventing missing motion. Reopening the same replay reuses cached telemetry instead of downloading it again.")
+            Text("Markers update only when a fresh OpenF1 location sample exists (held for up to \(Int(viewModel.projection?.freshnessWindow ?? 4))s). We keep the lap context front and center, and we only project onto a circuit outline we trust — falling back to a telemetry-derived outline when the baked map looks geometrically broken.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -169,11 +172,23 @@ struct TrackReplayView: View {
     private var playbackControls: some View {
         VStack(spacing: 14) {
             HStack(spacing: 10) {
-                controlChip(title: viewModel.currentLapLabel, systemImage: "flag.checkered.2.crossed")
+                controlChip(title: viewModel.currentPhaseLabel, systemImage: "flag.checkered.2.crossed")
+
+                if viewModel.hasPreRaceContext {
+                    Button {
+                        viewModel.jumpToFormation()
+                    } label: {
+                        controlChip(title: "Formation", systemImage: "flag.pattern.checkered")
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!viewModel.canJumpToFormation)
+                    .opacity(viewModel.canJumpToFormation ? 1 : 0.45)
+                }
+
                 Button {
                     viewModel.jumpToRaceStart()
                 } label: {
-                    controlChip(title: "Jump to start", systemImage: "bolt.fill")
+                    controlChip(title: "Race start", systemImage: "bolt.fill")
                 }
                 .buttonStyle(.plain)
                 .disabled(!viewModel.canJumpToRaceStart)
@@ -219,7 +234,7 @@ struct TrackReplayView: View {
 
                 Spacer()
 
-                Text(viewModel.currentSnapshot?.elapsedTime.replayClock ?? "--:--")
+                Text(viewModel.currentTimeLabel)
                     .font(.caption.monospacedDigit().weight(.bold))
                     .foregroundStyle(.secondary)
             }
@@ -323,28 +338,30 @@ private struct ReplayCircuitMapView: View {
 
     private func trackPath(in size: CGSize) -> Path {
         let source = trackPoints.isEmpty ? [TrackMapPoint(20, 80), TrackMapPoint(80, 20)] : trackPoints
+        let shouldClose = closesLoop(source)
         return Path { path in
             guard let first = source.first else { return }
             path.move(to: position(for: first, in: size))
             for point in source.dropFirst() {
                 path.addLine(to: position(for: point, in: size))
             }
-            path.closeSubpath()
+            if shouldClose {
+                path.closeSubpath()
+            }
         }
+    }
+
+    private func closesLoop(_ points: [TrackMapPoint]) -> Bool {
+        guard points.count >= 3 else { return false }
+        let segments = zip(points, points.dropFirst()).map { hypot($1.x - $0.x, $1.y - $0.y) }
+        guard !segments.isEmpty else { return false }
+        let median = segments.sorted()[segments.count / 2]
+        let closureGap = hypot(points[0].x - points[points.count - 1].x, points[0].y - points[points.count - 1].y)
+        return closureGap <= max(22, median * 6)
     }
 
     private func position(for point: TrackMapPoint, in size: CGSize) -> CGPoint {
         CGPoint(x: point.x / 100 * size.width, y: point.y / 100 * size.height)
-    }
-}
-
-private extension TimeInterval {
-    var replayClock: String {
-        let totalSeconds = Int(self)
-        let hours = totalSeconds / 3600
-        let minutes = (totalSeconds % 3600) / 60
-        let seconds = totalSeconds % 60
-        return hours > 0 ? String(format: "%d:%02d:%02d", hours, minutes, seconds) : String(format: "%d:%02d", minutes, seconds)
     }
 }
 

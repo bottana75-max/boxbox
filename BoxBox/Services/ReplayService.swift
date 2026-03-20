@@ -355,6 +355,7 @@ actor ReplayService {
             lapAnchors: payload.lapAnchors,
             raceStartSnapshotIndex: payload.raceStartSnapshotIndex,
             totalDuration: payload.totalDuration,
+            displayTrackPoints: payload.displayTrackPoints,
             projection: ReplayProjectionMetadata(
                 loadedDriverCount: payload.projection.loadedDriverCount,
                 sampleCount: payload.projection.sampleCount,
@@ -407,6 +408,7 @@ actor ReplayService {
             lapAnchors: timeline.lapAnchors,
             raceStartSnapshotIndex: timeline.raceStartSnapshotIndex,
             totalDuration: last.elapsedTime,
+            displayTrackPoints: timeline.displayTrackPoints,
             projection: ReplayProjectionMetadata(
                 loadedDriverCount: selectedDrivers.count,
                 sampleCount: sampleCount,
@@ -615,15 +617,17 @@ actor ReplayService {
             .flatMap { $0 }
 
         guard !sourcePoints.isEmpty else {
-            return ReplayTimeline(snapshots: [], lapAnchors: [], raceStartSnapshotIndex: 0)
+            return ReplayTimeline(snapshots: [], lapAnchors: [], raceStartSnapshotIndex: 0, displayTrackPoints: [])
         }
 
         let allTimes = sourcePoints.map(\.date).sorted()
         guard let rawStart = allTimes.first, let end = allTimes.last else {
-            return ReplayTimeline(snapshots: [], lapAnchors: [], raceStartSnapshotIndex: 0)
+            return ReplayTimeline(snapshots: [], lapAnchors: [], raceStartSnapshotIndex: 0, displayTrackPoints: [])
         }
 
-        let trackPoints = race.circuitInfo?.trackMapPoints ?? fallbackTrack(points: sourcePoints)
+        let circuitTrack = race.circuitInfo?.trackMapPoints ?? []
+        let fallbackTrackPoints = fallbackTrack(points: sourcePoints)
+        let trackPoints = resolvedTrackPoints(circuitTrack: circuitTrack, fallbackTrack: fallbackTrackPoints)
         let projector = makeProjector(source: sourcePoints, target: trackPoints)
         let driversByNumber = Dictionary(uniqueKeysWithValues: allDrivers.map { ($0.driverNumber, $0) })
         let rawLapTimeline = makeLapTimeline(from: lapData)
@@ -663,11 +667,13 @@ actor ReplayService {
 
             guard !standings.isEmpty else { return nil }
 
+            let lapNumber = currentLap(at: timestamp, timeline: lapTimeline)
             return ReplaySnapshot(
                 index: index,
                 timestamp: timestamp,
                 elapsedTime: timestamp.timeIntervalSince(start),
-                lapNumber: currentLap(at: timestamp, timeline: lapTimeline),
+                lapNumber: lapNumber,
+                phase: phase(at: timestamp, lapNumber: lapNumber, raceStart: raceStart, raceStartOffset: raceStart.timeIntervalSince(start), totalLaps: officialTotalLaps),
                 markers: markers,
                 standings: Array(standings.prefix(10)),
                 headline: headline(for: markers, standings: standings, selectedDrivers: selectedDrivers)
@@ -675,7 +681,7 @@ actor ReplayService {
         }
 
         guard !snapshots.isEmpty else {
-            return ReplayTimeline(snapshots: [], lapAnchors: [], raceStartSnapshotIndex: 0)
+            return ReplayTimeline(snapshots: [], lapAnchors: [], raceStartSnapshotIndex: 0, displayTrackPoints: trackPoints)
         }
 
         let lapAnchors = makeLapAnchors(snapshots: snapshots, lapTimeline: lapTimeline)
@@ -684,7 +690,7 @@ actor ReplayService {
         }
         let raceStartSnapshotIndex = raceStartDistances.min(by: { $0.1 < $1.1 })?.0 ?? 0
 
-        return ReplayTimeline(snapshots: snapshots, lapAnchors: lapAnchors, raceStartSnapshotIndex: raceStartSnapshotIndex)
+        return ReplayTimeline(snapshots: snapshots, lapAnchors: lapAnchors, raceStartSnapshotIndex: raceStartSnapshotIndex, displayTrackPoints: trackPoints)
     }
 
     private func inferredRaceStart(from positionData: [Int: [PositionPoint]], lapTimeline: [LapBoundary]) -> Date? {
@@ -736,7 +742,7 @@ actor ReplayService {
     private func currentLap(at time: Date, timeline: [LapBoundary]) -> Int? {
         guard !timeline.isEmpty else { return nil }
         let candidates = timeline.filter { $0.start <= time }
-        return candidates.last?.lapNumber ?? timeline.first?.lapNumber
+        return candidates.last?.lapNumber
     }
 
     private func makeLapAnchors(snapshots: [ReplaySnapshot], lapTimeline: [LapBoundary]) -> [ReplayLapAnchor] {
@@ -747,6 +753,41 @@ actor ReplayService {
             }) else { return nil }
             return ReplayLapAnchor(lapNumber: lap.lapNumber, snapshotIndex: best.offset, elapsedTime: best.element.elapsedTime)
         }
+    }
+
+    private func phase(at time: Date, lapNumber: Int?, raceStart: Date, raceStartOffset: TimeInterval, totalLaps: Int?) -> ReplayPhase {
+        if time < raceStart {
+            let label = raceStartOffset >= 180 ? "Warm-up / formation" : "Formation / pre-start"
+            return ReplayPhase(kind: .preRace, label: label, shortLabel: "Formation")
+        }
+
+        guard let lapNumber else {
+            return ReplayPhase(kind: .racing, label: "Race underway", shortLabel: "Race")
+        }
+
+        let label: String
+        if let totalLaps, totalLaps > 0 {
+            label = "Lap \(lapNumber) / \(totalLaps)"
+        } else {
+            label = "Lap \(lapNumber)"
+        }
+        return ReplayPhase(kind: .racing, label: label, shortLabel: "Lap \(lapNumber)")
+    }
+
+    private func resolvedTrackPoints(circuitTrack: [TrackMapPoint], fallbackTrack: [TrackMapPoint]) -> [TrackMapPoint] {
+        guard !fallbackTrack.isEmpty else { return circuitTrack }
+        guard !circuitTrack.isEmpty else { return fallbackTrack }
+        return isCircuitTrackReliable(circuitTrack) ? circuitTrack : fallbackTrack
+    }
+
+    private func isCircuitTrackReliable(_ track: [TrackMapPoint]) -> Bool {
+        guard track.count >= 3 else { return false }
+        let segments = zip(track, track.dropFirst()).map { hypot($1.x - $0.x, $1.y - $0.y) }
+        guard !segments.isEmpty else { return false }
+        let sortedSegments = segments.sorted()
+        let median = sortedSegments[sortedSegments.count / 2]
+        let closureGap = hypot(track[0].x - track[track.count - 1].x, track[0].y - track[track.count - 1].y)
+        return closureGap <= max(22, median * 6)
     }
 
     private func headline(for markers: [ReplayMarker], standings: [ReplayStandingEntry], selectedDrivers: [ReplayDriver]) -> String {
@@ -841,7 +882,8 @@ actor ReplayService {
         guard let minX = xs.min(), let maxX = xs.max(), let minY = ys.min(), let maxY = ys.max() else { return [] }
         let spanX = max(maxX - minX, 1)
         let spanY = max(maxY - minY, 1)
-        return points.prefix(400).map {
+        let sampled = evenlySubsampled(points.map { SIMD2<Double>($0.x, $0.y) }, maxCount: 400)
+        return sampled.map {
             TrackMapPoint((($0.x - minX) / spanX) * 100, (($0.y - minY) / spanY) * 100)
         }
     }
@@ -965,10 +1007,13 @@ actor ReplayService {
         let vector = SIMD2<Double>(point.x, point.y)
         var best = vector
         var bestDistance = Double.greatestFiniteMagnitude
+        let closesLoop = isCircuitTrackReliable(track)
+        let segmentLimit = closesLoop ? track.count : track.count - 1
 
-        for index in track.indices {
+        for index in 0..<segmentLimit {
             let start = SIMD2<Double>(track[index].x, track[index].y)
-            let end = SIMD2<Double>(track[(index + 1) % track.count].x, track[(index + 1) % track.count].y)
+            let endIndex = index == track.count - 1 ? 0 : index + 1
+            let end = SIMD2<Double>(track[endIndex].x, track[endIndex].y)
             let candidate = closestPointOnSegment(point: vector, start: start, end: end)
             let distance = simd_distance(candidate, vector)
             if distance < bestDistance {
@@ -1074,6 +1119,7 @@ private struct ReplayTimeline {
     let snapshots: [ReplaySnapshot]
     let lapAnchors: [ReplayLapAnchor]
     let raceStartSnapshotIndex: Int
+    let displayTrackPoints: [TrackMapPoint]
 }
 
 private struct LapBoundary {
