@@ -843,42 +843,15 @@ actor ReplayService {
         fallbackTrack: [TrackMapPoint],
         projectedTrack: [TrackMapPoint]
     ) -> [TrackMapPoint] {
-        if race.country.localizedCaseInsensitiveContains("China") {
-            return shanghaiReplayDisplayTrack
+        if !fallbackTrack.isEmpty {
+            return fallbackTrack
         }
 
         if !circuitTrack.isEmpty {
             return circuitTrack
         }
 
-        if !fallbackTrack.isEmpty {
-            return fallbackTrack
-        }
-
         return projectedTrack
-    }
-
-    private var shanghaiReplayDisplayTrack: [TrackMapPoint] {
-        [
-            .init(26.5, 10.5), .init(19.0, 8.3), .init(15.9, 8.2), .init(13.5, 9.2),
-            .init(11.2, 11.1), .init(9.9, 13.6), .init(9.4, 16.3), .init(9.6, 19.2),
-            .init(10.5, 21.3), .init(13.2, 23.2), .init(16.2, 22.6), .init(17.1, 21.2),
-            .init(16.9, 18.7), .init(16.2, 15.5), .init(17.3, 13.6), .init(20.1, 13.4),
-            .init(21.4, 14.9), .init(22.3, 17.2), .init(22.7, 20.4), .init(21.7, 23.3),
-            .init(19.7, 26.4), .init(12.5, 36.0), .init(6.7, 43.3), .init(5.3, 46.7),
-            .init(0.9, 61.1), .init(0.0, 64.4), .init(0.4, 65.9), .init(2.6, 66.0),
-            .init(5.3, 63.7), .init(8.3, 60.1), .init(12.5, 52.3), .init(17.2, 43.1),
-            .init(19.6, 40.1), .init(22.8, 38.5), .init(26.4, 38.1), .init(29.7, 39.2),
-            .init(32.9, 41.8), .init(35.5, 46.8), .init(38.4, 53.2), .init(40.5, 55.1),
-            .init(43.8, 56.0), .init(46.4, 55.4), .init(48.3, 53.8), .init(52.4, 45.4),
-            .init(54.2, 44.0), .init(56.1, 44.6), .init(59.9, 50.8), .init(59.6, 52.6),
-            .init(46.1, 78.3), .init(40.4, 89.1), .init(38.9, 89.1), .init(37.3, 87.3),
-            .init(35.7, 85.5), .init(33.7, 85.3), .init(31.5, 87.9), .init(30.5, 90.2),
-            .init(30.4, 93.4), .init(31.1, 96.2), .init(33.2, 98.8), .init(36.3, 99.9),
-            .init(39.0, 100.0), .init(42.3, 98.8), .init(45.5, 96.0), .init(64.5, 63.0),
-            .init(81.0, 34.4), .init(92.6, 14.4), .init(100.0, 1.7), .init(99.4, 0.0),
-            .init(96.4, 1.2), .init(94.0, 3.2), .init(79.9, 24.5), .init(62.0, 20.1)
-        ]
     }
 
     private func isCircuitTrackReliable(_ track: [TrackMapPoint]) -> Bool {
