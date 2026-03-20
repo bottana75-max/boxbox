@@ -625,12 +625,13 @@ actor ReplayService {
             return ReplayTimeline(snapshots: [], lapAnchors: [], raceStartSnapshotIndex: 0, displayTrackPoints: [])
         }
 
-        let circuitTrack = race.circuitInfo?.trackMapPoints ?? []
-        let fallbackTrackPoints = fallbackTrack(points: sourcePoints)
-        let trackPoints = resolvedTrackPoints(circuitTrack: circuitTrack, fallbackTrack: fallbackTrackPoints)
-        let projector = makeProjector(source: sourcePoints, target: trackPoints)
         let driversByNumber = Dictionary(uniqueKeysWithValues: allDrivers.map { ($0.driverNumber, $0) })
         let rawLapTimeline = makeLapTimeline(from: lapData)
+        let circuitTrack = race.circuitInfo?.trackMapPoints ?? []
+        let fallbackTrackPoints = representativeFallbackTrack(locationData: locationData, lapData: lapData, selectedDriverNumbers: selectedNumbers)
+            ?? fallbackTrack(points: sourcePoints)
+        let trackPoints = resolvedTrackPoints(circuitTrack: circuitTrack, fallbackTrack: fallbackTrackPoints)
+        let projector = makeProjector(source: sourcePoints, target: trackPoints)
         let officialTotalLaps = race.circuitInfo?.laps
         let lapTimeline = remapLapTimeline(rawLapTimeline, officialTotalLaps: officialTotalLaps)
         let raceStart = inferredRaceStart(from: positionData, lapTimeline: lapTimeline) ?? rawStart
@@ -874,6 +875,59 @@ actor ReplayService {
         if dBefore <= dAfter && dBefore <= freshnessWindow { return before }
         if dAfter <= freshnessWindow { return after }
         return nil
+    }
+
+    private func representativeFallbackTrack(
+        locationData: [Int: [ReplayLocationPoint]],
+        lapData: [Int: [LapPoint]],
+        selectedDriverNumbers: Set<Int>
+    ) -> [TrackMapPoint]? {
+        struct Candidate {
+            let points: [ReplayLocationPoint]
+            let score: Double
+        }
+
+        var best: Candidate?
+
+        for driverNumber in selectedDriverNumbers {
+            guard let driverPoints = locationData[driverNumber],
+                  driverPoints.count >= 20,
+                  let laps = lapData[driverNumber],
+                  laps.count >= 2
+            else { continue }
+
+            for index in 0..<(laps.count - 1) {
+                let start = laps[index].date
+                let end = laps[index + 1].date
+                guard end > start else { continue }
+
+                let segment = driverPoints.filter { $0.date >= start && $0.date <= end }
+                guard segment.count >= 20 else { continue }
+
+                let xs = segment.map(\.x)
+                let ys = segment.map(\.y)
+                guard let minX = xs.min(), let maxX = xs.max(), let minY = ys.min(), let maxY = ys.max() else { continue }
+
+                let diagonal = hypot(maxX - minX, maxY - minY)
+                guard diagonal > 1 else { continue }
+
+                let closureGap = hypot(segment[0].x - segment[segment.count - 1].x, segment[0].y - segment[segment.count - 1].y)
+                let perimeter = zip(segment, segment.dropFirst()).reduce(0.0) { partial, pair in
+                    partial + hypot(pair.1.x - pair.0.x, pair.1.y - pair.0.y)
+                }
+                guard perimeter > diagonal * 1.5 else { continue }
+
+                let closurePenalty = min(closureGap / diagonal, 1.5)
+                let score = Double(segment.count) + perimeter / diagonal - closurePenalty * 40
+
+                if best == nil || score > best!.score {
+                    best = Candidate(points: segment, score: score)
+                }
+            }
+        }
+
+        guard let best else { return nil }
+        return fallbackTrack(points: best.points)
     }
 
     private func fallbackTrack(points: [ReplayLocationPoint]) -> [TrackMapPoint] {
