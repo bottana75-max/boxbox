@@ -681,9 +681,9 @@ actor ReplayService {
         let fallbackTrackPoints = fallbackTrack(points: sourcePoints)
         let trackPoints = resolvedTrackPoints(circuitTrack: circuitTrack, fallbackTrack: fallbackTrackPoints)
         let displayTrackPoints = displayTrackPoints(for: race, circuitTrack: circuitTrack, fallbackTrack: fallbackTrackPoints, projectedTrack: trackPoints)
-        // Use displayTrackPoints as projector target so driver positions are always
-        // aligned with what is actually rendered on screen.
-        let projectorTarget = displayTrackPoints.isEmpty ? trackPoints : displayTrackPoints
+        // Always project onto the circuit GeoJSON shape when available — it's the clean
+        // single-lap reference. Fall back to the OpenF1-derived track only if missing.
+        let projectorTarget = circuitTrack.isEmpty ? fallbackTrackPoints : circuitTrack
         let projector = makeProjector(source: sourcePoints, target: projectorTarget)
         var projectionStateByDriver: [Int: TrackProjectionState] = [:]
         let officialTotalLaps = race.circuitInfo?.laps
@@ -843,14 +843,10 @@ actor ReplayService {
         fallbackTrack: [TrackMapPoint],
         projectedTrack: [TrackMapPoint]
     ) -> [TrackMapPoint] {
-        if !fallbackTrack.isEmpty {
-            return fallbackTrack
-        }
-
+        // Display the clean GeoJSON circuit shape — never the raw OpenF1 blob
         if !circuitTrack.isEmpty {
             return circuitTrack
         }
-
         return projectedTrack
     }
 
