@@ -23,7 +23,7 @@ struct TrackReplayView: View {
                 selectionCard
 
                 if viewModel.isLoadingReplay {
-                    F1LoadingView(message: "Downloading real race location data")
+                    F1LoadingView(message: viewModel.loadingMessage)
                         .frame(minHeight: 220)
                         .f1Card()
                 } else if let snapshot = viewModel.currentSnapshot, !viewModel.snapshots.isEmpty {
@@ -150,7 +150,7 @@ struct TrackReplayView: View {
                     Text(viewModel.currentLapLabel)
                         .font(.caption.weight(.bold))
                         .foregroundStyle(.white)
-                    Text("\(viewModel.selectedDriverNumbers.count) drivers loaded")
+                    Text((viewModel.projection?.isCached ?? false) ? "Cached replay • \(viewModel.selectedDriverNumbers.count) drivers" : "\(viewModel.selectedDriverNumbers.count) drivers loaded")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
@@ -159,7 +159,7 @@ struct TrackReplayView: View {
             ReplayCircuitMapView(trackPoints: viewModel.race.circuitInfo?.trackMapPoints ?? [], markers: snapshot.markers)
                 .frame(height: 250)
 
-            Text("Markers update only when a fresh OpenF1 location sample exists (held for up to \(Int(viewModel.projection?.freshnessWindow ?? 4))s). Projected positions are snapped back to the circuit path to keep alignment steadier without inventing missing motion.")
+            Text("Markers update only when a fresh OpenF1 location sample exists (held for up to \(Int(viewModel.projection?.freshnessWindow ?? 4))s). Projected positions are snapped back to the circuit path to keep alignment steadier without inventing missing motion. Reopening the same replay reuses cached telemetry instead of downloading it again.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }

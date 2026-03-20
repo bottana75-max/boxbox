@@ -1,18 +1,48 @@
 import Foundation
 import simd
 
-final class ReplayService {
+actor ReplayService {
     static let shared = ReplayService()
 
     private let baseURL = "https://api.openf1.org/v1"
     private let decoder = JSONDecoder()
     private var sessionCache: [String: Int] = [:]
+    private var driversCache: [Int: [ReplayDriver]] = [:]
+    private var positionCache: [Int: [Int: [PositionPoint]]] = [:]
+    private var lapCache: [Int: [Int: [LapPoint]]] = [:]
+    private var locationCache: [ReplayLocationCacheKey: [ReplayLocationPoint]] = [:]
+    private var replayPayloadCache: [ReplayRequestKey: RaceReplayPayload] = [:]
+    private var inFlightReplays: [ReplayRequestKey: Task<RaceReplayPayload, Error>] = [:]
+    private var inFlightDrivers: [Int: Task<[ReplayDriver], Error>] = [:]
+    private var inFlightPositions: [Int: Task<[Int: [PositionPoint]], Error>] = [:]
+    private var inFlightLaps: [Int: Task<[Int: [LapPoint]], Error>] = [:]
+    private var inFlightLocations: [ReplayLocationCacheKey: Task<[ReplayLocationPoint], Error>] = [:]
     private let freshnessWindow: TimeInterval = 4.5
+    private let retryBaseDelay: TimeInterval = 1.5
+    private let maxRetryAttempts = 4
+    private let interRequestSpacingNs: UInt64 = 250_000_000
 
     private struct APIErrorEnvelope: Decodable {
         let message: String?
         let error: String?
         let detail: String?
+    }
+
+    private struct ReplayRequestKey: Hashable {
+        let raceID: String
+        let sessionKey: Int
+        let driverNumbers: [Int]
+    }
+
+    private struct ReplayLocationCacheKey: Hashable {
+        let sessionKey: Int
+        let driverNumber: Int
+    }
+
+    private struct ReplayRateLimitError: Error {
+        let label: String
+        let retryAfter: TimeInterval?
+        let message: String
     }
 
     private struct PositionResponse: Decodable {
@@ -181,19 +211,61 @@ final class ReplayService {
         Self.isoFormatter.date(from: string) ?? Self.isoFormatterNoFrac.date(from: string)
     }
 
+    private func retryAfterInterval(from response: HTTPURLResponse) -> TimeInterval? {
+        guard let value = response.value(forHTTPHeaderField: "Retry-After")?.trimmingCharacters(in: .whitespacesAndNewlines), !value.isEmpty else {
+            return nil
+        }
+        if let seconds = TimeInterval(value) {
+            return max(0, seconds)
+        }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "EEE',' dd MMM yyyy HH':'mm':'ss z"
+        if let date = formatter.date(from: value) {
+            return max(0, date.timeIntervalSinceNow)
+        }
+        return nil
+    }
+
     private func fetchData(from url: URL, label: String) async throws -> Data {
-        let (data, response) = try await URLSession.shared.data(from: url)
-        guard let http = response as? HTTPURLResponse else {
-            throw F1Error.apiError("Replay \(label) failed: invalid server response")
-        }
+        var attempt = 0
 
-        guard (200...299).contains(http.statusCode) else {
-            let envelope = try? decoder.decode(APIErrorEnvelope.self, from: data)
-            let message = envelope?.message ?? envelope?.error ?? envelope?.detail ?? HTTPURLResponse.localizedString(forStatusCode: http.statusCode)
-            throw F1Error.apiError("Replay \(label) failed (\(http.statusCode)): \(message)")
-        }
+        while true {
+            try Task.checkCancellation()
+            do {
+                let (data, response) = try await URLSession.shared.data(from: url)
+                guard let http = response as? HTTPURLResponse else {
+                    throw F1Error.apiError("Replay \(label) failed: invalid server response")
+                }
 
-        return data
+                if http.statusCode == 429 {
+                    let envelope = try? decoder.decode(APIErrorEnvelope.self, from: data)
+                    let message = envelope?.message ?? envelope?.error ?? envelope?.detail ?? "Too many requests from OpenF1"
+                    throw ReplayRateLimitError(label: label, retryAfter: retryAfterInterval(from: http), message: message)
+                }
+
+                guard (200...299).contains(http.statusCode) else {
+                    let envelope = try? decoder.decode(APIErrorEnvelope.self, from: data)
+                    let message = envelope?.message ?? envelope?.error ?? envelope?.detail ?? HTTPURLResponse.localizedString(forStatusCode: http.statusCode)
+                    throw F1Error.apiError("Replay \(label) failed (\(http.statusCode)): \(message)")
+                }
+
+                return data
+            } catch let error as ReplayRateLimitError {
+                guard attempt < maxRetryAttempts else {
+                    let waitText = error.retryAfter.map { String(format: "%.1f", $0) } ?? "a few"
+                    throw F1Error.apiError("Replay \(error.label) is being rate-limited by OpenF1. Retried \(maxRetryAttempts + 1)x, last wait \(waitText)s.")
+                }
+
+                let retryDelay = max(error.retryAfter ?? 0, retryBaseDelay * pow(2, Double(attempt)))
+                let cappedDelay = min(retryDelay, 20)
+                attempt += 1
+                try await Task.sleep(nanoseconds: UInt64(cappedDelay * 1_000_000_000))
+            } catch {
+                throw error
+            }
+        }
     }
 
     func fetchAvailableDrivers(for race: Race) async throws -> [ReplayDriver] {
@@ -201,7 +273,11 @@ final class ReplayService {
         return try await fetchDrivers(sessionKey: sessionKey)
     }
 
-    func fetchReplay(for race: Race, selectedDriverNumbers: [Int]) async throws -> RaceReplayPayload {
+    func fetchReplay(
+        for race: Race,
+        selectedDriverNumbers: [Int],
+        statusUpdate: ((String) -> Void)? = nil
+    ) async throws -> RaceReplayPayload {
         guard race.isReplayEligible else {
             throw F1Error.apiError("Replay is only available after current-season races finish")
         }
@@ -212,23 +288,81 @@ final class ReplayService {
             throw F1Error.apiError("Replay can load up to 5 drivers at once")
         }
 
+        let orderedDrivers = selectedDriverNumbers.sorted()
+        statusUpdate?("Matching this race to the correct OpenF1 session")
         let sessionKey = try await fetchSessionKey(for: race)
-        async let driversTask = fetchDrivers(sessionKey: sessionKey)
-        async let positionsTask = fetchPositionData(sessionKey: sessionKey)
-        async let locationsTask = fetchLocationData(sessionKey: sessionKey, driverNumbers: selectedDriverNumbers)
-        async let lapDataTask = fetchLapData(sessionKey: sessionKey)
+        let requestKey = ReplayRequestKey(raceID: race.id, sessionKey: sessionKey, driverNumbers: orderedDrivers)
 
-        let drivers = try await driversTask
-        let positionData = try await positionsTask
-        let locationData = try await locationsTask
-        let lapData = try await lapDataTask
+        if let cached = replayPayloadCache[requestKey] {
+            statusUpdate?("Using cached replay data")
+            return cachedPayload(from: cached)
+        }
+
+        if let task = inFlightReplays[requestKey] {
+            statusUpdate?("Replay already downloading — reusing the active request")
+            return try await task.value
+        }
+
+        let task = Task<RaceReplayPayload, Error> {
+            try await self.makeReplayPayload(
+                race: race,
+                sessionKey: sessionKey,
+                orderedDrivers: orderedDrivers,
+                statusUpdate: statusUpdate
+            )
+        }
+
+        inFlightReplays[requestKey] = task
+        do {
+            let payload = try await task.value
+            replayPayloadCache[requestKey] = payload
+            inFlightReplays[requestKey] = nil
+            return payload
+        } catch {
+            inFlightReplays[requestKey] = nil
+            throw error
+        }
+    }
+
+    private func cachedPayload(from payload: RaceReplayPayload) -> RaceReplayPayload {
+        RaceReplayPayload(
+            availableDrivers: payload.availableDrivers,
+            selectedDrivers: payload.selectedDrivers,
+            snapshots: payload.snapshots,
+            lapAnchors: payload.lapAnchors,
+            raceStartSnapshotIndex: payload.raceStartSnapshotIndex,
+            totalDuration: payload.totalDuration,
+            projection: ReplayProjectionMetadata(
+                loadedDriverCount: payload.projection.loadedDriverCount,
+                sampleCount: payload.projection.sampleCount,
+                usesProjectedTrackFit: payload.projection.usesProjectedTrackFit,
+                freshnessWindow: payload.projection.freshnessWindow,
+                isCached: true
+            )
+        )
+    }
+
+    private func makeReplayPayload(
+        race: Race,
+        sessionKey: Int,
+        orderedDrivers: [Int],
+        statusUpdate: ((String) -> Void)?
+    ) async throws -> RaceReplayPayload {
+        statusUpdate?("Loading driver list and race timing")
+        let drivers = try await fetchDrivers(sessionKey: sessionKey)
+        let positionData = try await fetchPositionData(sessionKey: sessionKey)
+        let lapData = try await fetchLapData(sessionKey: sessionKey)
+
+        statusUpdate?(orderedDrivers.count == 1 ? "Downloading telemetry for 1 selected driver" : "Downloading telemetry for \(orderedDrivers.count) selected drivers with rate-limit protection")
+        let locationData = try await fetchLocationData(sessionKey: sessionKey, driverNumbers: orderedDrivers)
 
         let driversByNumber = Dictionary(uniqueKeysWithValues: drivers.map { ($0.driverNumber, $0) })
-        let selectedDrivers = selectedDriverNumbers.compactMap { driversByNumber[$0] }
+        let selectedDrivers = orderedDrivers.compactMap { driversByNumber[$0] }
         guard !selectedDrivers.isEmpty else {
             throw F1Error.apiError("Selected drivers are not available for this race")
         }
 
+        statusUpdate?("Building replay timeline")
         let timeline = buildSnapshots(
             race: race,
             selectedDrivers: selectedDrivers,
@@ -254,7 +388,8 @@ final class ReplayService {
                 loadedDriverCount: selectedDrivers.count,
                 sampleCount: sampleCount,
                 usesProjectedTrackFit: true,
-                freshnessWindow: freshnessWindow
+                freshnessWindow: freshnessWindow,
+                isCached: false
             )
         )
     }
@@ -292,85 +427,155 @@ final class ReplayService {
     }
 
     private func fetchDrivers(sessionKey: Int) async throws -> [ReplayDriver] {
-        let url = URL(string: "\(baseURL)/drivers?session_key=\(sessionKey)")!
-        let data = try await fetchData(from: url, label: "drivers")
-        let responses = try decoder.decode([DriverResponse].self, from: data)
+        if let cached = driversCache[sessionKey] { return cached }
+        if let task = inFlightDrivers[sessionKey] { return try await task.value }
 
-        var seen = Set<Int>()
-        return responses.compactMap { driver in
-            guard seen.insert(driver.driverNumber).inserted else { return nil }
-            return ReplayDriver(
-                driverNumber: driver.driverNumber,
-                fullName: driver.fullName,
-                nameAcronym: driver.nameAcronym,
-                teamName: driver.teamName,
-                teamColour: driver.teamColour ?? F1Design.teamHex(for: driver.teamName)
-            )
+        let task = Task<[ReplayDriver], Error> {
+            let url = URL(string: "\(baseURL)/drivers?session_key=\(sessionKey)")!
+            let data = try await self.fetchData(from: url, label: "drivers")
+            let responses = try self.decoder.decode([DriverResponse].self, from: data)
+
+            var seen = Set<Int>()
+            return responses.compactMap { driver in
+                guard seen.insert(driver.driverNumber).inserted else { return nil }
+                return ReplayDriver(
+                    driverNumber: driver.driverNumber,
+                    fullName: driver.fullName,
+                    nameAcronym: driver.nameAcronym,
+                    teamName: driver.teamName,
+                    teamColour: driver.teamColour ?? F1Design.teamHex(for: driver.teamName)
+                )
+            }
+            .sorted { lhs, rhs in
+                if lhs.teamName == rhs.teamName { return lhs.fullName < rhs.fullName }
+                return lhs.teamName < rhs.teamName
+            }
         }
-        .sorted { lhs, rhs in
-            if lhs.teamName == rhs.teamName { return lhs.fullName < rhs.fullName }
-            return lhs.teamName < rhs.teamName
+
+        inFlightDrivers[sessionKey] = task
+        do {
+            let drivers = try await task.value
+            driversCache[sessionKey] = drivers
+            inFlightDrivers[sessionKey] = nil
+            return drivers
+        } catch {
+            inFlightDrivers[sessionKey] = nil
+            throw error
         }
     }
 
     private func fetchPositionData(sessionKey: Int) async throws -> [Int: [PositionPoint]] {
-        let url = URL(string: "\(baseURL)/position?session_key=\(sessionKey)")!
-        let data = try await fetchData(from: url, label: "positions")
-        let responses = try decoder.decode([PositionResponse].self, from: data)
+        if let cached = positionCache[sessionKey] { return cached }
+        if let task = inFlightPositions[sessionKey] { return try await task.value }
 
-        var result: [Int: [PositionPoint]] = [:]
-        for response in responses {
-            guard let date = parseDate(response.date) else { continue }
-            result[response.driverNumber, default: []].append(PositionPoint(date: date, position: response.position))
+        let task = Task<[Int: [PositionPoint]], Error> {
+            let url = URL(string: "\(baseURL)/position?session_key=\(sessionKey)")!
+            let data = try await self.fetchData(from: url, label: "positions")
+            let responses = try self.decoder.decode([PositionResponse].self, from: data)
+
+            var result: [Int: [PositionPoint]] = [:]
+            for response in responses {
+                guard let date = self.parseDate(response.date) else { continue }
+                result[response.driverNumber, default: []].append(PositionPoint(date: date, position: response.position))
+            }
+
+            for key in result.keys {
+                result[key]?.sort { $0.date < $1.date }
+            }
+            return result
         }
 
-        for key in result.keys {
-            result[key]?.sort { $0.date < $1.date }
+        inFlightPositions[sessionKey] = task
+        do {
+            let positions = try await task.value
+            positionCache[sessionKey] = positions
+            inFlightPositions[sessionKey] = nil
+            return positions
+        } catch {
+            inFlightPositions[sessionKey] = nil
+            throw error
         }
-        return result
     }
 
     private func fetchLocationData(sessionKey: Int, driverNumbers: [Int]) async throws -> [Int: [ReplayLocationPoint]] {
         var result: [Int: [ReplayLocationPoint]] = [:]
-        for driverNumber in driverNumbers {
+        for (index, driverNumber) in driverNumbers.enumerated() {
+            if index > 0 {
+                try await Task.sleep(nanoseconds: interRequestSpacingNs)
+            }
+            result[driverNumber] = try await fetchLocationData(sessionKey: sessionKey, driverNumber: driverNumber)
+        }
+        return result
+    }
+
+    private func fetchLocationData(sessionKey: Int, driverNumber: Int) async throws -> [ReplayLocationPoint] {
+        let cacheKey = ReplayLocationCacheKey(sessionKey: sessionKey, driverNumber: driverNumber)
+        if let cached = locationCache[cacheKey] { return cached }
+        if let task = inFlightLocations[cacheKey] { return try await task.value }
+
+        let task = Task<[ReplayLocationPoint], Error> {
             let url = URL(string: "\(baseURL)/location?session_key=\(sessionKey)&driver_number=\(driverNumber)")!
-            let data = try await fetchData(from: url, label: "location for #\(driverNumber)")
-            let responses = try decoder.decode([LocationResponse].self, from: data)
-            let points = responses.compactMap { response -> ReplayLocationPoint? in
-                guard let date = parseDate(response.date),
+            let data = try await self.fetchData(from: url, label: "location for #\(driverNumber)")
+            let responses = try self.decoder.decode([LocationResponse].self, from: data)
+            return responses.compactMap { response -> ReplayLocationPoint? in
+                guard let date = self.parseDate(response.date),
                       let x = response.x,
                       let y = response.y
                 else { return nil }
                 return ReplayLocationPoint(date: date, x: x, y: y, z: response.z ?? 0)
             }
             .sorted { $0.date < $1.date }
-            result[driverNumber] = points
         }
-        return result
+
+        inFlightLocations[cacheKey] = task
+        do {
+            let points = try await task.value
+            locationCache[cacheKey] = points
+            inFlightLocations[cacheKey] = nil
+            return points
+        } catch {
+            inFlightLocations[cacheKey] = nil
+            throw error
+        }
     }
 
-
     private func fetchLapData(sessionKey: Int) async throws -> [Int: [LapPoint]] {
-        let url = URL(string: "\(baseURL)/laps?session_key=\(sessionKey)")!
-        let data = try await fetchData(from: url, label: "laps")
-        let responses = try decoder.decode([LapResponse].self, from: data)
+        if let cached = lapCache[sessionKey] { return cached }
+        if let task = inFlightLaps[sessionKey] { return try await task.value }
 
-        var result: [Int: [LapPoint]] = [:]
-        for response in responses {
-            guard let dateString = response.dateStart,
-                  let date = parseDate(dateString),
-                  response.lapNumber > 0
-            else { continue }
-            result[response.driverNumber, default: []].append(LapPoint(date: date, lapNumber: response.lapNumber))
-        }
+        let task = Task<[Int: [LapPoint]], Error> {
+            let url = URL(string: "\(baseURL)/laps?session_key=\(sessionKey)")!
+            let data = try await self.fetchData(from: url, label: "laps")
+            let responses = try self.decoder.decode([LapResponse].self, from: data)
 
-        for key in result.keys {
-            result[key]?.sort { lhs, rhs in
-                if lhs.date == rhs.date { return lhs.lapNumber < rhs.lapNumber }
-                return lhs.date < rhs.date
+            var result: [Int: [LapPoint]] = [:]
+            for response in responses {
+                guard let dateString = response.dateStart,
+                      let date = self.parseDate(dateString),
+                      response.lapNumber > 0
+                else { continue }
+                result[response.driverNumber, default: []].append(LapPoint(date: date, lapNumber: response.lapNumber))
             }
+
+            for key in result.keys {
+                result[key]?.sort { lhs, rhs in
+                    if lhs.date == rhs.date { return lhs.lapNumber < rhs.lapNumber }
+                    return lhs.date < rhs.date
+                }
+            }
+            return result
         }
-        return result
+
+        inFlightLaps[sessionKey] = task
+        do {
+            let laps = try await task.value
+            lapCache[sessionKey] = laps
+            inFlightLaps[sessionKey] = nil
+            return laps
+        } catch {
+            inFlightLaps[sessionKey] = nil
+            throw error
+        }
     }
 
     private func buildSnapshots(
@@ -457,7 +662,6 @@ final class ReplayService {
 
         return ReplayTimeline(snapshots: snapshots, lapAnchors: lapAnchors, raceStartSnapshotIndex: raceStartSnapshotIndex)
     }
-
 
     private func inferredRaceStart(from positionData: [Int: [PositionPoint]], lapData: [Int: [LapPoint]]) -> Date? {
         let earliestPosition = positionData.values.compactMap { $0.first?.date }.min()

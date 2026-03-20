@@ -64,6 +64,7 @@ struct ReplayProjectionMetadata: Hashable {
     let sampleCount: Int
     let usesProjectedTrackFit: Bool
     let freshnessWindow: TimeInterval
+    let isCached: Bool
 }
 
 struct RaceReplayPayload {

@@ -15,6 +15,7 @@ final class ReplayViewModel {
     var isPlaying = false
     var isLoadingDrivers = false
     var isLoadingReplay = false
+    var loadingMessage = "Downloading real race location data"
     var error: String?
     var hasLoadedDriverList = false
 
@@ -131,13 +132,20 @@ final class ReplayViewModel {
 
         loadTask?.cancel()
         isLoadingReplay = true
+        loadingMessage = "Matching this race to the correct OpenF1 session"
         error = nil
         pause()
 
         let task = Task { [weak self] in
             guard let self else { return }
             do {
-                let payload = try await service.fetchReplay(for: race, selectedDriverNumbers: Array(selectedDriverNumbers).sorted())
+                let payload = try await service.fetchReplay(
+                    for: race,
+                    selectedDriverNumbers: Array(selectedDriverNumbers).sorted(),
+                    statusUpdate: { [weak self] message in
+                        self?.loadingMessage = message
+                    }
+                )
                 guard !Task.isCancelled else { return }
                 availableDrivers = payload.availableDrivers
                 snapshots = payload.snapshots
