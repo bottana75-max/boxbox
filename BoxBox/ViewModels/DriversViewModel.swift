@@ -9,6 +9,7 @@ class DriversViewModel {
     var isLoading = false
     var error: String?
 
+    @ObservationIgnored private var loadTask: Task<Void, Never>?
     private let service = OpenF1Service.shared
 
     var selectedDrivers: [Driver] {
@@ -38,15 +39,27 @@ class DriversViewModel {
     }
 
     func loadData() async {
+        loadTask?.cancel()
         isLoading = true
         error = nil
 
-        do {
-            drivers = try await service.fetchDrivers()
-        } catch {
-            self.error = error.localizedDescription
+        let task = Task { [weak self] in
+            guard let self else { return }
+            do {
+                let fetched = try await service.fetchDrivers()
+                guard !Task.isCancelled else { return }
+                drivers = fetched
+            } catch {
+                guard !Task.isCancelled else { return }
+                self.error = error.localizedDescription
+            }
+            isLoading = false
         }
+        loadTask = task
+        await task.value
+    }
 
-        isLoading = false
+    nonisolated deinit {
+        loadTask?.cancel()
     }
 }

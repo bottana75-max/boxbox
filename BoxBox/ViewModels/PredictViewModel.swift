@@ -13,6 +13,7 @@ class PredictViewModel {
     var error: String?
     var showPaywall = false
 
+    @ObservationIgnored private var loadTask: Task<Void, Never>?
     private let service = OpenF1Service.shared
     private let aiService = AIService.shared
     let storeKit = StoreKitManager.shared
@@ -56,6 +57,8 @@ class PredictViewModel {
     }
 
     func loadNextRace(forceRefresh: Bool = false) async {
+        loadTask?.cancel()
+
         // Always show the loading indicator on the initial load.
         // On pull-to-refresh (forceRefresh: true) the system spinner is enough.
         if !forceRefresh {
@@ -63,30 +66,40 @@ class PredictViewModel {
         }
 
         error = nil
-        await storeKit.restorePurchases()
-        await storeKit.loadProducts()
-        do {
-            async let scheduleTask = service.fetchCurrentSchedule()
-            async let standingsTask = service.fetchDriverStandings()
-            async let recentTask = service.fetchRecentCompletedRaces(limit: 3)
 
-            let schedule = try await scheduleTask
-            let fetchedStandings = try await standingsTask
-            let fetchedRecent = try await recentTask
-            let now = Date()
-            nextRace = schedule.first { race in
-                guard let raceDate = race.raceDate else { return false }
-                return raceDate > now
+        let task = Task { [weak self] in
+            guard let self else { return }
+            await storeKit.restorePurchases()
+            await storeKit.loadProducts()
+            do {
+                async let scheduleTask = service.fetchCurrentSchedule()
+                async let standingsTask = service.fetchDriverStandings()
+                async let recentTask = service.fetchRecentCompletedRaces(limit: 3)
+
+                let (schedule, fetchedStandings, fetchedRecent) = try await (scheduleTask, standingsTask, recentTask)
+                guard !Task.isCancelled else { return }
+
+                let now = Date()
+                nextRace = schedule.first { race in
+                    guard let raceDate = race.raceDate else { return false }
+                    return raceDate > now
+                }
+                standings = fetchedStandings
+                recentRaces = fetchedRecent
+                pressureProfile = CircuitPressureProfile.from(info: nextRace?.circuitInfo)
+                trends = service.buildTrends(from: fetchedStandings, recentRaces: fetchedRecent, limit: 5)
+            } catch {
+                guard !Task.isCancelled else { return }
+                self.error = error.localizedDescription
             }
-            standings = fetchedStandings
-            recentRaces = fetchedRecent
-            pressureProfile = CircuitPressureProfile.from(info: nextRace?.circuitInfo)
-            trends = service.buildTrends(from: fetchedStandings, recentRaces: fetchedRecent, limit: 5)
-        } catch {
-            self.error = error.localizedDescription
+            isLoading = false
         }
+        loadTask = task
+        await task.value
+    }
 
-        isLoading = false
+    nonisolated deinit {
+        loadTask?.cancel()
     }
 
     func predict() async {

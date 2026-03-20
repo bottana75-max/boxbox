@@ -39,6 +39,7 @@ class DriverDetailViewModel {
         return "Steady"
     }
 
+    @ObservationIgnored private var loadTask: Task<Void, Never>?
     private let service = OpenF1Service.shared
 
     init(driver: Driver) {
@@ -46,20 +47,39 @@ class DriverDetailViewModel {
     }
 
     func loadResults() async {
+        loadTask?.cancel()
         isLoading = true
         error = nil
-        do {
-            driver = try await service.resolveDriver(for: driver)
-            guard let driverId = try await service.findDriverId(for: driver) else {
-                error = "Driver data is not available right now"
-                isLoading = false
-                return
+
+        let task = Task { [weak self] in
+            guard let self else { return }
+            do {
+                // Resolve full driver profile (headshot, country) before fetching results.
+                let resolved = try await service.resolveDriver(for: driver)
+                guard !Task.isCancelled else { return }
+                driver = resolved
+
+                guard let driverId = try await service.findDriverId(for: resolved) else {
+                    error = "Driver data is not available right now"
+                    isLoading = false
+                    return
+                }
+                guard !Task.isCancelled else { return }
+
+                let results = try await service.fetchDriverResults(driverId: driverId)
+                guard !Task.isCancelled else { return }
+                recentResults = Array(results.suffix(5))
+            } catch {
+                guard !Task.isCancelled else { return }
+                self.error = "Recent results not available"
             }
-            let results = try await service.fetchDriverResults(driverId: driverId)
-            recentResults = Array(results.suffix(5))
-        } catch {
-            self.error = "Recent results not available"
+            isLoading = false
         }
-        isLoading = false
+        loadTask = task
+        await task.value
+    }
+
+    nonisolated deinit {
+        loadTask?.cancel()
     }
 }

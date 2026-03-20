@@ -98,33 +98,24 @@ class StoreKitManager {
 
     func restorePurchases() async {
         purchaseError = nil
-        var restored = false
         for await result in Transaction.currentEntitlements {
-            if case .verified(let transaction) = result {
-                if transaction.productID == "com.bottana.boxbox.unlimited" {
-                    UserDefaults.standard.set(true, forKey: Self.unlimitedKey)
-                    restored = true
-                }
+            if case .verified(let transaction) = result,
+               transaction.productID == "com.bottana.boxbox.unlimited" {
+                UserDefaults.standard.set(true, forKey: Self.unlimitedKey)
             }
-        }
-        if !restored {
-            purchaseError = "No previous purchase found."
         }
     }
 
     private func applyCredits(for productID: String) {
         let defaults = UserDefaults.standard
-        switch productID {
-        case "com.bottana.boxbox.credits5":
-            let current = defaults.integer(forKey: Self.creditsKey)
-            defaults.set(current + 5, forKey: Self.creditsKey)
-        case "com.bottana.boxbox.credits20":
-            let current = defaults.integer(forKey: Self.creditsKey)
-            defaults.set(current + 20, forKey: Self.creditsKey)
-        case "com.bottana.boxbox.unlimited":
+        let creditsByProduct: [String: Int] = [
+            "com.bottana.boxbox.credits5": 5,
+            "com.bottana.boxbox.credits20": 20,
+        ]
+        if let amount = creditsByProduct[productID] {
+            defaults.set(defaults.integer(forKey: Self.creditsKey) + amount, forKey: Self.creditsKey)
+        } else if productID == "com.bottana.boxbox.unlimited" {
             defaults.set(true, forKey: Self.unlimitedKey)
-        default:
-            break
         }
     }
 }

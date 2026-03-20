@@ -159,7 +159,7 @@ struct HomeView: View {
                 .buttonStyle(.plain)
 
                 VStack(spacing: 8) {
-                    ForEach(Array(viewModel.titleChasers.prefix(3).enumerated()), id: \.element.id) { _, standing in
+                    ForEach(Array(viewModel.titleChasers.prefix(3))) { standing in
                         NavigationLink(value: Driver.fallback(driverCode: standing.driverCode, driverName: standing.driverName, teamName: standing.constructorName)) {
                             HStack(spacing: 12) {
                                 Text("P\(standing.position)")

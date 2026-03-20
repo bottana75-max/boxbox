@@ -78,12 +78,7 @@ class HomeViewModel {
             countdown = ""
             return
         }
-
-        let now = Date()
-        let diff = Calendar.current.dateComponents([.day, .hour, .minute, .second], from: now, to: raceDate)
-
-        guard let d = diff.day, let h = diff.hour, let m = diff.minute, let s = diff.second else { return }
-        countdown = "\(d)d \(h)h \(m)m \(s)s"
+        countdown = countdownString(to: raceDate) ?? ""
     }
 
     nonisolated deinit {

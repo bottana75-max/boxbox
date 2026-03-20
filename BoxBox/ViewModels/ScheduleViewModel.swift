@@ -7,6 +7,7 @@ class ScheduleViewModel {
     var isLoading = false
     var error: String?
 
+    @ObservationIgnored private var loadTask: Task<Void, Never>?
     private let service = OpenF1Service.shared
 
     var nextRaceRound: Int? {
@@ -18,15 +19,27 @@ class ScheduleViewModel {
     }
 
     func loadData() async {
+        loadTask?.cancel()
         isLoading = true
         error = nil
 
-        do {
-            races = try await service.fetchCurrentSchedule()
-        } catch {
-            self.error = error.localizedDescription
+        let task = Task { [weak self] in
+            guard let self else { return }
+            do {
+                let fetched = try await service.fetchCurrentSchedule()
+                guard !Task.isCancelled else { return }
+                races = fetched
+            } catch {
+                guard !Task.isCancelled else { return }
+                self.error = error.localizedDescription
+            }
+            isLoading = false
         }
+        loadTask = task
+        await task.value
+    }
 
-        isLoading = false
+    nonisolated deinit {
+        loadTask?.cancel()
     }
 }

@@ -29,6 +29,7 @@
 		A1B2C3D401000005 /* Driver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000005 /* Driver.swift */; };
 		A1B2C3D401000006 /* Prediction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000006 /* Prediction.swift */; };
 		A1B2C3D401000007 /* Race.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000007 /* Race.swift */; };
+		A1B2C3D401000050 /* CountdownHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000050 /* CountdownHelpers.swift */; };
 		A1B2C3D401000008 /* AIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000008 /* AIService.swift */; };
 		A1B2C3D401000009 /* OpenF1Service.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000009 /* OpenF1Service.swift */; };
 		A1B2C3D40100000A /* DriversViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D40000000A /* DriversViewModel.swift */; };
@@ -95,6 +96,7 @@
 		A1B2C3D400000005 /* Driver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Driver.swift; sourceTree = "<group>"; };
 		A1B2C3D400000006 /* Prediction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Prediction.swift; sourceTree = "<group>"; };
 		A1B2C3D400000007 /* Race.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Race.swift; sourceTree = "<group>"; };
+		A1B2C3D400000050 /* CountdownHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountdownHelpers.swift; sourceTree = "<group>"; };
 		A1B2C3D400000008 /* AIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIService.swift; sourceTree = "<group>"; };
 		A1B2C3D400000009 /* OpenF1Service.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenF1Service.swift; sourceTree = "<group>"; };
 		A1B2C3D40000000A /* DriversViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriversViewModel.swift; sourceTree = "<group>"; };
@@ -216,6 +218,7 @@
 				A1B2C3D400000005 /* Driver.swift */,
 				A1B2C3D400000006 /* Prediction.swift */,
 				A1B2C3D400000007 /* Race.swift */,
+				A1B2C3D400000050 /* CountdownHelpers.swift */,
 				8D939F5E50D2DC18FC4E0BB8 /* RaceContext.swift */,
 				A1B2C3D400000040 /* ReplayModels.swift */,
 			);
@@ -429,6 +432,7 @@
 				A1B2C3D401000005 /* Driver.swift in Sources */,
 				A1B2C3D401000006 /* Prediction.swift in Sources */,
 				A1B2C3D401000007 /* Race.swift in Sources */,
+				A1B2C3D401000050 /* CountdownHelpers.swift in Sources */,
 				A1B2C3D401000008 /* AIService.swift in Sources */,
 				A1B2C3D401000009 /* OpenF1Service.swift in Sources */,
 				A1B2C3D40100000A /* DriversViewModel.swift in Sources */,

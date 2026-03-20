@@ -46,18 +46,12 @@ class RaceDetailViewModel {
             countdown = "Date TBD"
             return
         }
-        let now = Date()
-        guard raceDate > now else {
+        if let text = countdownString(to: raceDate) {
+            countdown = text
+        } else {
             countdown = "Race started!"
             countdownTask?.cancel()
-            return
         }
-        let components = Calendar.current.dateComponents([.day, .hour, .minute, .second], from: now, to: raceDate)
-        let d = components.day ?? 0
-        let h = components.hour ?? 0
-        let m = components.minute ?? 0
-        let s = components.second ?? 0
-        countdown = "\(d)d \(h)h \(m)m \(s)s"
     }
 
     nonisolated deinit {

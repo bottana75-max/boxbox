@@ -625,13 +625,10 @@ struct TeamRaceResult: Identifiable {
         status != "Finished" && !status.starts(with: "+")
     }
 
-    var raceName: String {
-        race.raceName
-    }
+    var raceName: String { race.raceName }
 
-    var shortName: String {
-        raceName.replacingOccurrences(of: " Grand Prix", with: "")
-    }
+    /// Short label for chart axes and compact lists (e.g. "Monaco").
+    var shortName: String { race.raceWeekendTitle }
 }
 
 struct DriverRaceResult: Identifiable {
@@ -645,14 +642,10 @@ struct DriverRaceResult: Identifiable {
         status != "Finished" && !status.starts(with: "+")
     }
 
-    var raceName: String {
-        race.raceName
-    }
+    var raceName: String { race.raceName }
 
-    var shortName: String {
-        raceName
-            .replacingOccurrences(of: " Grand Prix", with: "")
-    }
+    /// Short label for chart axes and compact lists (e.g. "Monaco").
+    var shortName: String { race.raceWeekendTitle }
 }
 
 struct JolpicaRaceResponse: Codable {
