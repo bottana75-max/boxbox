@@ -12,7 +12,7 @@ struct DriversView: View {
         NavigationStack {
             Group {
                 if viewModel.isLoading {
-                    F1LoadingView(message: "Loading drivers")
+                    F1LoadingView(message: "Loading...")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if let error = viewModel.error {
                     ErrorCard(message: error) {
@@ -21,11 +21,11 @@ struct DriversView: View {
                     .padding()
                 } else {
                     ScrollView {
-                        VStack(spacing: 16) {
+                        VStack(spacing: F1Design.cardSpacing) {
+                            overviewCard
+
                             if viewModel.isCompareMode {
                                 compareBanner
-                                    .padding(.horizontal)
-                                    .padding(.top)
                             }
 
                             LazyVGrid(columns: columns, spacing: 12) {
@@ -45,8 +45,8 @@ struct DriversView: View {
                                     }
                                 }
                             }
-                            .padding([.horizontal, .bottom])
                         }
+                        .padding()
                     }
                     .navigationDestination(for: Driver.self) { driver in
                         DriverDetailView(driver: driver)
@@ -80,14 +80,27 @@ struct DriversView: View {
         }
     }
 
+    private var overviewCard: some View {
+        VStack(alignment: .leading, spacing: F1Design.innerSpacing) {
+            F1SectionHeader(title: "GRID INDEX", subtitle: "Every driver in a cleaner, more comparable card system")
+
+            HStack(spacing: 10) {
+                F1MetricTile(title: "Drivers", value: "\(viewModel.drivers.count)")
+                F1MetricTile(title: "Compare", value: viewModel.isCompareMode ? "Live" : "Off")
+                F1MetricTile(title: "Selected", value: "\(viewModel.selectedDriverIDs.count)")
+            }
+        }
+        .f1Card(gradient: true, accent: .f1Red)
+    }
+
     private var compareBanner: some View {
         VStack(alignment: .leading, spacing: 8) {
             F1SectionHeader(title: "COMPARE MODE", subtitle: "Pick any two drivers for a quick side-by-side")
-            Text(viewModel.selectedDriverIDs.isEmpty ? "No drivers selected yet." : "Selected: \(viewModel.selectedDrivers.map(\.nameAcronym).joined(separator: " vs "))")
+            Text(viewModel.selectedDriverIDs.isEmpty ? "Select two drivers to build the head-to-head." : "Selected: \(viewModel.selectedDrivers.map(\.nameAcronym).joined(separator: " vs "))")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
-        .f1Card()
+        .f1Card(accent: .f1Red)
     }
 
     private var compareFooter: some View {
@@ -123,67 +136,65 @@ struct DriversView: View {
     private func driverCard(_ driver: Driver) -> some View {
         let isSelected = viewModel.selectedDriverIDs.contains(driver.id)
 
-        return VStack(spacing: 12) {
-            AsyncImage(url: driver.headshotUrl.flatMap { URL(string: $0) }) { phase in
-                switch phase {
-                case .success(let image):
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: 80, height: 80)
-                        .clipShape(Circle())
-                        .overlay(
-                            Circle()
-                                .strokeBorder(driver.teamColor.opacity(0.4), lineWidth: 2)
-                        )
-                case .failure:
-                    driverPlaceholder(driver)
-                default:
-                    driverPlaceholder(driver)
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top) {
+                AsyncImage(url: driver.headshotUrl.flatMap { URL(string: $0) }) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 76, height: 76)
+                            .clipShape(Circle())
+                            .overlay(
+                                Circle()
+                                    .strokeBorder(driver.teamColor.opacity(0.45), lineWidth: 2)
+                            )
+                    case .failure:
+                        driverPlaceholder(driver)
+                    default:
+                        driverPlaceholder(driver)
+                    }
                 }
-            }
-
-            VStack(spacing: 4) {
-                Text(driver.fullName)
-                    .font(.subheadline)
-                    .fontWeight(.bold)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-
-                Text(driver.teamName)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
-
-            HStack {
-                Text("#\(driver.driverNumber)")
-                    .font(.system(.title3, design: .rounded))
-                    .fontWeight(.black)
-                    .foregroundStyle(driver.teamColor)
 
                 Spacer()
 
-                if viewModel.isCompareMode {
-                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                        .foregroundStyle(isSelected ? Color.f1Red : .secondary)
-                } else {
-                    Text(driver.countryCode)
-                        .font(.system(.caption, design: .monospaced))
-                        .fontWeight(.medium)
+                VStack(alignment: .trailing, spacing: 8) {
+                    Text("#\(driver.driverNumber)")
+                        .font(.system(.title3, design: .rounded))
+                        .fontWeight(.black)
+                        .foregroundStyle(driver.teamColor)
+
+                    if viewModel.isCompareMode {
+                        Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                            .foregroundStyle(isSelected ? Color.f1Red : .secondary)
+                    } else {
+                        Text(driver.countryCode)
+                            .font(.system(.caption, design: .monospaced))
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(driver.fullName)
+                    .font(.headline)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.white)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.8)
+
+                HStack(spacing: 6) {
+                    F1TeamDot(teamName: driver.teamName)
+                    Text(driver.teamName)
+                        .font(.caption)
                         .foregroundStyle(.secondary)
+                        .lineLimit(1)
                 }
             }
         }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: F1Design.cornerRadius, style: .continuous)
-                .fill(Color.f1CardBackground)
-                .overlay(
-                    RoundedRectangle(cornerRadius: F1Design.cornerRadius, style: .continuous)
-                        .strokeBorder(isSelected ? Color.f1Red : driver.teamColor.opacity(0.2), lineWidth: isSelected ? 2 : 1)
-                )
-        )
+        .f1Card(accent: isSelected ? .f1Red : driver.teamColor.opacity(0.8))
         .overlay(alignment: .topTrailing) {
             RoundedRectangle(cornerRadius: 2)
                 .fill(driver.teamColor)
@@ -196,7 +207,7 @@ struct DriversView: View {
     private func driverPlaceholder(_ driver: Driver) -> some View {
         Circle()
             .fill(driver.teamColor.opacity(0.15))
-            .frame(width: 80, height: 80)
+            .frame(width: 76, height: 76)
             .overlay(
                 Text(driver.nameAcronym)
                     .font(.title3)

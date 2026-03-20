@@ -3,19 +3,40 @@ import SwiftUI
 // MARK: - Design Tokens
 
 enum F1Design {
-    static let cornerRadius: CGFloat = 16
-    static let innerCornerRadius: CGFloat = 12
+    static let cornerRadius: CGFloat = 18
+    static let innerCornerRadius: CGFloat = 14
     static let cardSpacing: CGFloat = 20
     static let innerSpacing: CGFloat = 14
     static let contentPadding: CGFloat = 16
+    static let sectionSpacing: CGFloat = 24
+
+    static let cardGradient = LinearGradient(
+        colors: [
+            Color.white.opacity(0.05),
+            Color.clear,
+            Color.black.opacity(0.12)
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+
+    static let heroGradient = LinearGradient(
+        colors: [
+            Color.f1CardBackground,
+            Color.f1SecondaryBackground.opacity(0.96),
+            Color.black.opacity(0.82)
+        ],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
 
     // Podium / position colors
     static func positionColor(_ position: Int, isDNF: Bool = false) -> Color {
         if isDNF { return .red }
         switch position {
-        case 1: return Color(red: 1.0, green: 0.84, blue: 0.0)   // gold
-        case 2: return Color(white: 0.75)                          // silver
-        case 3: return Color(red: 0.8, green: 0.5, blue: 0.2)     // bronze
+        case 1: return Color(red: 1.0, green: 0.84, blue: 0.0)
+        case 2: return Color(white: 0.75)
+        case 3: return Color(red: 0.8, green: 0.5, blue: 0.2)
         default: return .white
         }
     }
@@ -45,24 +66,41 @@ enum F1Design {
 
 struct F1CardModifier: ViewModifier {
     var gradient: Bool = false
+    var accent: Color? = nil
 
     func body(content: Content) -> some View {
         content
             .padding(F1Design.contentPadding)
             .background(
-                gradient
-                    ? AnyShapeStyle(LinearGradient(
-                        colors: [Color.f1CardBackground, Color.f1SecondaryBackground.opacity(0.7)],
-                        startPoint: .topLeading, endPoint: .bottomTrailing))
-                    : AnyShapeStyle(Color.f1CardBackground)
+                ZStack(alignment: .topLeading) {
+                    RoundedRectangle(cornerRadius: F1Design.cornerRadius, style: .continuous)
+                        .fill(gradient ? AnyShapeStyle(F1Design.heroGradient) : AnyShapeStyle(Color.f1CardBackground))
+
+                    RoundedRectangle(cornerRadius: F1Design.cornerRadius, style: .continuous)
+                        .fill(F1Design.cardGradient)
+
+                    if let accent {
+                        LinearGradient(
+                            colors: [accent.opacity(0.28), .clear],
+                            startPoint: .topLeading,
+                            endPoint: .center
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: F1Design.cornerRadius, style: .continuous))
+                    }
+                }
             )
+            .overlay {
+                RoundedRectangle(cornerRadius: F1Design.cornerRadius, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.06), lineWidth: 1)
+            }
             .clipShape(RoundedRectangle(cornerRadius: F1Design.cornerRadius, style: .continuous))
+            .shadow(color: .black.opacity(0.18), radius: 14, x: 0, y: 10)
     }
 }
 
 extension View {
-    func f1Card(gradient: Bool = false) -> some View {
-        modifier(F1CardModifier(gradient: gradient))
+    func f1Card(gradient: Bool = false, accent: Color? = nil) -> some View {
+        modifier(F1CardModifier(gradient: gradient, accent: accent))
     }
 }
 
@@ -73,22 +111,22 @@ struct F1SectionHeader: View {
     var subtitle: String? = nil
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 6) {
-                RoundedRectangle(cornerRadius: 1.5)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                RoundedRectangle(cornerRadius: 2)
                     .fill(Color.f1Red)
-                    .frame(width: 3, height: 12)
+                    .frame(width: 3, height: 14)
                 Text(title)
-                    .font(.caption)
-                    .fontWeight(.heavy)
+                    .font(.system(size: 12, weight: .heavy))
                     .foregroundStyle(Color.f1Red)
-                    .tracking(0.8)
+                    .tracking(1)
             }
             if let subtitle {
                 Text(subtitle)
-                    .font(.caption2)
+                    .font(.caption)
                     .foregroundStyle(.secondary)
-                    .padding(.leading, 9) // align with text after accent bar
+                    .padding(.leading, 11)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -139,22 +177,23 @@ struct F1EmptyView: View {
         VStack(spacing: 12) {
             Image(systemName: icon)
                 .font(.title2)
-                .foregroundStyle(Color.f1SecondaryBackground)
+                .foregroundStyle(Color.f1Subtle)
             Text(title)
                 .font(.subheadline)
-                .fontWeight(.medium)
-                .foregroundStyle(.secondary)
+                .fontWeight(.semibold)
+                .foregroundStyle(.white)
             if let subtitle {
                 Text(subtitle)
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
             }
         }
         .frame(maxWidth: .infinity, minHeight: 80)
     }
 }
 
-// MARK: - Stat Pill (reusable compact metric)
+// MARK: - Stat Pill
 
 struct F1StatPill: View {
     let title: String
@@ -166,39 +205,11 @@ struct F1StatPill: View {
     }
 
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(alignment: .leading, spacing: 6) {
             Text(title.uppercased())
                 .font(.system(size: 9, weight: .semibold))
                 .foregroundStyle(.secondary)
-                .tracking(0.4)
-            Text(value)
-                .font(.caption)
-                .fontWeight(.bold)
-                .foregroundStyle(.white)
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 10)
-        .background(
-            style == .standard
-                ? Color.black.opacity(0.18)
-                : Color.f1SecondaryBackground
-        )
-        .clipShape(RoundedRectangle(cornerRadius: F1Design.innerCornerRadius, style: .continuous))
-    }
-}
-
-// MARK: - Metric Tile (label on top, value below)
-
-struct F1MetricTile: View {
-    let title: String
-    let value: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title.uppercased())
-                .font(.system(size: 9, weight: .semibold))
-                .foregroundStyle(.secondary)
-                .tracking(0.4)
+                .tracking(0.5)
             Text(value)
                 .font(.subheadline)
                 .fontWeight(.bold)
@@ -207,19 +218,58 @@ struct F1MetricTile: View {
                 .minimumScaleFactor(0.75)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(10)
-        .background(Color.f1SecondaryBackground)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(style == .standard ? Color.black.opacity(0.16) : Color.f1SecondaryBackground)
+        .overlay {
+            RoundedRectangle(cornerRadius: F1Design.innerCornerRadius, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.04), lineWidth: 1)
+        }
         .clipShape(RoundedRectangle(cornerRadius: F1Design.innerCornerRadius, style: .continuous))
     }
 }
 
-// MARK: - Inner Row Card (used for sub-items within a card)
+// MARK: - Metric Tile
+
+struct F1MetricTile: View {
+    let title: String
+    let value: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title.uppercased())
+                .font(.system(size: 9, weight: .semibold))
+                .foregroundStyle(.secondary)
+                .tracking(0.5)
+            Text(value)
+                .font(.subheadline)
+                .fontWeight(.bold)
+                .foregroundStyle(.white)
+                .lineLimit(2)
+                .minimumScaleFactor(0.75)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(Color.f1SecondaryBackground)
+        .overlay {
+            RoundedRectangle(cornerRadius: F1Design.innerCornerRadius, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.04), lineWidth: 1)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: F1Design.innerCornerRadius, style: .continuous))
+    }
+}
+
+// MARK: - Inner Row Card
 
 struct F1InnerCardModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .padding(F1Design.contentPadding)
             .background(Color.f1SecondaryBackground)
+            .overlay {
+                RoundedRectangle(cornerRadius: F1Design.innerCornerRadius + 2, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.04), lineWidth: 1)
+            }
             .clipShape(RoundedRectangle(cornerRadius: F1Design.innerCornerRadius + 2, style: .continuous))
     }
 }
@@ -242,5 +292,37 @@ struct F1PositionBadge: View {
             .font(.system(size, design: design))
             .fontWeight(.black)
             .foregroundStyle(F1Design.positionColor(position))
+    }
+}
+
+// MARK: - Helpers
+
+struct F1Chevron: View {
+    var body: some View {
+        Image(systemName: "chevron.right")
+            .font(.caption2.weight(.bold))
+            .foregroundStyle(.secondary)
+    }
+}
+
+struct F1ListRow<Content: View>: View {
+    let accent: Color?
+    @ViewBuilder var content: Content
+
+    init(accent: Color? = nil, @ViewBuilder content: () -> Content) {
+        self.accent = accent
+        self.content = content()
+    }
+
+    var body: some View {
+        HStack(spacing: 12) {
+            if let accent {
+                RoundedRectangle(cornerRadius: 2)
+                    .fill(accent)
+                    .frame(width: 3)
+            }
+            content
+        }
+        .padding(.vertical, 4)
     }
 }

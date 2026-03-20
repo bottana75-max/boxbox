@@ -173,7 +173,7 @@ struct DriverDetailView: View {
             F1SectionHeader(title: "LAST 5 RACES", subtitle: "Tap a race for the full weekend page")
 
             if viewModel.isLoading {
-                F1LoadingView(message: "Loading results")
+                F1LoadingView(message: "Loading...")
                     .frame(minHeight: 100)
             } else if let error = viewModel.error {
                 HStack(spacing: 8) {

@@ -37,44 +37,45 @@ struct RaceDetailView: View {
     }
 
     private var raceHeader: some View {
-        VStack(spacing: 16) {
-            Text("ROUND \(viewModel.race.round)")
-                .font(.system(size: 11, weight: .heavy, design: .monospaced))
-                .tracking(1.2)
-                .foregroundStyle(Color.f1Red)
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("ROUND \(viewModel.race.round)")
+                        .font(.system(size: 10, weight: .heavy, design: .monospaced))
+                        .tracking(1)
+                        .foregroundStyle(Color.f1Red)
 
-            Text(viewModel.race.raceName)
-                .font(.title)
-                .fontWeight(.bold)
-                .multilineTextAlignment(.center)
+                    Text(viewModel.race.raceName)
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.white)
 
-            VStack(spacing: 8) {
-                Label(viewModel.race.circuitName, systemImage: "flag.checkered")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    Text(viewModel.race.circuitName)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
 
-                Label(viewModel.race.country, systemImage: "mappin")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                Spacer()
 
-                Label(viewModel.race.formattedDate, systemImage: "calendar")
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                if viewModel.race.isPast {
+                    Text("Completed")
+                        .font(.system(size: 10, weight: .heavy))
+                        .tracking(0.6)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(Color.green.opacity(0.75))
+                        .clipShape(Capsule())
+                }
             }
 
-            if viewModel.race.isPast {
-                Text("COMPLETED")
-                    .font(.system(size: 10, weight: .heavy))
-                    .tracking(0.6)
-                    .foregroundStyle(.green)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 5)
-                    .background(Color.green.opacity(0.12))
-                    .clipShape(Capsule())
+            HStack(spacing: 10) {
+                F1MetricTile(title: "Country", value: viewModel.race.country)
+                F1MetricTile(title: "Date", value: viewModel.race.formattedDate)
+                F1MetricTile(title: "Status", value: viewModel.race.isPast ? "Results live" : "Countdown")
             }
         }
-        .frame(maxWidth: .infinity)
-        .f1Card()
+        .f1Card(gradient: true, accent: .f1Red)
     }
 
     private func trackMapCard(_ info: CircuitInfo) -> some View {
@@ -136,7 +137,7 @@ struct RaceDetailView: View {
 
             Text("\(context.weatherDetail) \(context.windNote) \(context.sunsetCue)")
                 .font(.caption)
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(.secondary)
         }
         .f1Card()
     }
@@ -165,7 +166,7 @@ struct RaceDetailView: View {
             F1SectionHeader(title: "TOP 10 RESULTS", subtitle: "Tap a driver for the full profile")
 
             if viewModel.isLoading {
-                F1LoadingView(message: "Loading results")
+                F1LoadingView(message: "Loading...")
             } else if let error = viewModel.error {
                 HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill")
@@ -179,6 +180,7 @@ struct RaceDetailView: View {
                 ForEach(viewModel.results.prefix(10)) { result in
                     NavigationLink(value: Driver.fallback(driverCode: result.driverCode, driverName: result.driverName, teamName: result.constructor)) {
                         resultRow(result)
+                            .f1InnerCard()
                     }
                     .buttonStyle(.plain)
                 }
@@ -188,41 +190,41 @@ struct RaceDetailView: View {
     }
 
     private func resultRow(_ result: RaceResult) -> some View {
-        HStack(spacing: 12) {
-            F1PositionBadge(position: result.position)
-                .frame(width: 32)
+        F1ListRow(accent: F1Design.teamColor(for: result.constructor)) {
+            HStack(spacing: 12) {
+                F1PositionBadge(position: result.position)
+                    .frame(width: 32)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(result.driverName)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                Text(result.constructor)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(result.driverName)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.white)
+                    Text(result.constructor)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
 
-            Spacer()
+                Spacer()
 
-            VStack(alignment: .trailing, spacing: 2) {
-                Text("\(Int(result.points))")
-                    .font(.headline)
-                    .fontWeight(.bold)
-                Text("pts")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("\(Int(result.points))")
+                        .font(.headline)
+                        .fontWeight(.bold)
+                    Text("pts")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
 
-            if result.status != "Finished" && !result.status.starts(with: "+") {
-                Image(systemName: "exclamationmark.circle")
-                    .font(.caption)
-                    .foregroundStyle(.orange)
-            } else {
-                Image(systemName: "chevron.right")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                if result.status != "Finished" && !result.status.starts(with: "+") {
+                    Image(systemName: "exclamationmark.circle")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                } else {
+                    F1Chevron()
+                }
             }
         }
-        .padding(.vertical, 4)
     }
 
     private var countdownSection: some View {
@@ -240,10 +242,7 @@ struct RaceDetailView: View {
                 .foregroundStyle(Color.f1Red.opacity(0.4))
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 32)
-        .padding(.horizontal)
-        .background(Color.f1CardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: F1Design.cornerRadius, style: .continuous))
+        .f1Card(gradient: true, accent: .f1Red)
     }
 
     private func infoLine(icon: String, title: String, value: String) -> some View {
@@ -252,7 +251,7 @@ struct RaceDetailView: View {
                 .foregroundStyle(Color.f1Red)
                 .frame(width: 18)
             VStack(alignment: .leading, spacing: 2) {
-                Text(title)
+                Text(title.uppercased())
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                 Text(value)
@@ -279,6 +278,10 @@ struct RaceDetailView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding()
         .background(Color.f1SecondaryBackground)
+        .overlay {
+            RoundedRectangle(cornerRadius: F1Design.innerCornerRadius + 2, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.04), lineWidth: 1)
+        }
         .clipShape(RoundedRectangle(cornerRadius: F1Design.innerCornerRadius + 2, style: .continuous))
     }
 
@@ -295,7 +298,7 @@ struct RaceDetailView: View {
     }
 
     private func circuitNarrative(for info: CircuitInfo) -> String {
-        "\(info.city) is a \(info.speedClass.lowercased()) stop with \(info.turns) corners across \(info.formattedLength). With \(info.drsZones) DRS zone\(info.drsZones == 1 ? "" : "s"), the clean read for this weekend is track position, tyre life and how well drivers survive the opening laps. Expect qualifying to shape the race more than raw headline pace alone."
+        "\(info.city) is a \(info.speedClass.lowercased()) stop with \(info.turns) corners across \(info.formattedLength). With \(info.drsZones) DRS zone\(info.drsZones == 1 ? "" : "s"), the read for this weekend is track position, tyre life and how cleanly drivers survive the opening laps. Expect qualifying to matter more than raw headline pace alone."
     }
 }
 

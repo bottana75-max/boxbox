@@ -2,14 +2,13 @@ import SwiftUI
 
 struct PredictView: View {
     @State private var viewModel = PredictViewModel()
-    
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: F1Design.cardSpacing) {
                     if viewModel.isLoading && viewModel.nextRace == nil {
-                        F1LoadingView(message: "Loading prediction desk")
+                        F1LoadingView(message: "Setting up the predictor")
                     } else if let race = viewModel.nextRace {
                         nextRaceHeader(race)
                         predictionBriefingCard(race)
@@ -55,22 +54,24 @@ struct PredictView: View {
     private func nextRaceHeader(_ race: Race) -> some View {
         VStack(alignment: .leading, spacing: F1Design.innerSpacing) {
             HStack {
-                F1SectionHeader(title: "UPCOMING RACE")
+                F1SectionHeader(title: "PREDICTION DESK")
                 Spacer()
-                Text("Round \(race.round)")
-                    .font(.caption)
-                    .fontWeight(.medium)
+                Text("ROUND \(race.round)")
+                    .font(.system(size: 10, weight: .heavy, design: .monospaced))
+                    .tracking(0.8)
                     .foregroundStyle(.secondary)
             }
 
-            Text(race.raceName)
-                .font(.title2)
-                .fontWeight(.bold)
-                .foregroundStyle(.white)
+            VStack(alignment: .leading, spacing: 6) {
+                Text(race.raceName)
+                    .font(.title2)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.white)
 
-            Text("\(race.circuitName) · \(race.country)")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
+                Text("\(race.circuitName) · \(race.country)")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
 
             HStack(spacing: 10) {
                 F1MetricTile(title: "Date", value: race.formattedDate)
@@ -79,7 +80,7 @@ struct PredictView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .f1Card()
+        .f1Card(gradient: true, accent: .f1Red)
     }
 
     private func predictionBriefingCard(_ race: Race) -> some View {
@@ -102,7 +103,7 @@ struct PredictView: View {
 
     private func weatherContextCard(_ context: WeekendContext) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            F1SectionHeader(title: "WEEKEND CONTEXT", subtitle: "Estimated local timing + realistic weather pressure")
+            F1SectionHeader(title: "WEEKEND CONTEXT", subtitle: "Estimated local timing and weather pressure")
 
             Text(context.localClockLabel)
                 .font(.subheadline)
@@ -128,14 +129,14 @@ struct PredictView: View {
 
             Text("\(context.weatherDetail) \(context.windNote)")
                 .font(.caption)
-                .foregroundStyle(.tertiary)
+                .foregroundStyle(.secondary)
         }
         .f1Card()
     }
 
     private var contendersCard: some View {
         VStack(alignment: .leading, spacing: F1Design.innerSpacing) {
-            F1SectionHeader(title: "LEADING CONTENDERS", subtitle: "Standings + recent form feed the prediction model")
+            F1SectionHeader(title: "LEADING CONTENDERS", subtitle: "Standings and recent form power the model")
 
             if viewModel.favoriteDrivers.isEmpty {
                 F1EmptyView(icon: "person.3.fill", title: "Standings are still loading", subtitle: "Pull to refresh and we’ll rebuild the contender board.")
@@ -143,37 +144,39 @@ struct PredictView: View {
             } else {
                 ForEach(Array(viewModel.favoriteDrivers.enumerated()), id: \.element.id) { index, driver in
                     let trend = viewModel.trends.first(where: { $0.id == driver.id })
-                    HStack(spacing: 12) {
-                        Text("P\(index + 1)")
-                            .font(.caption)
-                            .fontWeight(.heavy)
-                            .foregroundStyle(Color.f1Red)
-                            .frame(width: 30)
-
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(driver.driverName)
-                                .font(.headline)
-                                .foregroundStyle(.white)
-                            Text(driver.constructorName)
+                    F1ListRow(accent: F1Design.teamColor(for: driver.constructorName)) {
+                        HStack(spacing: 12) {
+                            Text("P\(index + 1)")
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
-                            if let trend {
-                                Text("\(trend.recentSummary) · \(trend.momentumLabel)")
-                                    .font(.caption2)
-                                    .foregroundStyle(.tertiary)
+                                .fontWeight(.heavy)
+                                .foregroundStyle(Color.f1Red)
+                                .frame(width: 30)
+
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(driver.driverName)
+                                    .font(.headline)
+                                    .foregroundStyle(.white)
+                                Text(driver.constructorName)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                if let trend {
+                                    Text("\(trend.recentSummary) · \(trend.momentumLabel)")
+                                        .font(.caption2)
+                                        .foregroundStyle(.tertiary)
+                                }
                             }
-                        }
 
-                        Spacer()
+                            Spacer()
 
-                        VStack(alignment: .trailing, spacing: 4) {
-                            Text("\(driver.points.cleanNumber)")
-                                .font(.headline)
-                                .fontWeight(.bold)
-                                .foregroundStyle(.white)
-                            Text("pts")
-                                .font(.caption2)
-                                .foregroundStyle(.secondary)
+                            VStack(alignment: .trailing, spacing: 4) {
+                                Text(driver.points.cleanNumber)
+                                    .font(.headline)
+                                    .fontWeight(.bold)
+                                    .foregroundStyle(.white)
+                                Text("pts")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
                     }
                     .f1InnerCard()
@@ -188,7 +191,7 @@ struct PredictView: View {
             F1SectionHeader(title: "SESSION RADAR", subtitle: "Weekend cadence and timing")
 
             if race.weekendSessions.isEmpty {
-                F1EmptyView(icon: "calendar", title: "Session times not ready", subtitle: "We’ll populate the weekend plan when the next race timing lands.")
+                F1EmptyView(icon: "calendar", title: "Session times not ready", subtitle: "We’ll populate the weekend plan when timing lands.")
                     .f1InnerCard()
             } else {
                 ForEach(race.weekendSessions) { session in
@@ -246,6 +249,7 @@ struct PredictView: View {
         .buttonStyle(.borderedProminent)
         .tint(Color.f1Red)
         .disabled(viewModel.isLoading)
+        .controlSize(.large)
     }
 
     private var buttonIcon: String {
@@ -264,7 +268,7 @@ struct PredictView: View {
                 podiumPlace(position: 3, name: prediction.third, height: 60)
             }
         }
-        .f1Card()
+        .f1Card(accent: .f1Red)
         .transition(.scale.combined(with: .opacity))
     }
 
@@ -277,7 +281,7 @@ struct PredictView: View {
                 .lineLimit(2)
 
             ZStack {
-                RoundedRectangle(cornerRadius: 8)
+                RoundedRectangle(cornerRadius: 10)
                     .fill(podiumGradient(for: position))
                     .frame(height: height)
 
@@ -380,9 +384,8 @@ struct PredictView: View {
             )
             .frame(minHeight: 120)
         }
-        .f1Card()
+        .f1Card(gradient: true)
     }
-
 }
 
 #Preview {

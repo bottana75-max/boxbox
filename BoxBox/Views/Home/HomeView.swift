@@ -8,18 +8,18 @@ struct HomeView: View {
             ScrollView {
                 VStack(spacing: F1Design.cardSpacing) {
                     if viewModel.isLoading {
-                        F1LoadingView(message: "Fetching race data")
+                        F1LoadingView(message: "Loading...")
                     } else if let error = viewModel.error {
                         ErrorCard(message: error) {
                             Task { await viewModel.loadData() }
                         }
                     } else if viewModel.nextRace == nil && viewModel.lastRace == nil {
                         VStack(alignment: .leading, spacing: F1Design.innerSpacing) {
-                            F1SectionHeader(title: "PADDOCK STATUS", subtitle: "Nothing loaded yet")
+                            F1SectionHeader(title: "HOME", subtitle: "Pull down to refresh")
                             F1EmptyView(
                                 icon: "antenna.radiowaves.left.and.right.slash",
                                 title: "Race data is not ready yet",
-                                subtitle: "Pull to refresh and BoxBox will repopulate the home dashboard as soon as the schedule feed is back."
+                                subtitle: "Pull down to refresh when the feed is back."
                             )
                             .frame(minHeight: 140)
                         }

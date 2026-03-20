@@ -102,7 +102,7 @@ struct PaywallView: View {
                     VStack(spacing: 4) {
                         Text(paywallCTA)
                             .fontWeight(.bold)
-                        Text(storeKit.isUnlimited ? "Ready to race" : "One-time purchase")
+                        Text(storeKit.isUnlimited ? "Ready to race" : "Unlock once, predict all season")
                             .font(.caption)
                             .foregroundStyle(.white.opacity(0.8))
                     }
