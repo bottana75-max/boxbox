@@ -195,7 +195,7 @@ actor OpenF1Service {
         }
     }
 
-    func buildTrends(from standings: [DriverStanding], recentRaces: [(Race, [RaceResult])], limit: Int = 5) -> [DriverTrend] {
+    nonisolated func buildTrends(from standings: [DriverStanding], recentRaces: [(Race, [RaceResult])], limit: Int = 5) -> [DriverTrend] {
         let raceResultSets = recentRaces.map { $0.1 }
         return standings.prefix(limit).map { standing in
             let results = raceResultSets.compactMap { raceResults in

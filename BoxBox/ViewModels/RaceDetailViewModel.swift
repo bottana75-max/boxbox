@@ -26,7 +26,6 @@ class RaceDetailViewModel {
             }
             isLoading = false
         } else {
-            updateCountdown()
             startCountdownTimer()
         }
     }

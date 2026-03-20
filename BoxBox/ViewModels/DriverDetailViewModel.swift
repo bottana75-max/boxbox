@@ -39,6 +39,8 @@ class DriverDetailViewModel {
         return "Steady"
     }
 
+    private let service = OpenF1Service.shared
+
     init(driver: Driver) {
         self.driver = driver
     }
@@ -47,13 +49,13 @@ class DriverDetailViewModel {
         isLoading = true
         error = nil
         do {
-            driver = try await OpenF1Service.shared.resolveDriver(for: driver)
-            guard let driverId = try await OpenF1Service.shared.findDriverId(for: driver) else {
+            driver = try await service.resolveDriver(for: driver)
+            guard let driverId = try await service.findDriverId(for: driver) else {
                 error = "Driver data is not available right now"
                 isLoading = false
                 return
             }
-            let results = try await OpenF1Service.shared.fetchDriverResults(driverId: driverId)
+            let results = try await service.fetchDriverResults(driverId: driverId)
             recentResults = Array(results.suffix(5))
         } catch {
             self.error = "Recent results not available"

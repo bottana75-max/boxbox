@@ -81,7 +81,7 @@ class PredictViewModel {
             standings = fetchedStandings
             recentRaces = fetchedRecent
             pressureProfile = CircuitPressureProfile.from(info: nextRace?.circuitInfo)
-            trends = await service.buildTrends(from: fetchedStandings, recentRaces: fetchedRecent, limit: 5)
+            trends = service.buildTrends(from: fetchedStandings, recentRaces: fetchedRecent, limit: 5)
         } catch {
             self.error = error.localizedDescription
         }
@@ -108,7 +108,7 @@ class PredictViewModel {
             let activeStandings = standings.isEmpty ? try await service.fetchDriverStandings() : standings
             let activeRecent = recentRaces.isEmpty ? try await service.fetchRecentCompletedRaces(limit: 3) : recentRaces
             let activeTrends = trends.isEmpty
-                ? await service.buildTrends(from: activeStandings, recentRaces: activeRecent, limit: 5)
+                ? service.buildTrends(from: activeStandings, recentRaces: activeRecent, limit: 5)
                 : trends
 
             prediction = try await aiService.predictRace(

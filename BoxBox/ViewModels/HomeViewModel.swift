@@ -52,7 +52,7 @@ class HomeViewModel {
             }
 
             pressureProfile = CircuitPressureProfile.from(info: nextRace?.circuitInfo)
-            driverTrends = await service.buildTrends(from: standings, recentRaces: recent, limit: 5)
+            driverTrends = service.buildTrends(from: standings, recentRaces: recent, limit: 5)
 
             startCountdownTimer()
         } catch {
