@@ -16,20 +16,14 @@
 		8341330D724CA51259D09A5E /* BoxBoxWidgetExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = CDF38FFC44E0E85C42316A44 /* BoxBoxWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		8979B858BFC10EA711997E01 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F95989627549CD3CC318DB /* PaywallView.swift */; };
 		8E064DD990E0B8611B1D82FA /* RaceContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D939F5E50D2DC18FC4E0BB8 /* RaceContext.swift */; };
-		A1B2C3D401000040 /* ReplayModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000040 /* ReplayModels.swift */; };
-		A1B2C3D401000041 /* ReplayService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000041 /* ReplayService.swift */; };
-		A1B2C3D401000042 /* ReplayViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000042 /* ReplayViewModel.swift */; };
-		A1B2C3D401000043 /* TrackReplayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000043 /* TrackReplayView.swift */; };
 		99E2F004A02B90ED1CD25438 /* StandingsWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86FB8E3EF96A3DB37D3B65D5 /* StandingsWidget.swift */; };
 		A1B2C3D401000001 /* BoxBoxApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000001 /* BoxBoxApp.swift */; };
 		A1B2C3D401000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000002 /* ContentView.swift */; };
 		A1B2C3D401000003 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000003 /* Assets.xcassets */; };
-		A1B2C3D401000037 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000037 /* LaunchScreen.storyboard */; };
 		A1B2C3D401000004 /* Constructor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000004 /* Constructor.swift */; };
 		A1B2C3D401000005 /* Driver.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000005 /* Driver.swift */; };
 		A1B2C3D401000006 /* Prediction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000006 /* Prediction.swift */; };
 		A1B2C3D401000007 /* Race.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000007 /* Race.swift */; };
-		A1B2C3D401000050 /* CountdownHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000050 /* CountdownHelpers.swift */; };
 		A1B2C3D401000008 /* AIService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000008 /* AIService.swift */; };
 		A1B2C3D401000009 /* OpenF1Service.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000009 /* OpenF1Service.swift */; };
 		A1B2C3D40100000A /* DriversViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D40000000A /* DriversViewModel.swift */; };
@@ -50,6 +44,12 @@
 		A1B2C3D401000034 /* RaceDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000034 /* RaceDetailViewModel.swift */; };
 		A1B2C3D401000035 /* DriverStandingDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000035 /* DriverStandingDetailViewModel.swift */; };
 		A1B2C3D401000036 /* DesignSystem.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000036 /* DesignSystem.swift */; };
+		A1B2C3D401000037 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000037 /* LaunchScreen.storyboard */; };
+		A1B2C3D401000040 /* ReplayModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000040 /* ReplayModels.swift */; };
+		A1B2C3D401000041 /* ReplayService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000041 /* ReplayService.swift */; };
+		A1B2C3D401000042 /* ReplayViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000042 /* ReplayViewModel.swift */; };
+		A1B2C3D401000043 /* TrackReplayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000043 /* TrackReplayView.swift */; };
+		A1B2C3D401000050 /* CountdownHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000050 /* CountdownHelpers.swift */; };
 		BD6DAA42D662BA4ED3BE7B65 /* TeamDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76CEFBDE356549A61B42D5C6 /* TeamDetailViewModel.swift */; };
 		BFBECDD5325F9A63E6456812 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC42CA8437C937C1A1704BDF /* SwiftUI.framework */; };
 		F7598994CDA8645D57B9E7E7 /* NextRaceWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0BB7F7338ADE1257CC49FB7 /* NextRaceWidget.swift */; };
@@ -80,15 +80,15 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		1508E70DA0E9B06DAE605897 /* StoreKitManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = StoreKitManager.swift; path = StoreKitManager.swift; sourceTree = "<group>"; };
+		1508E70DA0E9B06DAE605897 /* StoreKitManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StoreKitManager.swift; sourceTree = "<group>"; };
 		3AFBC482F2D7707CFADD5A2C /* TeamDetailView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TeamDetailView.swift; sourceTree = "<group>"; };
 		3AFBC482F2D7707CFADD5A2D /* DriverComparisonView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DriverComparisonView.swift; sourceTree = "<group>"; };
 		4F041C9F8234BBB4C3593CB8 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/WidgetKit.framework; sourceTree = DEVELOPER_DIR; };
 		76CEFBDE356549A61B42D5C6 /* TeamDetailViewModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TeamDetailViewModel.swift; sourceTree = "<group>"; };
-		86FB8E3EF96A3DB37D3B65D5 /* StandingsWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = StandingsWidget.swift; path = StandingsWidget.swift; sourceTree = "<group>"; };
+		86FB8E3EF96A3DB37D3B65D5 /* StandingsWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StandingsWidget.swift; sourceTree = "<group>"; };
 		8D939F5E50D2DC18FC4E0BB8 /* RaceContext.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RaceContext.swift; sourceTree = "<group>"; };
-		93F95989627549CD3CC318DB /* PaywallView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = PaywallView.swift; path = PaywallView.swift; sourceTree = "<group>"; };
-		9FC0810A95EFBD26870CA7B3 /* BoxBoxWidgetBundle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = BoxBoxWidgetBundle.swift; path = BoxBoxWidgetBundle.swift; sourceTree = "<group>"; };
+		93F95989627549CD3CC318DB /* PaywallView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
+		9FC0810A95EFBD26870CA7B3 /* BoxBoxWidgetBundle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BoxBoxWidgetBundle.swift; sourceTree = "<group>"; };
 		A1B2C3D400000001 /* BoxBoxApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoxBoxApp.swift; sourceTree = "<group>"; };
 		A1B2C3D400000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A1B2C3D400000003 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -96,7 +96,6 @@
 		A1B2C3D400000005 /* Driver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Driver.swift; sourceTree = "<group>"; };
 		A1B2C3D400000006 /* Prediction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Prediction.swift; sourceTree = "<group>"; };
 		A1B2C3D400000007 /* Race.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Race.swift; sourceTree = "<group>"; };
-		A1B2C3D400000050 /* CountdownHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountdownHelpers.swift; sourceTree = "<group>"; };
 		A1B2C3D400000008 /* AIService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIService.swift; sourceTree = "<group>"; };
 		A1B2C3D400000009 /* OpenF1Service.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenF1Service.swift; sourceTree = "<group>"; };
 		A1B2C3D40000000A /* DriversViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriversViewModel.swift; sourceTree = "<group>"; };
@@ -118,17 +117,18 @@
 		A1B2C3D400000034 /* RaceDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RaceDetailViewModel.swift; sourceTree = "<group>"; };
 		A1B2C3D400000035 /* DriverStandingDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriverStandingDetailViewModel.swift; sourceTree = "<group>"; };
 		A1B2C3D400000036 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
+		A1B2C3D400000037 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		A1B2C3D400000040 /* ReplayModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReplayModels.swift; sourceTree = "<group>"; };
 		A1B2C3D400000041 /* ReplayService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReplayService.swift; sourceTree = "<group>"; };
 		A1B2C3D400000042 /* ReplayViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReplayViewModel.swift; sourceTree = "<group>"; };
 		A1B2C3D400000043 /* TrackReplayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackReplayView.swift; sourceTree = "<group>"; };
-		A1B2C3D400000037 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
+		A1B2C3D400000050 /* CountdownHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountdownHelpers.swift; sourceTree = "<group>"; };
 		A1B2C3D4F0000001 /* BoxBox.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BoxBox.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		A5416964D16F05B9E87671FE /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = Info.plist; path = Info.plist; sourceTree = "<group>"; };
+		A5416964D16F05B9E87671FE /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A5856908E55AC68E7DDE7106 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		AC42CA8437C937C1A1704BDF /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/SwiftUI.framework; sourceTree = DEVELOPER_DIR; };
 		CDF38FFC44E0E85C42316A44 /* BoxBoxWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BoxBoxWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		E0BB7F7338ADE1257CC49FB7 /* NextRaceWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = NextRaceWidget.swift; path = NextRaceWidget.swift; sourceTree = "<group>"; };
+		E0BB7F7338ADE1257CC49FB7 /* NextRaceWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NextRaceWidget.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -171,7 +171,6 @@
 				86FB8E3EF96A3DB37D3B65D5 /* StandingsWidget.swift */,
 				A5416964D16F05B9E87671FE /* Info.plist */,
 			);
-			name = BoxBoxWidget;
 			path = BoxBoxWidget;
 			sourceTree = "<group>";
 		};
@@ -266,14 +265,6 @@
 			path = Views;
 			sourceTree = "<group>";
 		};
-		A1B2C3D4D000000E /* Replay */ = {
-			isa = PBXGroup;
-			children = (
-				A1B2C3D400000043 /* TrackReplayView.swift */,
-			);
-			path = Replay;
-			sourceTree = "<group>";
-		};
 		A1B2C3D4D0000008 /* Drivers */ = {
 			isa = PBXGroup;
 			children = (
@@ -327,6 +318,14 @@
 				29F110A43D226ECFE9468ED1 /* iOS */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		A1B2C3D4D000000E /* Replay */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D400000043 /* TrackReplayView.swift */,
+			);
+			path = Replay;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -493,6 +492,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8GH7D2H8MW;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BoxBoxWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -518,6 +518,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 8GH7D2H8MW;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BoxBoxWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -669,6 +670,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = 8GH7D2H8MW;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BoxBox/Info.plist;
@@ -700,6 +702,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = 8GH7D2H8MW;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BoxBox/Info.plist;

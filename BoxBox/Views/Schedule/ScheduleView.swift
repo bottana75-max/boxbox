@@ -339,7 +339,7 @@ private struct RaceFlagPanel: View {
         .overlay(alignment: .topTrailing) {
             if isNext {
                 Circle()
-                    .fill(.f1Red)
+                    .fill(Color.f1Red)
                     .frame(width: 10, height: 10)
                     .overlay(Circle().stroke(.white.opacity(0.75), lineWidth: 1.5))
                     .offset(x: 4, y: -4)
