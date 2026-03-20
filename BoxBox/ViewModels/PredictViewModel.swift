@@ -14,6 +14,7 @@ class PredictViewModel {
     var showPaywall = false
 
     @ObservationIgnored private var loadTask: Task<Void, Never>?
+    @ObservationIgnored private var predictTask: Task<Void, Never>?
     private let service = OpenF1Service.shared
     private let aiService = AIService.shared
     let storeKit = StoreKitManager.shared
@@ -100,6 +101,7 @@ class PredictViewModel {
 
     nonisolated deinit {
         loadTask?.cancel()
+        predictTask?.cancel()
     }
 
     func predict() async {
@@ -113,30 +115,39 @@ class PredictViewModel {
             return
         }
 
+        predictTask?.cancel()
         isLoading = true
         error = nil
 
-        do {
-            // Use already-loaded data where available; only fetch if the view was somehow bypassed.
-            let activeStandings = standings.isEmpty ? try await service.fetchDriverStandings() : standings
-            let activeRecent = recentRaces.isEmpty ? try await service.fetchRecentCompletedRaces(limit: 3) : recentRaces
-            let activeTrends = trends.isEmpty
-                ? service.buildTrends(from: activeStandings, recentRaces: activeRecent, limit: 5)
-                : trends
+        let task = Task { [weak self] in
+            guard let self else { return }
+            do {
+                // Use already-loaded data where available; only fetch if the view was somehow bypassed.
+                let activeStandings = standings.isEmpty ? try await service.fetchDriverStandings() : standings
+                let activeRecent = recentRaces.isEmpty ? try await service.fetchRecentCompletedRaces(limit: 3) : recentRaces
+                guard !Task.isCancelled else { return }
+                let activeTrends = trends.isEmpty
+                    ? service.buildTrends(from: activeStandings, recentRaces: activeRecent, limit: 5)
+                    : trends
 
-            prediction = try await aiService.predictRace(
-                nextRace: nextRace,
-                driverStandings: activeStandings,
-                recentRaces: activeRecent,
-                trends: activeTrends,
-                pressureProfile: pressureProfile
-            )
+                let result = try await aiService.predictRace(
+                    nextRace: nextRace,
+                    driverStandings: activeStandings,
+                    recentRaces: activeRecent,
+                    trends: activeTrends,
+                    pressureProfile: pressureProfile
+                )
+                guard !Task.isCancelled else { return }
 
-            storeKit.consumeCredit()
-        } catch {
-            self.error = "Something went wrong generating your prediction. Check your API key, connection and try again."
+                prediction = result
+                storeKit.consumeCredit()
+            } catch {
+                guard !Task.isCancelled else { return }
+                self.error = "Something went wrong generating your prediction. Check your API key, connection and try again."
+            }
+            isLoading = false
         }
-
-        isLoading = false
+        predictTask = task
+        await task.value
     }
 }

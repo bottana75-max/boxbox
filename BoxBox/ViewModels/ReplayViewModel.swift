@@ -16,6 +16,7 @@ final class ReplayViewModel {
     var error: String?
     var hasLoadedDriverList = false
 
+    @ObservationIgnored private var loadTask: Task<Void, Never>?
     @ObservationIgnored private var playbackTask: Task<Void, Never>?
     private let service = ReplayService.shared
     private let maxDriverSelection = 5
@@ -56,20 +57,25 @@ final class ReplayViewModel {
 
     func prepare() async {
         guard canShowReplay, !hasLoadedDriverList else { return }
+        loadTask?.cancel()
         isLoadingDrivers = true
         error = nil
 
-        do {
-            let drivers = try await service.fetchAvailableDrivers(for: race)
-            guard !Task.isCancelled else { return }
-            availableDrivers = drivers
-            hasLoadedDriverList = true
-        } catch {
-            guard !Task.isCancelled else { return }
-            self.error = error.localizedDescription
+        let task = Task { [weak self] in
+            guard let self else { return }
+            do {
+                let drivers = try await service.fetchAvailableDrivers(for: race)
+                guard !Task.isCancelled else { return }
+                availableDrivers = drivers
+                hasLoadedDriverList = true
+            } catch {
+                guard !Task.isCancelled else { return }
+                self.error = error.localizedDescription
+            }
+            isLoadingDrivers = false
         }
-
-        isLoadingDrivers = false
+        loadTask = task
+        await task.value
     }
 
     func toggleDriver(_ driver: ReplayDriver) {
@@ -94,26 +100,31 @@ final class ReplayViewModel {
             return
         }
 
+        loadTask?.cancel()
         isLoadingReplay = true
         error = nil
         pause()
 
-        do {
-            let payload = try await service.fetchReplay(for: race, selectedDriverNumbers: Array(selectedDriverNumbers).sorted())
-            guard !Task.isCancelled else { return }
-            availableDrivers = payload.availableDrivers
-            snapshots = payload.snapshots
-            projection = payload.projection
-            selectedIndex = 0
-            if snapshots.isEmpty {
-                error = "Replay data is not available for this race yet."
+        let task = Task { [weak self] in
+            guard let self else { return }
+            do {
+                let payload = try await service.fetchReplay(for: race, selectedDriverNumbers: Array(selectedDriverNumbers).sorted())
+                guard !Task.isCancelled else { return }
+                availableDrivers = payload.availableDrivers
+                snapshots = payload.snapshots
+                projection = payload.projection
+                selectedIndex = 0
+                if snapshots.isEmpty {
+                    error = "Replay data is not available for this race yet."
+                }
+            } catch {
+                guard !Task.isCancelled else { return }
+                self.error = error.localizedDescription
             }
-        } catch {
-            guard !Task.isCancelled else { return }
-            self.error = error.localizedDescription
+            isLoadingReplay = false
         }
-
-        isLoadingReplay = false
+        loadTask = task
+        await task.value
     }
 
     func togglePlayback() {
@@ -124,13 +135,13 @@ final class ReplayViewModel {
         guard !isPlaying, snapshots.count > 1 else { return }
         isPlaying = true
         playbackTask = Task { [weak self] in
-            while !Task.isCancelled {
-                guard let self else { return }
+            while !Task.isCancelled, let self {
                 if self.selectedIndex >= self.snapshots.count - 1 {
                     self.isPlaying = false
                     return
                 }
                 try? await Task.sleep(for: .milliseconds(120))
+                guard !Task.isCancelled else { break }
                 self.selectedIndex += 1
             }
         }
@@ -148,6 +159,7 @@ final class ReplayViewModel {
     }
 
     nonisolated deinit {
+        loadTask?.cancel()
         playbackTask?.cancel()
     }
 }

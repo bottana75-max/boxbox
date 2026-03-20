@@ -44,6 +44,13 @@ struct RaceLocalTime {
     let identifier: String
     let abbreviation: String
 
+    // Cached formatter — DateFormatter allocation is expensive; reuse across calls.
+    private static let clockFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "EEE d MMM · HH:mm"
+        return f
+    }()
+
     static func lookup(country: String, city: String?) -> RaceLocalTime {
         let key = "\((city ?? "")) \(country)".lowercased()
         let mapping: [(String, RaceLocalTime)] = [
@@ -93,10 +100,8 @@ struct RaceLocalTime {
         var calendar = Calendar(identifier: .gregorian)
         calendar.timeZone = tz
         let localDate = calendar.date(bySettingHour: 15, minute: 0, second: 0, of: date) ?? date
-        let formatter = DateFormatter()
-        formatter.timeZone = tz
-        formatter.dateFormat = "EEE d MMM · HH:mm"
-        return "Estimated local lights out: \(formatter.string(from: localDate)) \(timezone.abbreviation)"
+        clockFormatter.timeZone = tz
+        return "Estimated local lights out: \(clockFormatter.string(from: localDate)) \(timezone.abbreviation)"
     }
 
     static func sessionNarrative(localHour: Int, weather: SeasonalWeatherProfile) -> String {

@@ -81,9 +81,9 @@ class HomeViewModel {
     private func startCountdownSync() {
         countdownSyncTask?.cancel()
         countdownSyncTask = Task { [weak self] in
-            while !Task.isCancelled {
+            while !Task.isCancelled, let self {
                 try? await Task.sleep(for: .seconds(1))
-                guard let self else { return }
+                guard !Task.isCancelled else { break }
                 self.countdown = self.countdownTimer.text
             }
         }

@@ -36,9 +36,10 @@ final class CountdownTimer {
         task?.cancel()
         tick() // Populate immediately so the UI never shows an empty string on first render.
         task = Task { [weak self] in
-            while !Task.isCancelled {
+            while !Task.isCancelled, let self {
                 try? await Task.sleep(for: .seconds(1))
-                self?.tick()
+                guard !Task.isCancelled else { break }
+                self.tick()
             }
         }
     }

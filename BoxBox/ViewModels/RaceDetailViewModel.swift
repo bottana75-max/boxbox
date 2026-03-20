@@ -9,6 +9,7 @@ class RaceDetailViewModel {
     var error: String?
     var countdown: String = ""
 
+    @ObservationIgnored private var loadTask: Task<Void, Never>?
     @ObservationIgnored private var countdownSyncTask: Task<Void, Never>?
     @ObservationIgnored private lazy var countdownTimer = CountdownTimer(
         targetDateProvider: { [weak self] in self?.race.raceDate },
@@ -21,14 +22,23 @@ class RaceDetailViewModel {
 
     func loadData() async {
         if race.isPast {
+            loadTask?.cancel()
             isLoading = true
             error = nil
-            do {
-                results = try await OpenF1Service.shared.fetchRaceResults(round: race.round)
-            } catch {
-                self.error = "Results not available yet"
+            let task = Task { [weak self] in
+                guard let self else { return }
+                do {
+                    let fetched = try await OpenF1Service.shared.fetchRaceResults(round: race.round)
+                    guard !Task.isCancelled else { return }
+                    results = fetched
+                } catch {
+                    guard !Task.isCancelled else { return }
+                    self.error = "Results not available yet"
+                }
+                isLoading = false
             }
-            isLoading = false
+            loadTask = task
+            await task.value
         } else {
             if race.raceDate == nil {
                 countdown = "Date TBD"
@@ -39,9 +49,9 @@ class RaceDetailViewModel {
             // Sync timer text into the observable property each second.
             countdownSyncTask?.cancel()
             countdownSyncTask = Task { [weak self] in
-                while !Task.isCancelled {
+                while !Task.isCancelled, let self {
                     try? await Task.sleep(for: .seconds(1))
-                    guard let self else { return }
+                    guard !Task.isCancelled else { break }
                     self.countdown = self.countdownTimer.text.isEmpty ? "Race started!" : self.countdownTimer.text
                 }
             }
@@ -49,6 +59,7 @@ class RaceDetailViewModel {
     }
 
     nonisolated deinit {
+        loadTask?.cancel()
         countdownSyncTask?.cancel()
     }
 }

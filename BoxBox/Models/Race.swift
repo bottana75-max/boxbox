@@ -68,7 +68,8 @@ struct Race: Identifiable, Codable, Hashable {
 
     var daysUntilRace: Int? {
         guard let raceDate else { return nil }
-        return Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: Date()), to: Calendar.current.startOfDay(for: raceDate)).day
+        let cal = Race.gregorianCalendar
+        return cal.dateComponents([.day], from: cal.startOfDay(for: Date()), to: cal.startOfDay(for: raceDate)).day
     }
 
     var weekendSessions: [WeekendSession] {

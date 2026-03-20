@@ -51,9 +51,10 @@ class StoreKitManager {
     }
 
     func consumeCredit() {
-        guard !isUnlimited else { return }
-        let current = UserDefaults.standard.integer(forKey: Self.creditsKey)
-        UserDefaults.standard.set(max(0, current - 1), forKey: Self.creditsKey)
+        let defaults = UserDefaults.standard
+        guard !defaults.bool(forKey: Self.unlimitedKey) else { return }
+        let current = defaults.integer(forKey: Self.creditsKey)
+        defaults.set(max(0, current - 1), forKey: Self.creditsKey)
     }
 
     func loadProducts() async {

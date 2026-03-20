@@ -61,7 +61,6 @@ class DriverDetailViewModel {
 
                 guard let driverId = try await service.findDriverId(for: resolved) else {
                     error = "Driver data is not available right now"
-                    isLoading = false
                     return
                 }
                 guard !Task.isCancelled else { return }
