@@ -18,6 +18,19 @@ final class ReplayService {
             case date, position
             case driverNumber = "driver_number"
         }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            date = try container.decode(String.self, forKey: .date)
+            position = try Self.decodeInt(container, forKey: .position)
+            driverNumber = try Self.decodeInt(container, forKey: .driverNumber)
+        }
+
+        private static func decodeInt(_ container: KeyedDecodingContainer<CodingKeys>, forKey key: CodingKeys) throws -> Int {
+            if let intValue = try? container.decode(Int.self, forKey: key) { return intValue }
+            if let stringValue = try? container.decode(String.self, forKey: key), let intValue = Int(stringValue) { return intValue }
+            throw DecodingError.dataCorruptedError(forKey: key, in: container, debugDescription: "Expected Int-compatible value")
+        }
     }
 
     private struct DriverResponse: Decodable {
@@ -55,13 +68,35 @@ final class ReplayService {
     private struct LocationResponse: Decodable {
         let date: String
         let driverNumber: Int
-        let x: Double
-        let y: Double
-        let z: Double
+        let x: Double?
+        let y: Double?
+        let z: Double?
 
         enum CodingKeys: String, CodingKey {
             case date, x, y, z
             case driverNumber = "driver_number"
+        }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            date = try container.decode(String.self, forKey: .date)
+            driverNumber = try Self.decodeInt(container, forKey: .driverNumber)
+            x = Self.decodeDoubleIfPresent(container, forKey: .x)
+            y = Self.decodeDoubleIfPresent(container, forKey: .y)
+            z = Self.decodeDoubleIfPresent(container, forKey: .z)
+        }
+
+        private static func decodeInt(_ container: KeyedDecodingContainer<CodingKeys>, forKey key: CodingKeys) throws -> Int {
+            if let intValue = try? container.decode(Int.self, forKey: key) { return intValue }
+            if let stringValue = try? container.decode(String.self, forKey: key), let intValue = Int(stringValue) { return intValue }
+            throw DecodingError.dataCorruptedError(forKey: key, in: container, debugDescription: "Expected Int-compatible value")
+        }
+
+        private static func decodeDoubleIfPresent(_ container: KeyedDecodingContainer<CodingKeys>, forKey key: CodingKeys) -> Double? {
+            if let value = try? container.decodeIfPresent(Double.self, forKey: key) { return value }
+            if let intValue = try? container.decodeIfPresent(Int.self, forKey: key) { return intValue.map(Double.init) }
+            if let stringValue = try? container.decodeIfPresent(String.self, forKey: key), let stringValue, let doubleValue = Double(stringValue) { return doubleValue }
+            return nil
         }
     }
 
@@ -74,6 +109,19 @@ final class ReplayService {
             case dateStart = "date_start"
             case driverNumber = "driver_number"
             case lapNumber = "lap_number"
+        }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            dateStart = try? container.decodeIfPresent(String.self, forKey: .dateStart)
+            driverNumber = try Self.decodeInt(container, forKey: .driverNumber)
+            lapNumber = try Self.decodeInt(container, forKey: .lapNumber)
+        }
+
+        private static func decodeInt(_ container: KeyedDecodingContainer<CodingKeys>, forKey key: CodingKeys) throws -> Int {
+            if let intValue = try? container.decode(Int.self, forKey: key) { return intValue }
+            if let stringValue = try? container.decode(String.self, forKey: key), let intValue = Int(stringValue) { return intValue }
+            throw DecodingError.dataCorruptedError(forKey: key, in: container, debugDescription: "Expected Int-compatible value")
         }
     }
 
@@ -248,8 +296,11 @@ final class ReplayService {
                     let (data, _) = try await URLSession.shared.data(from: url)
                     let responses = try self.decoder.decode([LocationResponse].self, from: data)
                     let points = responses.compactMap { response -> ReplayLocationPoint? in
-                        guard let date = self.parseDate(response.date) else { return nil }
-                        return ReplayLocationPoint(date: date, x: response.x, y: response.y, z: response.z)
+                        guard let date = self.parseDate(response.date),
+                              let x = response.x,
+                              let y = response.y
+                        else { return nil }
+                        return ReplayLocationPoint(date: date, x: x, y: y, z: response.z ?? 0)
                     }
                     .sorted { $0.date < $1.date }
                     return (driverNumber, points)
