@@ -91,7 +91,7 @@ final class ReplayService {
         return formatter
     }()
 
-    private func parseDate(_ string: String) -> Date? {
+    nonisolated private func parseDate(_ string: String) -> Date? {
         Self.isoFormatter.date(from: string) ?? Self.isoFormatterNoFrac.date(from: string)
     }
 
