@@ -931,15 +931,43 @@ actor ReplayService {
     }
 
     private func fallbackTrack(points: [ReplayLocationPoint]) -> [TrackMapPoint] {
-        let xs = points.map(\.x)
-        let ys = points.map(\.y)
+        let cleanedPoints = trimmingEdgeSpurs(from: points)
+        let xs = cleanedPoints.map(\.x)
+        let ys = cleanedPoints.map(\.y)
         guard let minX = xs.min(), let maxX = xs.max(), let minY = ys.min(), let maxY = ys.max() else { return [] }
         let spanX = max(maxX - minX, 1)
         let spanY = max(maxY - minY, 1)
-        let sampled = evenlySubsampled(points.map { SIMD2<Double>($0.x, $0.y) }, maxCount: 400)
+        let sampled = evenlySubsampled(cleanedPoints.map { SIMD2<Double>($0.x, $0.y) }, maxCount: 400)
         return sampled.map {
             TrackMapPoint((($0.x - minX) / spanX) * 100, (($0.y - minY) / spanY) * 100)
         }
+    }
+
+    private func trimmingEdgeSpurs(from points: [ReplayLocationPoint]) -> [ReplayLocationPoint] {
+        guard points.count >= 4 else { return points }
+
+        var trimmed = points
+        let segmentLengths = zip(trimmed, trimmed.dropFirst()).map { hypot($1.x - $0.x, $1.y - $0.y) }
+        guard !segmentLengths.isEmpty else { return points }
+
+        let sortedLengths = segmentLengths.sorted()
+        let median = sortedLengths[sortedLengths.count / 2]
+        let threshold = max(median * 6, 0.5)
+
+        while trimmed.count >= 4 {
+            let firstJump = hypot(trimmed[1].x - trimmed[0].x, trimmed[1].y - trimmed[0].y)
+            if firstJump <= threshold { break }
+            trimmed.removeFirst()
+        }
+
+        while trimmed.count >= 4 {
+            let lastIndex = trimmed.count - 1
+            let lastJump = hypot(trimmed[lastIndex].x - trimmed[lastIndex - 1].x, trimmed[lastIndex].y - trimmed[lastIndex - 1].y)
+            if lastJump <= threshold { break }
+            trimmed.removeLast()
+        }
+
+        return trimmed.count >= 2 ? trimmed : points
     }
 
     private func makeProjector(source: [ReplayLocationPoint], target: [TrackMapPoint]) -> ((ReplayLocationPoint) -> TrackMapPoint?) {
