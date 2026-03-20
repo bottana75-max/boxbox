@@ -25,7 +25,7 @@ struct ContentView: View {
             Tab("Standings", systemImage: "chart.bar.fill") {
                 StandingsView()
             }
-            Tab("Schedule", systemImage: "calendar") {
+            Tab("Races", systemImage: "flag.checkered") {
                 ScheduleView()
             }
         }
