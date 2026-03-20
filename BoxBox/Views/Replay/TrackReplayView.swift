@@ -9,48 +9,128 @@ struct TrackReplayView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: F1Design.cardSpacing) {
-            replayHeader
+            introCard
 
-            if viewModel.isLoading {
-                F1LoadingView(message: "Loading replay timeline")
-                    .frame(minHeight: 180)
+            if viewModel.isLoadingDrivers {
+                F1LoadingView(message: "Loading driver list")
+                    .frame(minHeight: 140)
                     .f1Card()
-            } else if let error = viewModel.error {
+            } else if let error = viewModel.error, viewModel.availableDrivers.isEmpty {
                 ErrorCard(message: error) {
-                    Task { await viewModel.loadReplay() }
+                    Task { await viewModel.prepare() }
                 }
-            } else if let snapshot = viewModel.currentSnapshot {
-                snapshotHero(snapshot)
-                playbackControls
-                standingsCard(snapshot)
             } else {
-                F1EmptyView(
-                    icon: "play.slash",
-                    title: "Replay not available",
-                    subtitle: "We only surface replay inside completed races from this season when position data is ready."
-                )
-                .f1Card()
+                selectionCard
+
+                if viewModel.isLoadingReplay {
+                    F1LoadingView(message: "Downloading real race location data")
+                        .frame(minHeight: 220)
+                        .f1Card()
+                } else if let snapshot = viewModel.currentSnapshot, !viewModel.snapshots.isEmpty {
+                    mapCard(snapshot)
+                    playbackControls
+                    standingsCard(snapshot)
+                } else if let error = viewModel.error {
+                    ErrorCard(message: error) {
+                        Task { await viewModel.loadReplay() }
+                    }
+                }
             }
         }
         .task {
-            await viewModel.loadReplay()
+            await viewModel.prepare()
         }
     }
 
-    private var replayHeader: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            F1SectionHeader(title: "RACE REPLAY", subtitle: "Accurate position-based playback for this completed race")
+    private var introCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            F1SectionHeader(title: "RACE REPLAY", subtitle: "Only shown for completed races from this season")
+
+            Text("This replay uses OpenF1 race positions plus per-driver location samples. We only draw cars where we have fresh telemetry, and we ask you to choose drivers before pulling the heavy location stream.")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
 
             HStack(spacing: 10) {
-                F1StatPill(title: "Scope", value: "Current season only", style: .subtle)
-                F1StatPill(title: "Format", value: "Timeline", style: .subtle)
-                F1StatPill(title: "Data", value: "Live positions", style: .subtle)
+                F1StatPill(title: "Motion", value: "Real samples", style: .subtle)
+                F1StatPill(title: "Limit", value: "5 drivers", style: .subtle)
+                F1StatPill(title: "Coverage", value: "Full race", style: .subtle)
             }
         }
         .f1Card()
     }
 
-    private func snapshotHero(_ snapshot: ReplaySnapshot) -> some View {
+    private var selectionCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    F1SectionHeader(title: "LOAD DRIVERS", subtitle: viewModel.selectionSummary)
+                    Text("Pick the drivers you want on the moving map. The field ranking still comes from the full race position feed.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Button {
+                    Task { await viewModel.loadReplay() }
+                } label: {
+                    Text(viewModel.snapshots.isEmpty ? "Load replay" : "Reload")
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .background(viewModel.selectedDriverNumbers.isEmpty ? Color.gray.opacity(0.35) : Color.f1Red)
+                        .clipShape(Capsule())
+                }
+                .disabled(viewModel.selectedDriverNumbers.isEmpty || viewModel.isLoadingReplay)
+            }
+
+            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 10) {
+                ForEach(viewModel.availableDrivers) { driver in
+                    driverChip(driver)
+                }
+            }
+        }
+        .f1Card()
+    }
+
+    private func driverChip(_ driver: ReplayDriver) -> some View {
+        let isSelected = viewModel.selectedDriverNumbers.contains(driver.driverNumber)
+
+        return Button {
+            viewModel.toggleDriver(driver)
+        } label: {
+            HStack(spacing: 10) {
+                Circle()
+                    .fill(driver.color)
+                    .frame(width: 10, height: 10)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(driver.nameAcronym)
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(.white)
+                    Text(driver.fullName)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+
+                Spacer(minLength: 8)
+
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .foregroundStyle(isSelected ? Color.f1Red : .secondary)
+            }
+            .padding(12)
+            .background(Color.f1SecondaryBackground)
+            .overlay {
+                RoundedRectangle(cornerRadius: F1Design.innerCornerRadius, style: .continuous)
+                    .strokeBorder(isSelected ? driver.color : Color.white.opacity(0.05), lineWidth: isSelected ? 1.2 : 1)
+            }
+            .clipShape(RoundedRectangle(cornerRadius: F1Design.innerCornerRadius, style: .continuous))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func mapCard(_ snapshot: ReplaySnapshot) -> some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 6) {
@@ -60,71 +140,26 @@ struct TrackReplayView: View {
                     Text(snapshot.headline)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
                 }
-
                 Spacer()
-
-                if let leader = snapshot.standings.first {
-                    VStack(alignment: .trailing, spacing: 6) {
-                        Text("P1")
-                            .font(.caption.weight(.bold))
-                            .foregroundStyle(Color.f1Red)
-                        Text(leader.driver.nameAcronym)
-                            .font(.title3.weight(.black))
-                            .foregroundStyle(leader.driver.color)
-                        Text(leader.driver.teamName)
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.trailing)
-                    }
+                VStack(alignment: .trailing, spacing: 4) {
+                    Text("Loaded")
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(Color.f1Red)
+                    Text("\(viewModel.selectedDriverNumbers.count) drivers")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
             }
 
-            replayTimeline(snapshot)
+            ReplayCircuitMapView(trackPoints: viewModel.race.circuitInfo?.trackMapPoints ?? [], markers: snapshot.markers)
+                .frame(height: 250)
+
+            Text("Markers update only when a fresh OpenF1 location sample exists (held for up to \(Int(viewModel.projection?.freshnessWindow ?? 4))s).")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
         .f1Card(gradient: true, accent: .f1Red)
-    }
-
-    private func replayTimeline(_ snapshot: ReplaySnapshot) -> some View {
-        let topFive = Array(snapshot.standings.prefix(5))
-
-        return VStack(alignment: .leading, spacing: 10) {
-            Text("Front of the field")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
-
-            ForEach(topFive) { entry in
-                HStack(spacing: 10) {
-                    F1PositionBadge(position: entry.position)
-                        .frame(width: 28)
-
-                    Circle()
-                        .fill(entry.driver.color)
-                        .frame(width: 8, height: 8)
-
-                    Text(entry.driver.fullName)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.white)
-
-                    Spacer()
-
-                    if entry.delta != 0 {
-                        Label(
-                            entry.delta > 0 ? "+\(entry.delta)" : "\(entry.delta)",
-                            systemImage: entry.delta > 0 ? "arrow.up" : "arrow.down"
-                        )
-                        .font(.caption2.weight(.bold))
-                        .foregroundStyle(entry.delta > 0 ? .green : .orange)
-                    } else {
-                        Text("=")
-                            .font(.caption2.weight(.bold))
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .f1InnerCard()
-            }
-        }
     }
 
     private var playbackControls: some View {
@@ -136,16 +171,12 @@ struct TrackReplayView: View {
             .tint(Color.f1Red)
 
             HStack(spacing: 18) {
-                Button {
-                    viewModel.step(by: -1)
-                } label: {
-                    Image(systemName: "backward.frame.fill")
+                Button { viewModel.step(by: -15) } label: {
+                    Image(systemName: "gobackward.15")
                         .font(.title3)
                 }
 
-                Button {
-                    viewModel.togglePlayback()
-                } label: {
+                Button { viewModel.togglePlayback() } label: {
                     Image(systemName: viewModel.isPlaying ? "pause.fill" : "play.fill")
                         .font(.title3)
                         .frame(width: 44, height: 44)
@@ -153,10 +184,8 @@ struct TrackReplayView: View {
                         .clipShape(Circle())
                 }
 
-                Button {
-                    viewModel.step(by: 1)
-                } label: {
-                    Image(systemName: "forward.frame.fill")
+                Button { viewModel.step(by: 15) } label: {
+                    Image(systemName: "goforward.15")
                         .font(.title3)
                 }
 
@@ -173,7 +202,7 @@ struct TrackReplayView: View {
 
     private func standingsCard(_ snapshot: ReplaySnapshot) -> some View {
         VStack(alignment: .leading, spacing: F1Design.innerSpacing) {
-            F1SectionHeader(title: "TOP 10 SNAPSHOT", subtitle: "Position changes between replay checkpoints")
+            F1SectionHeader(title: "RACE ORDER", subtitle: "Top 10 from the official position feed at this replay moment")
 
             ForEach(snapshot.standings) { entry in
                 HStack(spacing: 12) {
@@ -195,15 +224,14 @@ struct TrackReplayView: View {
 
                     Spacer()
 
-                    Text(entry.driver.nameAcronym)
-                        .font(.caption.weight(.bold))
-                        .foregroundStyle(.secondary)
-
-                    if entry.delta != 0 {
-                        Text(entry.delta > 0 ? "+\(entry.delta)" : "\(entry.delta)")
+                    if entry.isSelected {
+                        Text("ON MAP")
                             .font(.caption2.weight(.bold))
-                            .foregroundStyle(entry.delta > 0 ? .green : .orange)
-                            .frame(width: 30, alignment: .trailing)
+                            .foregroundStyle(Color.f1Red)
+                    } else {
+                        Text(entry.driver.nameAcronym)
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(.secondary)
                     }
                 }
                 .f1InnerCard()
@@ -213,12 +241,69 @@ struct TrackReplayView: View {
     }
 }
 
+private struct ReplayCircuitMapView: View {
+    let trackPoints: [TrackMapPoint]
+    let markers: [ReplayMarker]
+
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack {
+                RoundedRectangle(cornerRadius: 20)
+                    .fill(Color.f1SecondaryBackground)
+
+                trackPath(in: geometry.size)
+                    .stroke(Color.white.opacity(0.14), style: StrokeStyle(lineWidth: 10, lineCap: .round, lineJoin: .round))
+
+                trackPath(in: geometry.size)
+                    .stroke(Color.white.opacity(0.85), style: StrokeStyle(lineWidth: 2.25, lineCap: .round, lineJoin: .round))
+
+                ForEach(markers) { marker in
+                    VStack(spacing: 2) {
+                        Text(marker.driver.nameAcronym)
+                            .font(.system(size: 9, weight: .black, design: .rounded))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 3)
+                            .background(marker.driver.color)
+                            .clipShape(Capsule())
+
+                        Circle()
+                            .fill(marker.driver.color)
+                            .frame(width: 10, height: 10)
+                            .overlay {
+                                Circle().stroke(Color.white, lineWidth: 2)
+                            }
+                    }
+                    .position(position(for: marker.projectedPoint, in: geometry.size))
+                }
+            }
+        }
+    }
+
+    private func trackPath(in size: CGSize) -> Path {
+        let source = trackPoints.isEmpty ? [TrackMapPoint(20, 80), TrackMapPoint(80, 20)] : trackPoints
+        return Path { path in
+            guard let first = source.first else { return }
+            path.move(to: position(for: first, in: size))
+            for point in source.dropFirst() {
+                path.addLine(to: position(for: point, in: size))
+            }
+            path.closeSubpath()
+        }
+    }
+
+    private func position(for point: TrackMapPoint, in size: CGSize) -> CGPoint {
+        CGPoint(x: point.x / 100 * size.width, y: point.y / 100 * size.height)
+    }
+}
+
 private extension TimeInterval {
     var replayClock: String {
         let totalSeconds = Int(self)
-        let minutes = totalSeconds / 60
+        let hours = totalSeconds / 3600
+        let minutes = (totalSeconds % 3600) / 60
         let seconds = totalSeconds % 60
-        return String(format: "%d:%02d", minutes, seconds)
+        return hours > 0 ? String(format: "%d:%02d:%02d", hours, minutes, seconds) : String(format: "%d:%02d", minutes, seconds)
     }
 }
 

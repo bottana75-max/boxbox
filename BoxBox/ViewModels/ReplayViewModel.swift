@@ -2,17 +2,23 @@ import Foundation
 
 @MainActor
 @Observable
-class ReplayViewModel {
+final class ReplayViewModel {
     let race: Race
 
+    var availableDrivers: [ReplayDriver] = []
+    var selectedDriverNumbers: Set<Int> = []
     var snapshots: [ReplaySnapshot] = []
+    var projection: ReplayProjectionMetadata?
     var selectedIndex = 0
     var isPlaying = false
-    var isLoading = false
+    var isLoadingDrivers = false
+    var isLoadingReplay = false
     var error: String?
+    var hasLoadedDriverList = false
 
     @ObservationIgnored private var playbackTask: Task<Void, Never>?
     private let service = ReplayService.shared
+    private let maxDriverSelection = 5
 
     init(race: Race) {
         self.race = race
@@ -39,24 +45,70 @@ class ReplayViewModel {
         }
     }
 
+    var selectedDrivers: [ReplayDriver] {
+        availableDrivers.filter { selectedDriverNumbers.contains($0.driverNumber) }
+    }
+
+    var selectionSummary: String {
+        if selectedDriverNumbers.isEmpty { return "Choose 1 to 5 drivers before loading full location data." }
+        return "\(selectedDriverNumbers.count)/\(maxDriverSelection) drivers selected"
+    }
+
+    func prepare() async {
+        guard canShowReplay, !hasLoadedDriverList else { return }
+        isLoadingDrivers = true
+        error = nil
+
+        do {
+            availableDrivers = try await service.fetchAvailableDrivers(for: race)
+            hasLoadedDriverList = true
+        } catch {
+            self.error = error.localizedDescription
+        }
+
+        isLoadingDrivers = false
+    }
+
+    func toggleDriver(_ driver: ReplayDriver) {
+        if selectedDriverNumbers.contains(driver.driverNumber) {
+            selectedDriverNumbers.remove(driver.driverNumber)
+            return
+        }
+
+        guard selectedDriverNumbers.count < maxDriverSelection else {
+            error = "Load up to 5 drivers at a time so the replay stays fast and readable."
+            return
+        }
+
+        error = nil
+        selectedDriverNumbers.insert(driver.driverNumber)
+    }
+
     func loadReplay() async {
         guard canShowReplay else { return }
-        isLoading = true
+        guard !selectedDriverNumbers.isEmpty else {
+            error = "Choose at least one driver first."
+            return
+        }
+
+        isLoadingReplay = true
         error = nil
         pause()
 
         do {
-            let payload = try await service.fetchReplay(for: race)
+            let payload = try await service.fetchReplay(for: race, selectedDriverNumbers: Array(selectedDriverNumbers).sorted())
+            availableDrivers = payload.availableDrivers
             snapshots = payload.snapshots
+            projection = payload.projection
             selectedIndex = 0
             if snapshots.isEmpty {
-                error = "Replay data is not available for this race yet"
+                error = "Replay data is not available for this race yet."
             }
         } catch {
             self.error = error.localizedDescription
         }
 
-        isLoading = false
+        isLoadingReplay = false
     }
 
     func togglePlayback() {
@@ -73,7 +125,7 @@ class ReplayViewModel {
                     self.isPlaying = false
                     return
                 }
-                try? await Task.sleep(for: .milliseconds(900))
+                try? await Task.sleep(for: .milliseconds(120))
                 self.selectedIndex += 1
             }
         }

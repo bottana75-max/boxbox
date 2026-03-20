@@ -1,11 +1,6 @@
 import Foundation
 import SwiftUI
 
-struct PositionPoint {
-    let date: Date
-    let position: Int
-}
-
 struct ReplayDriver: Identifiable, Hashable {
     let driverNumber: Int
     let fullName: String
@@ -20,10 +15,26 @@ struct ReplayDriver: Identifiable, Hashable {
     }
 }
 
+struct ReplayLocationPoint: Hashable {
+    let date: Date
+    let x: Double
+    let y: Double
+    let z: Double
+}
+
+struct ReplayMarker: Identifiable, Hashable {
+    let driver: ReplayDriver
+    let runningPosition: Int?
+    let projectedPoint: TrackMapPoint
+    let sourcePoint: ReplayLocationPoint
+
+    var id: Int { driver.driverNumber }
+}
+
 struct ReplayStandingEntry: Identifiable, Hashable {
     let driver: ReplayDriver
     let position: Int
-    let delta: Int
+    let isSelected: Bool
 
     var id: Int { driver.driverNumber }
 }
@@ -32,14 +43,24 @@ struct ReplaySnapshot: Identifiable, Hashable {
     let index: Int
     let timestamp: Date
     let elapsedTime: TimeInterval
+    let markers: [ReplayMarker]
     let standings: [ReplayStandingEntry]
     let headline: String
 
     var id: Int { index }
 }
 
+struct ReplayProjectionMetadata: Hashable {
+    let loadedDriverCount: Int
+    let sampleCount: Int
+    let usesProjectedTrackFit: Bool
+    let freshnessWindow: TimeInterval
+}
+
 struct RaceReplayPayload {
-    let drivers: [ReplayDriver]
+    let availableDrivers: [ReplayDriver]
+    let selectedDrivers: [ReplayDriver]
     let snapshots: [ReplaySnapshot]
     let totalDuration: TimeInterval
+    let projection: ReplayProjectionMetadata
 }
