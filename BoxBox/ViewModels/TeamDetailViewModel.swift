@@ -110,16 +110,16 @@ class TeamDetailViewModel {
             do {
                 async let standingsReq = OpenF1Service.shared.fetchConstructorStandings()
                 async let driverStandingsReq = OpenF1Service.shared.fetchDriverStandings()
-                async let resultsReq = OpenF1Service.shared.fetchConstructorResults(constructorId: constructorId)
+                async let resultsReq = OpenF1Service.shared.fetchConstructorResults(constructorId: self.constructorId)
 
                 let (constructors, drivers, results) = try await (standingsReq, driverStandingsReq, resultsReq)
 
                 guard !Task.isCancelled else { return }
 
-                allConstructors = constructors.sorted { $0.position < $1.position }
-                standing = constructors.first { $0.name == teamName }
-                teamDrivers = drivers.filter { $0.constructorName == teamName }.sorted { $0.position < $1.position }
-                recentResults = Array(results.suffix(10))
+                self.allConstructors = constructors.sorted { $0.position < $1.position }
+                self.standing = constructors.first { $0.name == self.teamName }
+                self.teamDrivers = drivers.filter { $0.constructorName == self.teamName }.sorted { $0.position < $1.position }
+                self.recentResults = Array(results.suffix(10))
             } catch {
                 guard !Task.isCancelled else { return }
                 self.error = "Could not load team data. Check your connection."

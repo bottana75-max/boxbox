@@ -1,7 +1,6 @@
 import Foundation
 import simd
 
-@MainActor
 final class ReplayService {
     static let shared = ReplayService()
 
@@ -103,7 +102,7 @@ final class ReplayService {
         return formatter
     }()
 
-    nonisolated private func parseDate(_ string: String) -> Date? {
+    private func parseDate(_ string: String) -> Date? {
         Self.isoFormatter.date(from: string) ?? Self.isoFormatterNoFrac.date(from: string)
     }
 
@@ -322,7 +321,7 @@ final class ReplayService {
         let interval: TimeInterval = totalDuration > 7_200 ? 3 : 2
         let snapshotCount = max(2, Int(ceil(totalDuration / interval)) + 1)
 
-        let snapshots = (0..<snapshotCount).compactMap { index in
+        let snapshots: [ReplaySnapshot] = (0..<snapshotCount).compactMap { index in
             let timestamp = index == snapshotCount - 1 ? end : start.addingTimeInterval(Double(index) * interval)
             let markers = selectedDrivers.compactMap { driver -> ReplayMarker? in
                 guard let points = locationData[driver.driverNumber],
@@ -366,9 +365,10 @@ final class ReplayService {
         }
 
         let lapAnchors = makeLapAnchors(snapshots: snapshots, lapTimeline: lapTimeline)
-        let raceStartSnapshotIndex = snapshots.enumerated().min(by: {
-            abs($0.element.timestamp.timeIntervalSince(raceStart)) < abs($1.element.timestamp.timeIntervalSince(raceStart))
-        })?.offset ?? 0
+        let raceStartDistances = snapshots.enumerated().map { index, snapshot in
+            (index, abs(snapshot.timestamp.timeIntervalSince(raceStart)))
+        }
+        let raceStartSnapshotIndex = raceStartDistances.min(by: { $0.1 < $1.1 })?.0 ?? 0
 
         return ReplayTimeline(snapshots: snapshots, lapAnchors: lapAnchors, raceStartSnapshotIndex: raceStartSnapshotIndex)
     }

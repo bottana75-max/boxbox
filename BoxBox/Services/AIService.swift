@@ -35,8 +35,6 @@ class AIService {
             "- \($0.driverName): \($0.recentSummary.isEmpty ? "No recent results" : $0.recentSummary) | momentum \($0.momentumLabel) | avg finish \(String(format: "%.1f", $0.averageFinish))"
         }.joined(separator: "\n")
 
-        let weekendContext = nextRace.weekendContext
-
         let prompt = """
         You are an expert Formula 1 analyst. Predict the podium (top 3) for the upcoming race.
 
