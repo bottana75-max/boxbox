@@ -40,7 +40,7 @@ struct DriverDetailView: View {
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
-                        .frame(width: 160, height: 160)
+                        .frame(width: 148, height: 148)
                         .clipShape(Circle())
                 case .failure:
                     driverPlaceholder
@@ -51,7 +51,7 @@ struct DriverDetailView: View {
             .overlay(
                 Circle()
                     .strokeBorder(viewModel.driver.teamColor, lineWidth: 3)
-                    .frame(width: 166, height: 166)
+                    .frame(width: 154, height: 154)
             )
 
             VStack(spacing: 6) {
@@ -73,16 +73,16 @@ struct DriverDetailView: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 8)
+        .f1Card(gradient: true, accent: viewModel.driver.teamColor)
     }
 
     private var driverPlaceholder: some View {
         Circle()
             .fill(viewModel.driver.teamColor.opacity(0.15))
-            .frame(width: 160, height: 160)
+            .frame(width: 148, height: 148)
             .overlay(
                 Text(viewModel.driver.nameAcronym)
-                    .font(.system(size: 48, weight: .bold, design: .rounded))
+                    .font(.system(size: 46, weight: .bold, design: .rounded))
                     .foregroundStyle(viewModel.driver.teamColor)
             )
     }
@@ -91,7 +91,7 @@ struct DriverDetailView: View {
         VStack(spacing: 16) {
             F1SectionHeader(title: "DRIVER INFO")
 
-            HStack(spacing: 24) {
+            HStack(spacing: 12) {
                 infoItem(label: "Acronym", value: viewModel.driver.nameAcronym)
                 if viewModel.driver.driverNumber > 0 {
                     infoItem(label: "Number", value: "#\(viewModel.driver.driverNumber)")
@@ -104,18 +104,16 @@ struct DriverDetailView: View {
             NavigationLink {
                 TeamDetailView(teamName: viewModel.driver.teamName, teamColour: viewModel.driver.teamColour)
             } label: {
-                HStack(spacing: 8) {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(viewModel.driver.teamColor)
-                        .frame(width: 4, height: 20)
-                    Text(viewModel.driver.teamName)
-                        .font(.headline)
-                        .foregroundStyle(viewModel.driver.teamColor)
-                    Spacer()
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                F1ListRow(accent: viewModel.driver.teamColor) {
+                    HStack(spacing: 8) {
+                        Text(viewModel.driver.teamName)
+                            .font(.headline)
+                            .foregroundStyle(viewModel.driver.teamColor)
+                        Spacer()
+                        F1Chevron()
+                    }
                 }
+                .f1InnerCard()
             }
             .buttonStyle(.plain)
         }
@@ -173,7 +171,7 @@ struct DriverDetailView: View {
             F1SectionHeader(title: "LAST 5 RACES", subtitle: "Tap a race for the full weekend page")
 
             if viewModel.isLoading {
-                F1LoadingView(message: "Loading...")
+                F1LoadingView(message: "Loading results")
                     .frame(minHeight: 100)
             } else if let error = viewModel.error {
                 HStack(spacing: 8) {
@@ -190,11 +188,9 @@ struct DriverDetailView: View {
                 ForEach(viewModel.recentResults, id: \.id) { result in
                     NavigationLink(value: result.race) {
                         resultRow(result)
+                            .f1InnerCard()
                     }
                     .buttonStyle(.plain)
-                    if result.id != viewModel.recentResults.last?.id {
-                        Divider().overlay(Color.f1SecondaryBackground)
-                    }
                 }
             }
         }
@@ -203,14 +199,18 @@ struct DriverDetailView: View {
 
     private func infoItem(label: String, value: String) -> some View {
         VStack(spacing: 4) {
-            Text(label)
+            Text(label.uppercased())
                 .font(.caption2)
                 .foregroundStyle(.secondary)
             Text(value)
                 .font(.headline)
                 .fontWeight(.bold)
+                .foregroundStyle(.white)
         }
         .frame(maxWidth: .infinity)
+        .padding(.vertical, 8)
+        .background(Color.f1SecondaryBackground)
+        .clipShape(RoundedRectangle(cornerRadius: F1Design.innerCornerRadius, style: .continuous))
     }
 
     private func statTile(label: String, value: String, accent: Color) -> some View {
@@ -264,37 +264,36 @@ struct DriverDetailView: View {
     }
 
     private func resultRow(_ result: DriverRaceResult) -> some View {
-        HStack(spacing: 12) {
-            Text("P\(result.position)")
-                .font(.system(.title3, design: .rounded))
-                .fontWeight(.black)
-                .frame(width: 44)
-                .foregroundStyle(F1Design.positionColor(result.position, isDNF: result.isDNF))
+        F1ListRow(accent: viewModel.driver.teamColor) {
+            HStack(spacing: 12) {
+                Text("P\(result.position)")
+                    .font(.system(.title3, design: .rounded))
+                    .fontWeight(.black)
+                    .frame(width: 44)
+                    .foregroundStyle(F1Design.positionColor(result.position, isDNF: result.isDNF))
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(result.shortName)
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                if result.isDNF {
-                    Text(result.status)
-                        .font(.caption2)
-                        .foregroundStyle(.red)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(result.shortName)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                    if result.isDNF {
+                        Text(result.status)
+                            .font(.caption2)
+                            .foregroundStyle(.red)
+                    }
+                }
+
+                Spacer()
+
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text("\(Int(result.points)) pts")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(.secondary)
+                    F1Chevron()
                 }
             }
-
-            Spacer()
-
-            VStack(alignment: .trailing, spacing: 2) {
-                Text("\(Int(result.points)) pts")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.secondary)
-                Image(systemName: "chevron.right")
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            }
         }
-        .padding(.vertical, 4)
     }
 }
 

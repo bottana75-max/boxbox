@@ -7,7 +7,7 @@ struct ScheduleView: View {
         NavigationStack {
             Group {
                 if viewModel.isLoading {
-                    F1LoadingView(message: "Loading...")
+                    F1LoadingView(message: "Loading calendar")
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else if let error = viewModel.error {
                     ErrorCard(message: error) {

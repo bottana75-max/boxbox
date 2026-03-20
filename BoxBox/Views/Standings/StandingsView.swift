@@ -16,7 +16,7 @@ struct StandingsView: View {
 
                 if viewModel.isLoading {
                     Spacer()
-                    F1LoadingView(message: "Loading...")
+                    F1LoadingView(message: "Fetching standings")
                     Spacer()
                 } else if let error = viewModel.error {
                     Spacer()
