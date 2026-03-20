@@ -1030,7 +1030,9 @@ actor ReplayService {
               let sourceBasis = makeBasis(for: sourceVectors),
               let targetBasis = makeBasis(for: targetVectors)
         else {
-            return ReplayTrackProjector { _, _ in nil }
+            return ReplayTrackProjector { _, _ -> (TrackMapPoint, ReplayService.TrackProjectionState)? in
+                nil
+            }
         }
 
         let sourceSubsample = evenlySubsampled(sourceVectors, maxCount: 300)
@@ -1055,7 +1057,7 @@ actor ReplayService {
         let closesLoop = isCircuitTrackReliable(target)
         let polyline = TrackPolyline(track: target, closesLoop: closesLoop)
 
-        return ReplayTrackProjector { point, previous in
+        return ReplayTrackProjector { point, previous -> (TrackMapPoint, ReplayService.TrackProjectionState)? in
             let vector = SIMD2<Double>(point.x, point.y)
             guard let projected = self.project(vector: vector, option: best, sourceBasis: sourceBasis, targetBasis: targetBasis) else {
                 return nil
@@ -1312,13 +1314,13 @@ actor ReplayService {
 
 
 private struct ReplayTrackProjector {
-    private let resolver: (ReplayLocationPoint, TrackProjectionState?) -> (TrackMapPoint, TrackProjectionState)?
+    private let resolver: (ReplayLocationPoint, ReplayService.TrackProjectionState?) -> (TrackMapPoint, ReplayService.TrackProjectionState)?
 
-    init(resolver: @escaping (ReplayLocationPoint, TrackProjectionState?) -> (TrackMapPoint, TrackProjectionState)?) {
+    init(resolver: @escaping (ReplayLocationPoint, ReplayService.TrackProjectionState?) -> (TrackMapPoint, ReplayService.TrackProjectionState)?) {
         self.resolver = resolver
     }
 
-    func project(_ point: ReplayLocationPoint, previous: TrackProjectionState?) -> (point: TrackMapPoint, state: TrackProjectionState)? {
+    func project(_ point: ReplayLocationPoint, previous: ReplayService.TrackProjectionState?) -> (point: TrackMapPoint, state: ReplayService.TrackProjectionState)? {
         resolver(point, previous)
     }
 }
