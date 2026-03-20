@@ -5,10 +5,7 @@ actor OpenF1Service {
 
     private let openF1Base = "https://api.openf1.org/v1"
     private let jolpicaBase = "https://api.jolpi.ca/ergast/f1"
-    private let decoder: JSONDecoder = {
-        let d = JSONDecoder()
-        return d
-    }()
+    private let decoder = JSONDecoder()
 
     func fetchDrivers(sessionKey: String = "latest") async throws -> [Driver] {
         let url = URL(string: "\(openF1Base)/drivers?session_key=\(sessionKey)")!
@@ -78,15 +75,25 @@ actor OpenF1Service {
 
     func fetchRecentCompletedRaces(limit: Int = 3) async throws -> [(Race, [RaceResult])] {
         let schedule = try await fetchCurrentSchedule()
-        let completed = schedule.filter { $0.isPast }.sorted { $0.round > $1.round }
-        var payload: [(Race, [RaceResult])] = []
+        let completed = schedule.filter { $0.isPast }
+            .sorted { $0.round > $1.round }
+            .prefix(limit)
 
-        for race in completed.prefix(limit) {
-            let results = try await fetchRaceResults(round: race.round)
-            payload.append((race, results))
+        // Fetch all race results concurrently instead of serially.
+        return try await withThrowingTaskGroup(of: (Int, Race, [RaceResult]).self) { group in
+            for race in completed {
+                group.addTask { [race] in
+                    let results = try await self.fetchRaceResults(round: race.round)
+                    return (race.round, race, results)
+                }
+            }
+            var payload: [(Int, Race, [RaceResult])] = []
+            for try await entry in group {
+                payload.append(entry)
+            }
+            // Restore descending-round order after concurrent collection.
+            return payload.sorted { $0.0 > $1.0 }.map { ($0.1, $0.2) }
         }
-
-        return payload
     }
 
     func fetchDriverStandings() async throws -> [DriverStanding] {
@@ -132,14 +139,19 @@ actor OpenF1Service {
 
     func findDriverId(for driver: Driver) async throws -> String? {
         let standings = try await fetchDriverStandings()
+
+        // Primary: exact acronym match (e.g. "VER" == "VER").
         if let match = standings.first(where: { $0.driverCode == driver.nameAcronym }) {
             return match.id
         }
-        let driverName = driver.fullName.lowercased()
-        if let match = standings.first(where: { driverName.contains($0.driverName.split(separator: " ").last?.lowercased() ?? "") }) {
-            return match.id
+
+        // Fallback: check whether the driver's full name contains the standing's family name.
+        let fullNameLower = driver.fullName.lowercased()
+        let fallback = standings.first { standing in
+            let familyName = standing.driverName.split(separator: " ").last?.lowercased() ?? ""
+            return !familyName.isEmpty && fullNameLower.contains(familyName)
         }
-        return nil
+        return fallback?.id
     }
 
     func fetchConstructorResults(constructorId: String) async throws -> [TeamRaceResult] {
@@ -184,12 +196,15 @@ actor OpenF1Service {
     }
 
     func buildTrends(from standings: [DriverStanding], recentRaces: [(Race, [RaceResult])], limit: Int = 5) -> [DriverTrend] {
-        let indexedResults = recentRaces.map { $0.1 }
+        let raceResultSets = recentRaces.map { $0.1 }
         return standings.prefix(limit).map { standing in
-            let results = indexedResults.compactMap { raceResults in
+            let results = raceResultSets.compactMap { raceResults in
                 raceResults.first(where: { $0.driverCode == standing.driverCode || $0.driverName == standing.driverName })
             }
 
+            // Momentum score: weight recent races more heavily (offset 0 = 3×, offset 1 = 2×, offset 2+ = 1×).
+            // A finish in position P contributes max(0, 12 - P) so winners score highest.
+            // Championship wins are added as a flat bonus for title pedigree.
             let score = results.enumerated().reduce(0) { partial, item in
                 let weight = max(1, 4 - item.offset)
                 let resultScore = max(0, 12 - item.element.position)

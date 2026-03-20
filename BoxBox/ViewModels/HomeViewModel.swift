@@ -64,11 +64,11 @@ class HomeViewModel {
 
     func startCountdownTimer() {
         countdownTask?.cancel()
-        updateCountdown()
-        countdownTask = Task {
+        updateCountdown() // Populate immediately so the UI never shows an empty string on first render.
+        countdownTask = Task { [weak self] in
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(1))
-                updateCountdown()
+                self?.updateCountdown()
             }
         }
     }
@@ -82,9 +82,8 @@ class HomeViewModel {
         let now = Date()
         let diff = Calendar.current.dateComponents([.day, .hour, .minute, .second], from: now, to: raceDate)
 
-        if let d = diff.day, let h = diff.hour, let m = diff.minute, let s = diff.second {
-            countdown = "\(d)d \(h)h \(m)m \(s)s"
-        }
+        guard let d = diff.day, let h = diff.hour, let m = diff.minute, let s = diff.second else { return }
+        countdown = "\(d)d \(h)h \(m)m \(s)s"
     }
 
     nonisolated deinit {

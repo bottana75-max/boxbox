@@ -12,6 +12,9 @@ class AIService {
 
     var hasAPIKey: Bool { true }
 
+    // Reuse decoder — allocating JSONDecoder on every prediction call is wasteful.
+    private let decoder = JSONDecoder()
+
     func predictRace(
         nextRace: Race,
         driverStandings: [DriverStanding],
@@ -87,12 +90,14 @@ class AIService {
             throw AIError.apiError("API returned status \(statusCode)")
         }
 
-        let chatResponse = try JSONDecoder().decode(ChatCompletionResponse.self, from: data)
-        guard let content = chatResponse.choices.first?.message.content else {
+        let chatResponse = try decoder.decode(ChatCompletionResponse.self, from: data)
+        guard let rawContent = chatResponse.choices.first?.message.content else {
             throw AIError.noResponse
         }
 
-        let cleanContent = content.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Strip optional markdown code fences the model sometimes wraps around JSON.
+        let cleanContent = rawContent
+            .trimmingCharacters(in: .whitespacesAndNewlines)
             .replacingOccurrences(of: "```json", with: "")
             .replacingOccurrences(of: "```", with: "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -101,7 +106,7 @@ class AIService {
             throw AIError.parseError
         }
 
-        let predictionResponse = try JSONDecoder().decode(PredictionAPIResponse.self, from: jsonData)
+        let predictionResponse = try decoder.decode(PredictionAPIResponse.self, from: jsonData)
 
         return Prediction(
             id: UUID(),

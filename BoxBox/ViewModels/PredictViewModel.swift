@@ -56,6 +56,8 @@ class PredictViewModel {
     }
 
     func loadNextRace(forceRefresh: Bool = false) async {
+        // Always show the loading indicator on the initial load.
+        // On pull-to-refresh (forceRefresh: true) the system spinner is enough.
         if !forceRefresh {
             isLoading = true
         }
@@ -69,17 +71,17 @@ class PredictViewModel {
             async let recentTask = service.fetchRecentCompletedRaces(limit: 3)
 
             let schedule = try await scheduleTask
-            let standings = try await standingsTask
-            let recent = try await recentTask
+            let fetchedStandings = try await standingsTask
+            let fetchedRecent = try await recentTask
             let now = Date()
             nextRace = schedule.first { race in
                 guard let raceDate = race.raceDate else { return false }
                 return raceDate > now
             }
-            self.standings = standings
-            recentRaces = recent
+            standings = fetchedStandings
+            recentRaces = fetchedRecent
             pressureProfile = CircuitPressureProfile.from(info: nextRace?.circuitInfo)
-            trends = await service.buildTrends(from: standings, recentRaces: recent, limit: 5)
+            trends = await service.buildTrends(from: fetchedStandings, recentRaces: fetchedRecent, limit: 5)
         } catch {
             self.error = error.localizedDescription
         }
@@ -102,15 +104,18 @@ class PredictViewModel {
         error = nil
 
         do {
-            let standings = self.standings.isEmpty ? try await service.fetchDriverStandings() : self.standings
-            let recentPayload = recentRaces.isEmpty ? try await service.fetchRecentCompletedRaces(limit: 3) : recentRaces
-            let trendPayload = trends.isEmpty ? await service.buildTrends(from: standings, recentRaces: recentPayload, limit: 5) : trends
+            // Use already-loaded data where available; only fetch if the view was somehow bypassed.
+            let activeStandings = standings.isEmpty ? try await service.fetchDriverStandings() : standings
+            let activeRecent = recentRaces.isEmpty ? try await service.fetchRecentCompletedRaces(limit: 3) : recentRaces
+            let activeTrends = trends.isEmpty
+                ? await service.buildTrends(from: activeStandings, recentRaces: activeRecent, limit: 5)
+                : trends
 
             prediction = try await aiService.predictRace(
                 nextRace: nextRace,
-                driverStandings: standings,
-                recentRaces: recentPayload,
-                trends: trendPayload,
+                driverStandings: activeStandings,
+                recentRaces: activeRecent,
+                trends: activeTrends,
                 pressureProfile: pressureProfile
             )
 

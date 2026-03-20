@@ -33,11 +33,11 @@ class RaceDetailViewModel {
 
     func startCountdownTimer() {
         countdownTask?.cancel()
-        updateCountdown()
-        countdownTask = Task {
+        updateCountdown() // Populate immediately so the UI never shows an empty string on first render.
+        countdownTask = Task { [weak self] in
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(1))
-                updateCountdown()
+                self?.updateCountdown()
             }
         }
     }
@@ -48,7 +48,7 @@ class RaceDetailViewModel {
             return
         }
         let now = Date()
-        if raceDate <= now {
+        guard raceDate > now else {
             countdown = "Race started!"
             countdownTask?.cancel()
             return

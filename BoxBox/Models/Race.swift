@@ -8,11 +8,26 @@ struct Race: Identifiable, Codable, Hashable {
     let date: String
     let round: Int
 
+    // Static formatters — DateFormatter allocation is expensive; reuse across calls.
+    // These are only ever accessed from the main thread (SwiftUI rendering + @MainActor VMs).
+    private static let parseDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "yyyy-MM-dd"
+        f.timeZone = TimeZone(secondsFromGMT: 0)
+        return f
+    }()
+
+    private static let displayDateFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "MMM d, yyyy"
+        return f
+    }()
+
+    // Gregorian calendar shared across computed properties that need year/month/day extraction.
+    private static let gregorianCalendar = Calendar(identifier: .gregorian)
+
     var raceDate: Date? {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-MM-dd"
-        formatter.timeZone = TimeZone(secondsFromGMT: 0)
-        return formatter.date(from: date)
+        Race.parseDateFormatter.date(from: date)
     }
 
     var isPast: Bool {
@@ -21,12 +36,12 @@ struct Race: Identifiable, Codable, Hashable {
     }
 
     var seasonYear: Int {
-        let calendar = Calendar(identifier: .gregorian)
-        return raceDate.map { calendar.component(.year, from: $0) } ?? calendar.component(.year, from: Date())
+        raceDate.map { Race.gregorianCalendar.component(.year, from: $0) }
+            ?? Race.gregorianCalendar.component(.year, from: Date())
     }
 
     var isCurrentSeason: Bool {
-        seasonYear == Calendar(identifier: .gregorian).component(.year, from: Date())
+        seasonYear == Race.gregorianCalendar.component(.year, from: Date())
     }
 
     var isReplayEligible: Bool {
@@ -35,9 +50,7 @@ struct Race: Identifiable, Codable, Hashable {
 
     var formattedDate: String {
         guard let raceDate else { return date }
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM d, yyyy"
-        return formatter.string(from: raceDate)
+        return Race.displayDateFormatter.string(from: raceDate)
     }
 
     var raceWeekendTitle: String {
@@ -46,7 +59,7 @@ struct Race: Identifiable, Codable, Hashable {
 
     var month: Int {
         guard let raceDate else { return 1 }
-        return Calendar(identifier: .gregorian).component(.month, from: raceDate)
+        return Race.gregorianCalendar.component(.month, from: raceDate)
     }
 
     var weekendContext: WeekendContext {
@@ -60,7 +73,7 @@ struct Race: Identifiable, Codable, Hashable {
 
     var weekendSessions: [WeekendSession] {
         guard let raceDate else { return [] }
-        let calendar = Calendar(identifier: .gregorian)
+        let calendar = Race.gregorianCalendar
         let raceStart = calendar.date(bySettingHour: 14, minute: 0, second: 0, of: raceDate) ?? raceDate
 
         let offsets: [(String, String, Int, Int)] = [
@@ -90,6 +103,18 @@ struct WeekendSession: Identifiable, Hashable {
     let subtitle: String
     let date: Date
 
+    private static let dayFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "EEE"
+        return f
+    }()
+
+    private static let timeFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "HH:mm"
+        return f
+    }()
+
     var id: String {
         "\(label)-\(date.timeIntervalSince1970)"
     }
@@ -101,15 +126,11 @@ struct WeekendSession: Identifiable, Hashable {
     var relativeLabel: String {
         if Calendar.current.isDateInToday(date) { return "Today" }
         if Calendar.current.isDateInTomorrow(date) { return "Tomorrow" }
-        let formatter = DateFormatter()
-        formatter.dateFormat = "EEE"
-        return formatter.string(from: date)
+        return WeekendSession.dayFormatter.string(from: date)
     }
 
     var timeLabel: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "HH:mm"
-        return formatter.string(from: date)
+        WeekendSession.timeFormatter.string(from: date)
     }
 }
 

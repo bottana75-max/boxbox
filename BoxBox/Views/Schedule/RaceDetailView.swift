@@ -290,6 +290,8 @@ struct RaceDetailView: View {
         .clipShape(RoundedRectangle(cornerRadius: F1Design.innerCornerRadius + 2, style: .continuous))
     }
 
+    // Note: these helpers mirror the logic in CircuitPressureProfile.from(info:) intentionally —
+    // the Weekend Read card uses standalone labels without constructing a full pressure profile.
     private func tyreStress(for info: CircuitInfo) -> String {
         if info.lengthKm > 5.7 || info.speedClass.contains("High speed") { return "High" }
         if info.speedClass.contains("Technical") || info.speedClass.contains("Street") { return "Medium" }

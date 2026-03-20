@@ -99,10 +99,14 @@ class TeamDetailViewModel {
     }
 
     func loadData() async {
+        // Cancel any in-flight request before starting a new one (e.g. view reappears).
+        loadTask?.cancel()
         isLoading = true
         error = nil
 
-        let task = Task {
+        // Store the task so deinit can cancel it if the view is dismissed mid-flight.
+        let task = Task { [weak self] in
+            guard let self else { return }
             do {
                 async let standingsReq = OpenF1Service.shared.fetchConstructorStandings()
                 async let driverStandingsReq = OpenF1Service.shared.fetchDriverStandings()
