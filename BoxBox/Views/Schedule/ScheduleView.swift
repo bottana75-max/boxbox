@@ -64,68 +64,111 @@ struct ScheduleView: View {
         let winner = viewModel.winnerByRound[race.round]
 
         return ZStack(alignment: .topLeading) {
-            RaceCardBackdrop(treatment: treatment)
+            RaceCardBackdrop(treatment: treatment, isNext: isNext)
                 .clipShape(RoundedRectangle(cornerRadius: F1Design.cornerRadius, style: .continuous))
 
-            VStack(alignment: .leading, spacing: 14) {
-                HStack(alignment: .top, spacing: 12) {
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack(spacing: 8) {
-                            Text("ROUND \(race.round)")
-                                .font(.system(size: 10, weight: .heavy, design: .monospaced))
-                                .tracking(0.8)
-                                .foregroundStyle(isNext ? Color.f1Red : .secondary)
+            HStack(alignment: .top, spacing: 14) {
+                RaceFlagPanel(race: race, treatment: treatment, isNext: isNext)
 
-                            if isNext {
-                                tag("Next", color: .f1Red)
-                            } else if race.isPast {
-                                tag("Final", color: treatment.primary.opacity(0.8))
+                VStack(alignment: .leading, spacing: 14) {
+                    HStack(alignment: .top, spacing: 12) {
+                        VStack(alignment: .leading, spacing: 8) {
+                            HStack(spacing: 8) {
+                                Text(isNext ? "UP NEXT" : "ROUND \(race.round)")
+                                    .font(.system(size: 10, weight: .heavy, design: .monospaced))
+                                    .tracking(0.9)
+                                    .foregroundStyle(isNext ? Color.white : .secondary)
+
+                                if isNext {
+                                    tag("Spotlight", color: .f1Red)
+                                } else if race.isPast {
+                                    tag("Final", color: treatment.primary.opacity(0.8))
+                                } else {
+                                    tag("Upcoming", color: .white.opacity(0.16), foreground: .white.opacity(0.86))
+                                }
+                            }
+
+                            Text(race.raceWeekendTitle)
+                                .font(isNext ? .title2 : .title3)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.white)
+                                .multilineTextAlignment(.leading)
+
+                            Text(race.circuitName)
+                                .font(.subheadline)
+                                .foregroundStyle(isNext ? .white.opacity(0.86) : .secondary)
+                        }
+
+                        Spacer(minLength: 12)
+
+                        Group {
+                            if let info = race.circuitInfo {
+                                CircuitOutlineView(points: info.trackMapPoints, stroke: treatment.secondary)
+                                    .frame(width: 64, height: 64)
+                                    .padding(10)
+                                    .background(.white.opacity(0.03), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
+                                    .overlay {
+                                        RoundedRectangle(cornerRadius: 18, style: .continuous)
+                                            .strokeBorder(.white.opacity(isNext ? 0.10 : 0.05), lineWidth: 1)
+                                    }
                             } else {
-                                tag("Upcoming", color: .white.opacity(0.16), foreground: .white.opacity(0.86))
+                                F1Chevron()
                             }
                         }
-
-                        Text(race.raceWeekendTitle)
-                            .font(.title3)
-                            .fontWeight(.bold)
-                            .foregroundStyle(.white)
-                            .multilineTextAlignment(.leading)
-
-                        Text(race.circuitName)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
                     }
 
-                    Spacer(minLength: 12)
-
-                    Group {
-                        if let info = race.circuitInfo {
-                            CircuitOutlineView(points: info.trackMapPoints, stroke: treatment.secondary)
-                                .frame(width: 64, height: 64)
-                                .padding(10)
-                                .background(.white.opacity(0.03), in: RoundedRectangle(cornerRadius: 18, style: .continuous))
-                                .overlay {
-                                    RoundedRectangle(cornerRadius: 18, style: .continuous)
-                                        .strokeBorder(.white.opacity(0.05), lineWidth: 1)
-                                }
-                        } else {
-                            F1Chevron()
-                        }
+                    HStack(spacing: 10) {
+                        schedulePill(systemImage: "flag.fill", title: race.country)
+                        schedulePill(systemImage: "calendar", title: race.formattedDate)
+                        schedulePill(systemImage: "clock", title: race.weekendContext.localClockLabel)
                     }
-                }
 
-                HStack(spacing: 10) {
-                    schedulePill(systemImage: "flag.fill", title: race.country)
-                    schedulePill(systemImage: "calendar", title: race.formattedDate)
-                    schedulePill(systemImage: "clock", title: race.weekendContext.localClockLabel)
-                }
-
-                if race.isPast, let winner {
-                    winnerStrip(winner, treatment: treatment)
+                    if isNext {
+                        nextRaceStrip(race, treatment: treatment)
+                    } else if race.isPast, let winner {
+                        winnerStrip(winner, treatment: treatment)
+                    }
                 }
             }
             .padding(F1Design.contentPadding)
         }
+    }
+
+    private func nextRaceStrip(_ race: Race, treatment: RaceVisualTreatment) -> some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle()
+                    .fill(.white.opacity(0.08))
+                    .frame(width: 34, height: 34)
+                Image(systemName: "flag.checkered.2.crossed")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(.white)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Next race")
+                    .font(.system(size: 9, weight: .bold))
+                    .tracking(0.8)
+                    .foregroundStyle(treatment.secondary.opacity(0.92))
+                Text("\(race.formattedDate) • \(race.weekendContext.localClockLabel)")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.white)
+            }
+
+            Spacer()
+
+            Image(systemName: "sparkles")
+                .font(.system(size: 13, weight: .bold))
+                .foregroundStyle(treatment.secondary)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 10)
+        .background(Color.white.opacity(0.05))
+        .overlay {
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(treatment.secondary.opacity(0.32), lineWidth: 1)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
     }
 
     private func winnerStrip(_ winner: RaceWinner, treatment: RaceVisualTreatment) -> some View {
@@ -210,14 +253,15 @@ struct ScheduleView: View {
 
 private struct RaceCardBackdrop: View {
     let treatment: RaceVisualTreatment
+    let isNext: Bool
 
     var body: some View {
         ZStack {
             LinearGradient(
                 colors: [
-                    treatment.primary.opacity(0.16),
+                    treatment.primary.opacity(isNext ? 0.22 : 0.16),
                     Color.clear,
-                    treatment.secondary.opacity(0.12)
+                    treatment.secondary.opacity(isNext ? 0.18 : 0.12)
                 ],
                 startPoint: .topLeading,
                 endPoint: .bottomTrailing
@@ -231,20 +275,118 @@ private struct RaceCardBackdrop: View {
             .blendMode(.plusLighter)
             .mask(
                 LinearGradient(
-                    colors: [.black.opacity(0.9), .black.opacity(0.15), .clear],
+                    colors: [.black.opacity(0.95), .black.opacity(0.2), .clear],
                     startPoint: .leading,
                     endPoint: .trailing
                 )
             )
 
             RadialGradient(
-                colors: [treatment.primary.opacity(0.18), .clear],
+                colors: [treatment.primary.opacity(isNext ? 0.24 : 0.18), .clear],
                 center: .topLeading,
                 startRadius: 10,
-                endRadius: 180
+                endRadius: 190
             )
+
+            if isNext {
+                RoundedRectangle(cornerRadius: F1Design.cornerRadius, style: .continuous)
+                    .strokeBorder(treatment.secondary.opacity(0.28), lineWidth: 1)
+            }
         }
         .allowsHitTesting(false)
+    }
+}
+
+private struct RaceFlagPanel: View {
+    let race: Race
+    let treatment: RaceVisualTreatment
+    let isNext: Bool
+
+    var body: some View {
+        let style = race.flagStripeStyle
+
+        ZStack(alignment: .topLeading) {
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(Color.white.opacity(0.04))
+
+            FlagStripeFill(style: style, treatment: treatment)
+                .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+                .padding(1)
+
+            LinearGradient(
+                colors: [.white.opacity(0.35), .clear, .black.opacity(0.12)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+            .padding(1)
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("R\(race.round)")
+                    .font(.system(size: 10, weight: .black, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.9))
+
+                Spacer()
+
+                Text(String(race.country.prefix(3)).uppercased())
+                    .font(.system(size: 9, weight: .heavy, design: .rounded))
+                    .tracking(0.8)
+                    .foregroundStyle(.white.opacity(0.95))
+            }
+            .padding(10)
+        }
+        .frame(width: 58)
+        .overlay(alignment: .topTrailing) {
+            if isNext {
+                Circle()
+                    .fill(.f1Red)
+                    .frame(width: 10, height: 10)
+                    .overlay(Circle().stroke(.white.opacity(0.75), lineWidth: 1.5))
+                    .offset(x: 4, y: -4)
+            }
+        }
+        .shadow(color: treatment.primary.opacity(isNext ? 0.22 : 0.12), radius: isNext ? 16 : 10, x: 0, y: 8)
+    }
+}
+
+private struct FlagStripeFill: View {
+    let style: FlagStripeStyle
+    let treatment: RaceVisualTreatment
+
+    var body: some View {
+        switch style {
+        case .vertical:
+            HStack(spacing: 0) {
+                treatment.primary
+                treatment.secondary
+                treatment.tertiary
+            }
+        case .horizontal:
+            VStack(spacing: 0) {
+                treatment.primary
+                treatment.secondary
+                treatment.tertiary
+            }
+        case .splitHorizontal:
+            VStack(spacing: 0) {
+                treatment.primary
+                treatment.secondary
+            }
+        case .splitVertical:
+            HStack(spacing: 0) {
+                treatment.primary
+                treatment.secondary
+            }
+        case .band:
+            ZStack {
+                treatment.tertiary
+                VStack(spacing: 0) {
+                    treatment.primary.frame(maxHeight: .infinity)
+                    treatment.secondary.frame(height: 14)
+                    treatment.tertiary.frame(maxHeight: .infinity)
+                }
+            }
+        }
     }
 }
 
@@ -261,7 +403,9 @@ private struct CircuitOutlineView: View {
                 for point in mapped.dropFirst() {
                     path.addLine(to: point)
                 }
-                path.addLine(to: CGPoint(x: (first.x / 100) * proxy.size.width, y: (first.y / 100) * proxy.size.height))
+                if shouldClose(points) {
+                    path.addLine(to: CGPoint(x: (first.x / 100) * proxy.size.width, y: (first.y / 100) * proxy.size.height))
+                }
             }
             .stroke(stroke, style: StrokeStyle(lineWidth: 2.2, lineCap: .round, lineJoin: .round))
             .shadow(color: stroke.opacity(0.35), radius: 6, x: 0, y: 0)
@@ -269,12 +413,29 @@ private struct CircuitOutlineView: View {
         .padding(6)
         .opacity(0.9)
     }
+
+    private func shouldClose(_ points: [TrackMapPoint]) -> Bool {
+        guard points.count >= 3 else { return false }
+        let segments = zip(points, points.dropFirst()).map { hypot($1.x - $0.x, $1.y - $0.y) }
+        guard !segments.isEmpty else { return false }
+        let median = segments.sorted()[segments.count / 2]
+        let closureGap = hypot(points[0].x - points[points.count - 1].x, points[0].y - points[points.count - 1].y)
+        return closureGap <= max(22, median * 6)
+    }
 }
 
 private struct RaceVisualTreatment {
     let primary: Color
     let secondary: Color
     let tertiary: Color
+}
+
+private enum FlagStripeStyle {
+    case vertical
+    case horizontal
+    case splitHorizontal
+    case splitVertical
+    case band
 }
 
 private extension Race {
@@ -312,6 +473,26 @@ private extension Race {
             return RaceVisualTreatment(primary: .f1Red.opacity(0.92), secondary: Color(red: 0.95, green: 0.82, blue: 0.14), tertiary: Color(red: 0.35, green: 0.05, blue: 0.05))
         default:
             return RaceVisualTreatment(primary: .f1Red.opacity(0.86), secondary: .white.opacity(0.85), tertiary: Color.f1Subtle.opacity(0.92))
+        }
+    }
+
+    var flagStripeStyle: FlagStripeStyle {
+        let normalized = country.lowercased()
+        switch normalized {
+        case let value where value.contains("italy") || value.contains("mexico") || value.contains("france") || value.contains("ireland"):
+            return .vertical
+        case let value where value.contains("monaco") || value.contains("indonesia") || value.contains("poland"):
+            return .splitHorizontal
+        case let value where value.contains("japan") || value.contains("canada") || value.contains("singapore") || value.contains("bahrain") || value.contains("qatar"):
+            return .band
+        case let value where value.contains("belgium"):
+            return .vertical
+        case let value where value.contains("china") || value.contains("hungary") || value.contains("netherlands") || value.contains("austria"):
+            return .horizontal
+        case let value where value.contains("usa") || value.contains("united states") || value.contains("great britain") || value.contains("britain"):
+            return .band
+        default:
+            return .splitVertical
         }
     }
 }

@@ -306,14 +306,22 @@ struct CircuitInfo {
             .init(59.6, 94.0), .init(57.4, 83.0)
         ])),
         (["Miami"], CircuitInfo(laps: 57, lengthKm: 5.412, city: "Miami", turns: 19, drsZones: 3, lapRecord: "1:29.708", firstGrandPrix: 2022, direction: "Anti-clockwise", speedClass: "Street balanced", trackMapPoints: [
-            .init(30, 85), .init(25, 78), .init(20, 70), .init(15, 60),
-            .init(12, 50), .init(10, 40), .init(12, 30), .init(15, 22),
-            .init(20, 16), .init(28, 12), .init(38, 10), .init(50, 10),
-            .init(60, 12), .init(68, 15), .init(72, 18), .init(75, 22),
-            .init(78, 28), .init(82, 35), .init(85, 42), .init(88, 50),
-            .init(90, 58), .init(88, 65), .init(85, 70), .init(80, 75),
-            .init(75, 78), .init(68, 80), .init(60, 82), .init(50, 85),
-            .init(42, 86), .init(38, 86)
+            .init(49.4, 72.6), .init(63.0, 50.9), .init(63.1, 47.9), .init(62.7, 45.9),
+            .init(58.9, 37.9), .init(58.9, 28.7), .init(58.6, 22.9), .init(55.3, 13.8),
+            .init(52.3, 11.2), .init(47.5, 9.9), .init(42.6, 13.9), .init(29.2, 34.3),
+            .init(26.3, 37.7), .init(25.1, 37.9), .init(22.6, 36.4), .init(20.1, 32.1),
+            .init(18.8, 30.0), .init(15.6, 29.6), .init(14.0, 31.6), .init(11.0, 38.6),
+            .init(7.8, 41.4), .init(5.9, 40.6), .init(2.6, 37.3), .init(0.4, 30.5),
+            .init(0.0, 26.0), .init(0.4, 19.8), .init(0.9, 18.1), .init(3.3, 16.5),
+            .init(6.8, 17.4), .init(10.6, 15.4), .init(24.6, 12.4), .init(35.5, 13.5),
+            .init(42.3, 7.7), .init(49.3, 1.8), .init(53.5, 0.0), .init(62.2, 1.7),
+            .init(66.2, 5.3), .init(80.8, 19.0), .init(90.0, 30.9), .init(93.5, 36.6),
+            .init(94.0, 41.1), .init(93.4, 42.7), .init(90.6, 47.3), .init(89.9, 53.8),
+            .init(90.2, 57.8), .init(92.1, 61.1), .init(96.7, 61.1), .init(97.4, 62.2),
+            .init(100.0, 72.0), .init(99.9, 73.6), .init(98.4, 75.7), .init(99.7, 88.7),
+            .init(99.6, 90.5), .init(95.8, 92.4), .init(49.8, 96.5), .init(12.1, 100.0),
+            .init(12.3, 95.2), .init(13.5, 92.3), .init(17.6, 85.6), .init(19.4, 84.5),
+            .init(22.8, 86.6), .init(29.5, 93.4), .init(32.5, 94.0), .init(38.3, 90.0)
         ])),
         (["Imola", "Emilia Romagna"], CircuitInfo(laps: 63, lengthKm: 4.909, city: "Imola", turns: 19, drsZones: 1, lapRecord: "1:15.484", firstGrandPrix: 1980, direction: "Anti-clockwise", speedClass: "Old-school", trackMapPoints: [
             .init(62.1, 32.1), .init(60.5, 32.1), .init(47.0, 29.6), .init(34.5, 30.5),
@@ -541,15 +549,22 @@ struct CircuitInfo {
             .init(12.8, 29.8), .init(16.1, 28.1)
         ])),
         (["Las Vegas"], CircuitInfo(laps: 50, lengthKm: 6.201, city: "Las Vegas", turns: 17, drsZones: 2, lapRecord: "1:35.490", firstGrandPrix: 2023, direction: "Clockwise", speedClass: "Street power", trackMapPoints: [
-            .init(75, 10), .init(78, 15), .init(80, 22), .init(82, 30),
-            .init(83, 40), .init(83, 50), .init(82, 60), .init(80, 68),
-            .init(78, 72), .init(75, 75), .init(70, 78), .init(62, 80),
-            .init(52, 82), .init(42, 84), .init(32, 85), .init(25, 84),
-            .init(20, 82), .init(16, 78), .init(14, 72), .init(13, 65),
-            .init(14, 58), .init(16, 52), .init(18, 48), .init(20, 44),
-            .init(22, 40), .init(25, 35), .init(28, 30), .init(32, 25),
-            .init(38, 20), .init(45, 16), .init(52, 13), .init(60, 11),
-            .init(68, 10)
+            .init(91.7, 11.2), .init(96.4, 14.4), .init(98.1, 15.8), .init(98.3, 16.6),
+            .init(96.7, 17.9), .init(95.0, 18.3), .init(91.6, 18.4), .init(90.1, 18.1),
+            .init(83.7, 15.1), .init(79.9, 14.3), .init(78.5, 14.3), .init(74.6, 15.3),
+            .init(73.3, 15.9), .init(70.2, 19.2), .init(69.6, 63.1), .init(71.0, 64.1),
+            .init(90.6, 63.9), .init(93.0, 64.2), .init(96.6, 66.3), .init(97.8, 67.3),
+            .init(99.4, 69.4), .init(99.8, 70.6), .init(100.0, 73.0), .init(99.2, 73.3),
+            .init(96.2, 73.7), .init(95.3, 75.3), .init(95.4, 76.0), .init(97.9, 78.8),
+            .init(98.8, 79.8), .init(96.8, 81.5), .init(93.6, 81.7), .init(60.7, 82.9),
+            .init(54.6, 85.7), .init(51.8, 89.0), .init(44.9, 96.7), .init(42.0, 97.9),
+            .init(34.7, 99.4), .init(29.6, 100.0), .init(28.2, 99.6), .init(27.7, 98.5),
+            .init(21.9, 91.6), .init(16.9, 86.1), .init(15.1, 84.3), .init(8.9, 76.9),
+            .init(7.3, 73.7), .init(4.3, 67.3), .init(3.3, 64.7), .init(1.8, 58.1),
+            .init(1.5, 53.1), .init(1.5, 45.7), .init(1.6, 38.3), .init(0.6, 21.7),
+            .init(0.3, 8.8), .init(0.0, 3.7), .init(1.1, 3.1), .init(2.7, 3.2),
+            .init(6.5, 1.3), .init(11.8, 0.2), .init(25.1, 0.0), .init(56.7, 0.1),
+            .init(63.7, 0.1), .init(75.4, 1.3), .init(76.9, 1.7), .init(79.2, 2.8)
         ])),
         (["Lusail", "Qatar"], CircuitInfo(laps: 57, lengthKm: 5.380, city: "Lusail", turns: 16, drsZones: 1, lapRecord: "1:22.384", firstGrandPrix: 2021, direction: "Clockwise", speedClass: "Fast sweepers", trackMapPoints: [
             .init(25.2, 59.5), .init(12.0, 35.5), .init(12.0, 32.9), .init(13.2, 31.2),
