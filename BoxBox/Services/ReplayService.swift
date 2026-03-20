@@ -681,7 +681,10 @@ actor ReplayService {
         let fallbackTrackPoints = fallbackTrack(points: sourcePoints)
         let trackPoints = resolvedTrackPoints(circuitTrack: circuitTrack, fallbackTrack: fallbackTrackPoints)
         let displayTrackPoints = displayTrackPoints(for: race, circuitTrack: circuitTrack, fallbackTrack: fallbackTrackPoints, projectedTrack: trackPoints)
-        let projector = makeProjector(source: sourcePoints, target: trackPoints)
+        // Use displayTrackPoints as projector target so driver positions are always
+        // aligned with what is actually rendered on screen.
+        let projectorTarget = displayTrackPoints.isEmpty ? trackPoints : displayTrackPoints
+        let projector = makeProjector(source: sourcePoints, target: projectorTarget)
         var projectionStateByDriver: [Int: TrackProjectionState] = [:]
         let officialTotalLaps = race.circuitInfo?.laps
         let lapTimeline = remapLapTimeline(rawLapTimeline, officialTotalLaps: officialTotalLaps)
