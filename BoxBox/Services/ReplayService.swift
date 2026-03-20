@@ -218,6 +218,56 @@ actor ReplayService {
         }
     }
 
+    fileprivate struct TrackProjectionState {
+        let progress: Double
+        let point: TrackMapPoint
+        let timestamp: Date
+    }
+
+    fileprivate struct TrackProjectionCandidate {
+        let point: SIMD2<Double>
+        let progress: Double
+        let distance: Double
+    }
+
+    fileprivate struct TrackPolyline {
+        struct Segment {
+            let start: SIMD2<Double>
+            let end: SIMD2<Double>
+            let startProgress: Double
+        }
+
+        let segments: [Segment]
+        let totalLength: Double
+        let isClosed: Bool
+
+        init?(track: [TrackMapPoint], closesLoop: Bool) {
+            guard track.count >= 2 else { return nil }
+
+            let vectors = track.map { SIMD2<Double>($0.x, $0.y) }
+            let count = closesLoop ? vectors.count : vectors.count - 1
+            guard count > 0 else { return nil }
+
+            var built: [Segment] = []
+            built.reserveCapacity(count)
+            var progress = 0.0
+
+            for index in 0..<count {
+                let start = vectors[index]
+                let end = vectors[(index + 1) % vectors.count]
+                let length = simd_distance(start, end)
+                guard length > 0.000001 else { continue }
+                built.append(Segment(start: start, end: end, startProgress: progress))
+                progress += length
+            }
+
+            guard !built.isEmpty, progress > 0 else { return nil }
+            segments = built
+            totalLength = progress
+            isClosed = closesLoop
+        }
+    }
+
     private static let isoFormatter: ISO8601DateFormatter = {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
@@ -632,6 +682,7 @@ actor ReplayService {
             ?? fallbackTrack(points: sourcePoints)
         let trackPoints = resolvedTrackPoints(circuitTrack: circuitTrack, fallbackTrack: fallbackTrackPoints)
         let projector = makeProjector(source: sourcePoints, target: trackPoints)
+        var projectionStateByDriver: [Int: TrackProjectionState] = [:]
         let officialTotalLaps = race.circuitInfo?.laps
         let lapTimeline = remapLapTimeline(rawLapTimeline, officialTotalLaps: officialTotalLaps)
         let raceStart = inferredRaceStart(from: positionData, lapTimeline: lapTimeline) ?? rawStart
@@ -646,13 +697,15 @@ actor ReplayService {
             let markers = selectedDrivers.compactMap { driver -> ReplayMarker? in
                 guard let points = locationData[driver.driverNumber],
                       let location = interpolatedLocation(in: points, at: timestamp),
-                      let projected = projector(location)
+                      let projection = projector.project(location, previous: projectionStateByDriver[driver.driverNumber])
                 else { return nil }
+
+                projectionStateByDriver[driver.driverNumber] = projection.state
 
                 return ReplayMarker(
                     driver: driver,
                     runningPosition: latestPosition(in: positionData[driver.driverNumber] ?? [], at: timestamp),
-                    projectedPoint: projected,
+                    projectedPoint: projection.point,
                     sourcePoint: location
                 )
             }
@@ -970,17 +1023,16 @@ actor ReplayService {
         return trimmed.count >= 2 ? trimmed : points
     }
 
-    private func makeProjector(source: [ReplayLocationPoint], target: [TrackMapPoint]) -> ((ReplayLocationPoint) -> TrackMapPoint?) {
+    private func makeProjector(source: [ReplayLocationPoint], target: [TrackMapPoint]) -> ReplayTrackProjector {
         let sourceVectors = source.map { SIMD2<Double>($0.x, $0.y) }
         let targetVectors = target.map { SIMD2<Double>($0.x, $0.y) }
         guard sourceVectors.count >= 3, targetVectors.count >= 3,
               let sourceBasis = makeBasis(for: sourceVectors),
               let targetBasis = makeBasis(for: targetVectors)
         else {
-            return { _ in nil }
+            return ReplayTrackProjector { _, _ in nil }
         }
 
-        // Subsample source for scoring — evenly spaced, up to 300 points
         let sourceSubsample = evenlySubsampled(sourceVectors, maxCount: 300)
         let targetSubsample = evenlySubsampled(targetVectors, maxCount: 300)
 
@@ -994,22 +1046,27 @@ actor ReplayService {
                 < alignmentScore(option: rhs, source: sourceSubsample, sourceBasis: sourceBasis, target: targetSubsample, targetBasis: targetBasis)
         } ?? (false, false, false)
 
-        // ICP refinement: iteratively improve alignment using Procrustes
         let correction = computeICPCorrection(
             source: sourceSubsample, option: best,
             sourceBasis: sourceBasis, targetBasis: targetBasis,
             target: targetSubsample, iterations: 4
         )
 
-        return { point in
+        let closesLoop = isCircuitTrackReliable(target)
+        let polyline = TrackPolyline(track: target, closesLoop: closesLoop)
+
+        return ReplayTrackProjector { point, previous in
             let vector = SIMD2<Double>(point.x, point.y)
             guard let projected = self.project(vector: vector, option: best, sourceBasis: sourceBasis, targetBasis: targetBasis) else {
                 return nil
             }
+
             let pv = SIMD2<Double>(projected.x, projected.y)
             let refined = correction.apply(pv)
             let clamped = TrackMapPoint(min(max(refined.x, 0), 100), min(max(refined.y, 0), 100))
-            return self.snapToTrack(clamped, track: target)
+            let snapped = self.snapToTrack(clamped, track: target, polyline: polyline, previous: previous, timestamp: point.date)
+                ?? TrackProjectionState(progress: 0, point: clamped, timestamp: point.date)
+            return (snapped.point, snapped)
         }
     }
 
@@ -1084,27 +1141,41 @@ actor ReplayService {
         return cumulative
     }
 
-    private func snapToTrack(_ point: TrackMapPoint, track: [TrackMapPoint]) -> TrackMapPoint {
-        guard track.count >= 2 else { return point }
-        let vector = SIMD2<Double>(point.x, point.y)
-        var best = vector
-        var bestDistance = Double.greatestFiniteMagnitude
-        let closesLoop = isCircuitTrackReliable(track)
-        let segmentLimit = closesLoop ? track.count : track.count - 1
-
-        for index in 0..<segmentLimit {
-            let start = SIMD2<Double>(track[index].x, track[index].y)
-            let endIndex = index == track.count - 1 ? 0 : index + 1
-            let end = SIMD2<Double>(track[endIndex].x, track[endIndex].y)
-            let candidate = closestPointOnSegment(point: vector, start: start, end: end)
-            let distance = simd_distance(candidate, vector)
-            if distance < bestDistance {
-                bestDistance = distance
-                best = candidate
-            }
+    private func snapToTrack(
+        _ point: TrackMapPoint,
+        track: [TrackMapPoint],
+        polyline: TrackPolyline?,
+        previous: TrackProjectionState?,
+        timestamp: Date
+    ) -> TrackProjectionState? {
+        guard track.count >= 2 else {
+            return TrackProjectionState(progress: 0, point: point, timestamp: timestamp)
         }
 
-        return TrackMapPoint(best.x, best.y)
+        let vector = SIMD2<Double>(point.x, point.y)
+        let candidates = snapCandidates(for: vector, polyline: polyline)
+        guard !candidates.isEmpty else {
+            return TrackProjectionState(progress: 0, point: point, timestamp: timestamp)
+        }
+
+        let chosen: TrackProjectionCandidate
+        if let previous, let polyline {
+            let elapsed = max(timestamp.timeIntervalSince(previous.timestamp), 0.5)
+            let window = progressContinuityWindow(for: polyline, elapsed: elapsed)
+            let continuityWeighted = candidates.min { lhs, rhs in
+                continuityScore(candidate: lhs, previous: previous, polyline: polyline, window: window)
+                    < continuityScore(candidate: rhs, previous: previous, polyline: polyline, window: window)
+            }
+            chosen = continuityWeighted ?? candidates[0]
+        } else {
+            chosen = candidates.min(by: { $0.distance < $1.distance }) ?? candidates[0]
+        }
+
+        return TrackProjectionState(
+            progress: chosen.progress,
+            point: TrackMapPoint(chosen.point.x, chosen.point.y),
+            timestamp: timestamp
+        )
     }
 
     private func closestPointOnSegment(point: SIMD2<Double>, start: SIMD2<Double>, end: SIMD2<Double>) -> SIMD2<Double> {
@@ -1113,6 +1184,48 @@ actor ReplayService {
         guard lengthSquared > 0.000001 else { return start }
         let t = max(0, min(1, simd_dot(point - start, segment) / lengthSquared))
         return start + segment * t
+    }
+
+    private func snapCandidates(for point: SIMD2<Double>, polyline: TrackPolyline?) -> [TrackProjectionCandidate] {
+        guard let polyline else {
+            return [TrackProjectionCandidate(point: point, progress: 0, distance: 0)]
+        }
+
+        return polyline.segments.map { segment in
+            let candidatePoint = closestPointOnSegment(point: point, start: segment.start, end: segment.end)
+            let localLength = simd_distance(candidatePoint, segment.start)
+            let progress = segment.startProgress + localLength
+            return TrackProjectionCandidate(
+                point: candidatePoint,
+                progress: progress,
+                distance: simd_distance(candidatePoint, point)
+            )
+        }
+    }
+
+    private func progressContinuityWindow(for polyline: TrackPolyline, elapsed: TimeInterval) -> Double {
+        let trackLength = polyline.totalLength
+        let baseline = max(trackLength * 0.04, 6)
+        let growth = elapsed * max(trackLength * 0.015, 2.5)
+        return min(max(baseline + growth, baseline), trackLength * 0.35)
+    }
+
+    private func continuityScore(
+        candidate: TrackProjectionCandidate,
+        previous: TrackProjectionState,
+        polyline: TrackPolyline,
+        window: Double
+    ) -> Double {
+        let delta = wrappedProgressDistance(from: previous.progress, to: candidate.progress, total: polyline.totalLength, isClosed: polyline.isClosed)
+        let normalizedDelta = delta / max(window, 1)
+        let continuityPenalty = normalizedDelta * normalizedDelta * 12
+        return candidate.distance + continuityPenalty
+    }
+
+    private func wrappedProgressDistance(from start: Double, to end: Double, total: Double, isClosed: Bool) -> Double {
+        let direct = abs(end - start)
+        guard isClosed, total > 0 else { return direct }
+        return min(direct, total - direct)
     }
 
     /// Bidirectional alignment score: measures how well projected source covers
@@ -1194,6 +1307,19 @@ actor ReplayService {
         let projected = targetBasis.center + targetBasis.axis1 * t1 + targetBasis.axis2 * t2
 
         return TrackMapPoint(min(max(projected.x, 0), 100), min(max(projected.y, 0), 100))
+    }
+}
+
+
+private struct ReplayTrackProjector {
+    private let resolver: (ReplayLocationPoint, TrackProjectionState?) -> (TrackMapPoint, TrackProjectionState)?
+
+    init(resolver: @escaping (ReplayLocationPoint, TrackProjectionState?) -> (TrackMapPoint, TrackProjectionState)?) {
+        self.resolver = resolver
+    }
+
+    func project(_ point: ReplayLocationPoint, previous: TrackProjectionState?) -> (point: TrackMapPoint, state: TrackProjectionState)? {
+        resolver(point, previous)
     }
 }
 
