@@ -19,6 +19,10 @@ struct RaceDetailView: View {
                 }
                 if viewModel.race.isPast {
                     resultsSection
+
+                    if viewModel.race.isReplayEligible {
+                        TrackReplayView(race: viewModel.race)
+                    }
                 } else {
                     countdownSection
                 }

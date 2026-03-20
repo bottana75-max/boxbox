@@ -16,6 +16,9 @@ struct ContentView: View {
             Tab("Home", systemImage: "house.fill") {
                 HomeView()
             }
+            Tab("Drivers", systemImage: "person.3.fill") {
+                DriversView()
+            }
             Tab("Predict", systemImage: "sparkles") {
                 PredictView()
             }
@@ -24,12 +27,6 @@ struct ContentView: View {
             }
             Tab("Schedule", systemImage: "calendar") {
                 ScheduleView()
-            }
-            Tab("Replay", systemImage: "play.circle.fill") {
-                TrackReplayView()
-            }
-            Tab("Drivers", systemImage: "person.3.fill") {
-                DriversView()
             }
         }
         .tint(Color.f1Red)

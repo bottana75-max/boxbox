@@ -1,370 +1,210 @@
 import SwiftUI
 
 struct TrackReplayView: View {
-    @State private var viewModel = ReplayViewModel()
+    @State private var viewModel: ReplayViewModel
+
+    init(race: Race) {
+        _viewModel = State(initialValue: ReplayViewModel(race: race))
+    }
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if viewModel.isLoading {
-                    F1LoadingView(message: "Loading race sessions")
-                } else if let error = viewModel.error, viewModel.selectedSession == nil {
-                    ErrorCard(message: error) {
-                        Task { await viewModel.loadSessions() }
-                    }
-                } else if viewModel.selectedSession == nil {
-                    sessionPicker
-                } else {
-                    replayContent
+        VStack(alignment: .leading, spacing: F1Design.cardSpacing) {
+            replayHeader
+
+            if viewModel.isLoading {
+                F1LoadingView(message: "Loading replay timeline")
+                    .frame(minHeight: 180)
+                    .f1Card()
+            } else if let error = viewModel.error {
+                ErrorCard(message: error) {
+                    Task { await viewModel.loadReplay() }
                 }
-            }
-            .background(Color.f1Background)
-            .navigationTitle("Race Replay")
-            .toolbarColorScheme(.dark, for: .navigationBar)
-        }
-        .task {
-            await viewModel.loadSessions()
-        }
-    }
-
-    // MARK: - Session Picker
-
-    @ViewBuilder
-    private var sessionPicker: some View {
-        ScrollView {
-            VStack(spacing: F1Design.cardSpacing) {
-                VStack(alignment: .leading, spacing: F1Design.innerSpacing) {
-                    F1SectionHeader(title: "SELECT RACE")
-
-                    if viewModel.availableSessions.isEmpty {
-                        F1EmptyView(
-                            icon: "flag.checkered",
-                            title: "No completed races yet",
-                            subtitle: "Race replays will appear here after each Grand Prix."
-                        )
-                        .frame(minHeight: 140)
-                    } else {
-                        ForEach(viewModel.availableSessions) { session in
-                            Button {
-                                Task { await viewModel.selectSession(session) }
-                            } label: {
-                                HStack(spacing: 12) {
-                                    Image(systemName: "play.circle.fill")
-                                        .font(.title2)
-                                        .foregroundStyle(Color.f1Red)
-
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(session.raceName)
-                                            .font(.headline)
-                                            .foregroundStyle(.white)
-                                        Text(session.circuitName)
-                                            .font(.caption)
-                                            .foregroundStyle(.secondary)
-                                    }
-
-                                    Spacer()
-
-                                    Text(session.date.formatted(.dateTime.day().month(.abbreviated)))
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-
-                                    Image(systemName: "chevron.right")
-                                        .font(.caption)
-                                        .foregroundStyle(.tertiary)
-                                }
-                                .f1InnerCard()
-                            }
-                        }
-                    }
-                }
+            } else if let snapshot = viewModel.currentSnapshot {
+                snapshotHero(snapshot)
+                playbackControls
+                standingsCard(snapshot)
+            } else {
+                F1EmptyView(
+                    icon: "play.slash",
+                    title: "Replay not available",
+                    subtitle: "We only surface replay inside completed races from this season when position data is ready."
+                )
                 .f1Card()
             }
-            .padding()
+        }
+        .task {
+            await viewModel.loadReplay()
         }
     }
 
-    // MARK: - Replay Content
+    private var replayHeader: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            F1SectionHeader(title: "RACE REPLAY", subtitle: "Accurate position-based playback for this completed race")
 
-    @ViewBuilder
-    private var replayContent: some View {
-        if viewModel.isLoadingTrack {
-            VStack(spacing: 16) {
-                F1LoadingView(message: "Downloading telemetry")
-                Text("This may take a moment — loading position data for all drivers.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 32)
-            }
-        } else if let error = viewModel.error {
-            ErrorCard(message: error) {
-                if let session = viewModel.selectedSession {
-                    Task { await viewModel.selectSession(session) }
-                }
-            }
-        } else {
-            ScrollView {
-                VStack(spacing: F1Design.cardSpacing) {
-                    raceHeader
-                    driverSelector
-                    trackMap
-                    playbackControls
-                    liveStandings
-                }
-                .padding()
+            HStack(spacing: 10) {
+                F1StatPill(title: "Scope", value: "Current season only", style: .subtle)
+                F1StatPill(title: "Format", value: "Timeline", style: .subtle)
+                F1StatPill(title: "Data", value: "Live positions", style: .subtle)
             }
         }
+        .f1Card()
     }
 
-    // MARK: - Header
-
-    private var raceHeader: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(viewModel.selectedSession?.raceName ?? "")
-                        .font(.title3)
-                        .fontWeight(.bold)
+    private func snapshotHero(_ snapshot: ReplaySnapshot) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(snapshot.elapsedTime.replayClock)
+                        .font(.system(size: 28, weight: .black, design: .rounded))
                         .foregroundStyle(.white)
-                    Text(viewModel.selectedSession?.circuitName ?? "")
+                    Text(snapshot.headline)
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
+
                 Spacer()
-                Button {
-                    viewModel.pause()
-                    viewModel.selectedSession = nil
-                    viewModel.locationData = [:]
-                    viewModel.positionData = [:]
-                    viewModel.drivers = []
-                } label: {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.title2)
-                        .foregroundStyle(.secondary)
+
+                if let leader = snapshot.standings.first {
+                    VStack(alignment: .trailing, spacing: 6) {
+                        Text("P1")
+                            .font(.caption.weight(.bold))
+                            .foregroundStyle(Color.f1Red)
+                        Text(leader.driver.nameAcronym)
+                            .font(.title3.weight(.black))
+                            .foregroundStyle(leader.driver.color)
+                        Text(leader.driver.teamName)
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.trailing)
+                    }
                 }
             }
+
+            replayTimeline(snapshot)
         }
-        .f1Card()
+        .f1Card(gradient: true, accent: .f1Red)
     }
 
-    // MARK: - Driver Selector
+    private func replayTimeline(_ snapshot: ReplaySnapshot) -> some View {
+        let topFive = Array(snapshot.standings.prefix(5))
 
-    private var driverSelector: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack(spacing: 8) {
-                F1SectionHeader(title: "DRIVERS")
-                Spacer()
-                Button("All") { viewModel.setAllVisible(true) }
-                    .font(.caption2.weight(.semibold))
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(Color.f1SecondaryBackground)
-                    .clipShape(Capsule())
-                Button("Top 5") { viewModel.setTopNVisible(5) }
-                    .font(.caption2.weight(.semibold))
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(Color.f1SecondaryBackground)
-                    .clipShape(Capsule())
-                Button("None") { viewModel.setAllVisible(false) }
-                    .font(.caption2.weight(.semibold))
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 5)
-                    .background(Color.f1SecondaryBackground)
-                    .clipShape(Capsule())
-            }
-            .foregroundStyle(.white)
+        return VStack(alignment: .leading, spacing: 10) {
+            Text("Front of the field")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(viewModel.drivers) { driver in
-                        Button { viewModel.toggleDriver(driver) } label: {
-                            HStack(spacing: 4) {
-                                Circle()
-                                    .fill(driver.color)
-                                    .frame(width: 10, height: 10)
-                                Text(driver.nameAcronym)
-                                    .font(.caption2.weight(.bold))
-                            }
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 6)
-                            .background(driver.isVisible ? driver.color.opacity(0.25) : Color.f1SecondaryBackground)
-                            .clipShape(Capsule())
-                            .overlay(
-                                Capsule()
-                                    .stroke(driver.isVisible ? driver.color : Color.clear, lineWidth: 1)
-                            )
-                        }
+            ForEach(topFive) { entry in
+                HStack(spacing: 10) {
+                    F1PositionBadge(position: entry.position)
+                        .frame(width: 28)
+
+                    Circle()
+                        .fill(entry.driver.color)
+                        .frame(width: 8, height: 8)
+
+                    Text(entry.driver.fullName)
+                        .font(.subheadline.weight(.semibold))
                         .foregroundStyle(.white)
+
+                    Spacer()
+
+                    if entry.delta != 0 {
+                        Label(
+                            entry.delta > 0 ? "+\(entry.delta)" : "\(entry.delta)",
+                            systemImage: entry.delta > 0 ? "arrow.up" : "arrow.down"
+                        )
+                        .font(.caption2.weight(.bold))
+                        .foregroundStyle(entry.delta > 0 ? .green : .orange)
+                    } else {
+                        Text("=")
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(.secondary)
                     }
                 }
+                .f1InnerCard()
             }
         }
-        .f1Card()
     }
-
-    // MARK: - Track Map
-
-    private var trackMap: some View {
-        GeometryReader { geometry in
-            let w = geometry.size.width
-            let h = geometry.size.height
-
-            ZStack {
-                RoundedRectangle(cornerRadius: F1Design.innerCornerRadius)
-                    .fill(Color.f1SecondaryBackground)
-
-                // Draw track path from location data (use first driver with data as outline)
-                if let firstDriver = viewModel.visibleDrivers.first,
-                   let points = viewModel.locationData[firstDriver.driverNumber], !points.isEmpty {
-                    let trackPath = Path { path in
-                        let step = max(1, points.count / 500)
-                        var first = true
-                        for i in stride(from: 0, to: points.count, by: step) {
-                            let p = viewModel.normalizedPoint(x: points[i].x, y: points[i].y)
-                            let screenPt = CGPoint(
-                                x: (p.x / 100) * w * 0.85 + w * 0.075,
-                                y: (p.y / 100) * h * 0.85 + h * 0.075
-                            )
-                            if first {
-                                path.move(to: screenPt)
-                                first = false
-                            } else {
-                                path.addLine(to: screenPt)
-                            }
-                        }
-                        path.closeSubpath()
-                    }
-
-                    trackPath
-                        .stroke(Color.white.opacity(0.12), style: StrokeStyle(lineWidth: 5, lineCap: .round, lineJoin: .round))
-                }
-
-                // Driver dots
-                let positions = viewModel.currentDriverPositions
-                ForEach(viewModel.visibleDrivers) { driver in
-                    if let pos = positions[driver.driverNumber] {
-                        let screenX = (pos.x / 100) * w * 0.85 + w * 0.075
-                        let screenY = (pos.y / 100) * h * 0.85 + h * 0.075
-
-                        ZStack {
-                            Circle()
-                                .fill(driver.color)
-                                .frame(width: 14, height: 14)
-                            Text(driver.nameAcronym)
-                                .font(.system(size: 6, weight: .bold))
-                                .foregroundStyle(.white)
-                        }
-                        .position(x: screenX, y: screenY)
-                        .animation(.linear(duration: 0.016), value: pos.x)
-                        .animation(.linear(duration: 0.016), value: pos.y)
-                    }
-                }
-            }
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: 300)
-        .clipShape(RoundedRectangle(cornerRadius: F1Design.cornerRadius))
-    }
-
-    // MARK: - Playback Controls
 
     private var playbackControls: some View {
-        VStack(spacing: 10) {
-            // Scrubber
-            HStack(spacing: 8) {
-                Text(viewModel.elapsedTimeString)
-                    .font(.caption2.monospacedDigit())
-                    .foregroundStyle(.secondary)
-                    .frame(width: 42, alignment: .trailing)
+        VStack(spacing: 14) {
+            Slider(value: Binding(
+                get: { viewModel.progress },
+                set: { viewModel.progress = $0 }
+            ), in: 0...1)
+            .tint(Color.f1Red)
 
-                Slider(value: Binding(
-                    get: { viewModel.progress },
-                    set: { viewModel.progress = $0 }
-                ), in: 0...1)
-                .tint(Color.f1Red)
-
-                Text(viewModel.totalTimeString)
-                    .font(.caption2.monospacedDigit())
-                    .foregroundStyle(.secondary)
-                    .frame(width: 42, alignment: .leading)
-            }
-
-            // Buttons
-            HStack(spacing: 20) {
-                // Rewind to start
+            HStack(spacing: 18) {
                 Button {
-                    if let range = viewModel.timeRange {
-                        viewModel.seek(to: range.lowerBound)
-                    }
+                    viewModel.step(by: -1)
                 } label: {
-                    Image(systemName: "backward.end.fill")
+                    Image(systemName: "backward.frame.fill")
                         .font(.title3)
                 }
 
-                // Play / Pause
-                Button { viewModel.togglePlayback() } label: {
+                Button {
+                    viewModel.togglePlayback()
+                } label: {
                     Image(systemName: viewModel.isPlaying ? "pause.fill" : "play.fill")
-                        .font(.title)
+                        .font(.title3)
                         .frame(width: 44, height: 44)
                         .background(Color.f1Red)
                         .clipShape(Circle())
                 }
 
-                // Speed picker
-                Menu {
-                    ForEach([1.0, 2.0, 4.0, 8.0], id: \.self) { speed in
-                        Button("\(Int(speed))x") {
-                            viewModel.playbackSpeed = speed
-                        }
-                    }
+                Button {
+                    viewModel.step(by: 1)
                 } label: {
-                    Text("\(Int(viewModel.playbackSpeed))x")
-                        .font(.caption.weight(.bold))
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 6)
-                        .background(Color.f1SecondaryBackground)
-                        .clipShape(Capsule())
+                    Image(systemName: "forward.frame.fill")
+                        .font(.title3)
                 }
+
+                Spacer()
+
+                Text(viewModel.currentSnapshot?.elapsedTime.replayClock ?? "--:--")
+                    .font(.caption.monospacedDigit().weight(.bold))
+                    .foregroundStyle(.secondary)
             }
             .foregroundStyle(.white)
         }
         .f1Card()
     }
 
-    // MARK: - Live Standings
-
-    private var liveStandings: some View {
+    private func standingsCard(_ snapshot: ReplaySnapshot) -> some View {
         VStack(alignment: .leading, spacing: F1Design.innerSpacing) {
-            F1SectionHeader(title: "LIVE STANDINGS")
+            F1SectionHeader(title: "TOP 10 SNAPSHOT", subtitle: "Position changes between replay checkpoints")
 
-            let sorted = viewModel.sortedDriversByRank
-            let ranks = viewModel.currentDriverRanks
-
-            ForEach(sorted.prefix(10)) { driver in
+            ForEach(snapshot.standings) { entry in
                 HStack(spacing: 12) {
-                    let rank = ranks[driver.driverNumber] ?? 0
-                    F1PositionBadge(position: rank)
-                        .frame(width: 34)
+                    F1PositionBadge(position: entry.position)
+                        .frame(width: 32)
 
                     Circle()
-                        .fill(driver.color)
-                        .frame(width: 8, height: 8)
+                        .fill(entry.driver.color)
+                        .frame(width: 10, height: 10)
 
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(driver.fullName)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(entry.driver.fullName)
                             .font(.subheadline.weight(.semibold))
                             .foregroundStyle(.white)
-                        Text(driver.teamName)
+                        Text(entry.driver.teamName)
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
 
                     Spacer()
 
-                    Text(driver.nameAcronym)
+                    Text(entry.driver.nameAcronym)
                         .font(.caption.weight(.bold))
                         .foregroundStyle(.secondary)
+
+                    if entry.delta != 0 {
+                        Text(entry.delta > 0 ? "+\(entry.delta)" : "\(entry.delta)")
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(entry.delta > 0 ? .green : .orange)
+                            .frame(width: 30, alignment: .trailing)
+                    }
                 }
                 .f1InnerCard()
             }
@@ -373,6 +213,28 @@ struct TrackReplayView: View {
     }
 }
 
+private extension TimeInterval {
+    var replayClock: String {
+        let totalSeconds = Int(self)
+        let minutes = totalSeconds / 60
+        let seconds = totalSeconds % 60
+        return String(format: "%d:%02d", minutes, seconds)
+    }
+}
+
 #Preview {
-    TrackReplayView()
+    NavigationStack {
+        ScrollView {
+            TrackReplayView(race: Race(
+                id: "1",
+                raceName: "Bahrain Grand Prix",
+                circuitName: "Bahrain International Circuit",
+                country: "Bahrain",
+                date: "2026-03-02",
+                round: 1
+            ))
+            .padding()
+        }
+        .background(Color.f1Background)
+    }
 }

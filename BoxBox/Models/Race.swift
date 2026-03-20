@@ -20,6 +20,19 @@ struct Race: Identifiable, Codable, Hashable {
         return raceDate < Date()
     }
 
+    var seasonYear: Int {
+        let calendar = Calendar(identifier: .gregorian)
+        return raceDate.map { calendar.component(.year, from: $0) } ?? calendar.component(.year, from: Date())
+    }
+
+    var isCurrentSeason: Bool {
+        seasonYear == Calendar(identifier: .gregorian).component(.year, from: Date())
+    }
+
+    var isReplayEligible: Bool {
+        isPast && isCurrentSeason
+    }
+
     var formattedDate: String {
         guard let raceDate else { return date }
         let formatter = DateFormatter()
