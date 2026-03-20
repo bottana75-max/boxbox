@@ -56,6 +56,10 @@ struct TrackReplayView: View {
                 F1StatPill(title: "Limit", value: "5 drivers", style: .subtle)
                 F1StatPill(title: "Coverage", value: "Full race", style: .subtle)
             }
+
+            Text("Race-start jump skips the pre-start idle telemetry when OpenF1 publishes samples before lights out.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
         .f1Card()
     }
@@ -142,12 +146,12 @@ struct TrackReplayView: View {
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
-                VStack(alignment: .trailing, spacing: 4) {
-                    Text("Loaded")
-                        .font(.caption2.weight(.bold))
-                        .foregroundStyle(Color.f1Red)
-                    Text("\(viewModel.selectedDriverNumbers.count) drivers")
-                        .font(.caption)
+                VStack(alignment: .trailing, spacing: 6) {
+                    Text(viewModel.currentLapLabel)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.white)
+                    Text("\(viewModel.selectedDriverNumbers.count) drivers loaded")
+                        .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
             }
@@ -155,7 +159,7 @@ struct TrackReplayView: View {
             ReplayCircuitMapView(trackPoints: viewModel.race.circuitInfo?.trackMapPoints ?? [], markers: snapshot.markers)
                 .frame(height: 250)
 
-            Text("Markers update only when a fresh OpenF1 location sample exists (held for up to \(Int(viewModel.projection?.freshnessWindow ?? 4))s).")
+            Text("Markers update only when a fresh OpenF1 location sample exists (held for up to \(Int(viewModel.projection?.freshnessWindow ?? 4))s). Projected positions are snapped back to the circuit path to keep alignment steadier without inventing missing motion.")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -164,13 +168,31 @@ struct TrackReplayView: View {
 
     private var playbackControls: some View {
         VStack(spacing: 14) {
+            HStack(spacing: 10) {
+                controlChip(title: viewModel.currentLapLabel, systemImage: "flag.checkered.2.crossed")
+                Button {
+                    viewModel.jumpToRaceStart()
+                } label: {
+                    controlChip(title: "Jump to start", systemImage: "bolt.fill")
+                }
+                .buttonStyle(.plain)
+                .disabled(!viewModel.canJumpToRaceStart)
+                .opacity(viewModel.canJumpToRaceStart ? 1 : 0.45)
+            }
+
             Slider(value: Binding(
                 get: { viewModel.progress },
                 set: { viewModel.progress = $0 }
             ), in: 0...1)
             .tint(Color.f1Red)
 
-            HStack(spacing: 18) {
+            HStack(spacing: 12) {
+                Button { viewModel.stepToLap(direction: -1) } label: {
+                    Label("Prev lap", systemImage: "backward.end.fill")
+                        .font(.caption.weight(.bold))
+                }
+                .disabled(!viewModel.canStepToPreviousLap)
+
                 Button { viewModel.step(by: -15) } label: {
                     Image(systemName: "gobackward.15")
                         .font(.title3)
@@ -189,6 +211,12 @@ struct TrackReplayView: View {
                         .font(.title3)
                 }
 
+                Button { viewModel.stepToLap(direction: 1) } label: {
+                    Label("Next lap", systemImage: "forward.end.fill")
+                        .font(.caption.weight(.bold))
+                }
+                .disabled(!viewModel.canStepToNextLap)
+
                 Spacer()
 
                 Text(viewModel.currentSnapshot?.elapsedTime.replayClock ?? "--:--")
@@ -198,6 +226,19 @@ struct TrackReplayView: View {
             .foregroundStyle(.white)
         }
         .f1Card()
+    }
+
+    private func controlChip(title: String, systemImage: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: systemImage)
+            Text(title)
+        }
+        .font(.caption.weight(.bold))
+        .foregroundStyle(.white)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(Color.f1SecondaryBackground)
+        .clipShape(Capsule())
     }
 
     private func standingsCard(_ snapshot: ReplaySnapshot) -> some View {

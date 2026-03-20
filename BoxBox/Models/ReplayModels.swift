@@ -43,11 +43,20 @@ struct ReplaySnapshot: Identifiable, Hashable {
     let index: Int
     let timestamp: Date
     let elapsedTime: TimeInterval
+    let lapNumber: Int?
     let markers: [ReplayMarker]
     let standings: [ReplayStandingEntry]
     let headline: String
 
     var id: Int { index }
+}
+
+struct ReplayLapAnchor: Identifiable, Hashable {
+    let lapNumber: Int
+    let snapshotIndex: Int
+    let elapsedTime: TimeInterval
+
+    var id: Int { lapNumber }
 }
 
 struct ReplayProjectionMetadata: Hashable {
@@ -61,6 +70,8 @@ struct RaceReplayPayload {
     let availableDrivers: [ReplayDriver]
     let selectedDrivers: [ReplayDriver]
     let snapshots: [ReplaySnapshot]
+    let lapAnchors: [ReplayLapAnchor]
+    let raceStartSnapshotIndex: Int
     let totalDuration: TimeInterval
     let projection: ReplayProjectionMetadata
 }

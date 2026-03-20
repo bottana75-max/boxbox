@@ -8,6 +8,8 @@ final class ReplayViewModel {
     var availableDrivers: [ReplayDriver] = []
     var selectedDriverNumbers: Set<Int> = []
     var snapshots: [ReplaySnapshot] = []
+    var lapAnchors: [ReplayLapAnchor] = []
+    var raceStartSnapshotIndex = 0
     var projection: ReplayProjectionMetadata?
     var selectedIndex = 0
     var isPlaying = false
@@ -48,6 +50,33 @@ final class ReplayViewModel {
 
     var selectedDrivers: [ReplayDriver] {
         availableDrivers.filter { selectedDriverNumbers.contains($0.driverNumber) }
+    }
+
+    var currentLap: Int? {
+        currentSnapshot?.lapNumber
+    }
+
+    var totalLaps: Int {
+        race.circuitInfo?.laps ?? lapAnchors.last?.lapNumber ?? 0
+    }
+
+    var currentLapLabel: String {
+        guard let currentLap else { return totalLaps > 0 ? "Lap -- / \(totalLaps)" : "Lap unavailable" }
+        return totalLaps > 0 ? "Lap \(currentLap) / \(totalLaps)" : "Lap \(currentLap)"
+    }
+
+    var canJumpToRaceStart: Bool {
+        !snapshots.isEmpty && raceStartSnapshotIndex != selectedIndex
+    }
+
+    var canStepToPreviousLap: Bool {
+        guard let current = currentLap else { return false }
+        return lapAnchors.contains { $0.lapNumber < current }
+    }
+
+    var canStepToNextLap: Bool {
+        guard let current = currentLap else { return false }
+        return lapAnchors.contains { $0.lapNumber > current }
     }
 
     var selectionSummary: String {
@@ -112,6 +141,8 @@ final class ReplayViewModel {
                 guard !Task.isCancelled else { return }
                 availableDrivers = payload.availableDrivers
                 snapshots = payload.snapshots
+                lapAnchors = payload.lapAnchors
+                raceStartSnapshotIndex = payload.raceStartSnapshotIndex
                 projection = payload.projection
                 selectedIndex = 0
                 if snapshots.isEmpty {
@@ -156,6 +187,23 @@ final class ReplayViewModel {
     func step(by amount: Int) {
         pause()
         selectedIndex = min(max(selectedIndex + amount, 0), max(snapshots.count - 1, 0))
+    }
+
+    func jumpToRaceStart() {
+        guard snapshots.indices.contains(raceStartSnapshotIndex) else { return }
+        pause()
+        selectedIndex = raceStartSnapshotIndex
+    }
+
+    func stepToLap(direction: Int) {
+        guard direction != 0, let current = currentLap else { return }
+        pause()
+        let sorted = lapAnchors.sorted { $0.lapNumber < $1.lapNumber }
+        let target = direction < 0
+            ? sorted.last(where: { $0.lapNumber < current })
+            : sorted.first(where: { $0.lapNumber > current })
+        guard let target, snapshots.indices.contains(target.snapshotIndex) else { return }
+        selectedIndex = target.snapshotIndex
     }
 
     nonisolated deinit {

@@ -66,6 +66,18 @@ final class ReplayService {
         }
     }
 
+    private struct LapResponse: Decodable {
+        let dateStart: String?
+        let driverNumber: Int
+        let lapNumber: Int
+
+        enum CodingKeys: String, CodingKey {
+            case dateStart = "date_start"
+            case driverNumber = "driver_number"
+            case lapNumber = "lap_number"
+        }
+    }
+
     private struct AxisBasis {
         let center: SIMD2<Double>
         let axis1: SIMD2<Double>
@@ -115,10 +127,12 @@ final class ReplayService {
         async let driversTask = fetchDrivers(sessionKey: sessionKey)
         async let positionsTask = fetchPositionData(sessionKey: sessionKey)
         async let locationsTask = fetchLocationData(sessionKey: sessionKey, driverNumbers: selectedDriverNumbers)
+        async let lapDataTask = fetchLapData(sessionKey: sessionKey)
 
         let drivers = try await driversTask
         let positionData = try await positionsTask
         let locationData = try await locationsTask
+        let lapData = try await lapDataTask
 
         let driversByNumber = Dictionary(uniqueKeysWithValues: drivers.map { ($0.driverNumber, $0) })
         let selectedDrivers = selectedDriverNumbers.compactMap { driversByNumber[$0] }
@@ -126,15 +140,16 @@ final class ReplayService {
             throw F1Error.apiError("Selected drivers are not available for this race")
         }
 
-        let snapshots = buildSnapshots(
+        let timeline = buildSnapshots(
             race: race,
             selectedDrivers: selectedDrivers,
             allDrivers: drivers,
             locationData: locationData,
-            positionData: positionData
+            positionData: positionData,
+            lapData: lapData
         )
 
-        guard let last = snapshots.last else {
+        guard let last = timeline.snapshots.last else {
             throw F1Error.noData
         }
 
@@ -142,7 +157,9 @@ final class ReplayService {
         return RaceReplayPayload(
             availableDrivers: drivers,
             selectedDrivers: selectedDrivers,
-            snapshots: snapshots,
+            snapshots: timeline.snapshots,
+            lapAnchors: timeline.lapAnchors,
+            raceStartSnapshotIndex: timeline.raceStartSnapshotIndex,
             totalDuration: last.elapsedTime,
             projection: ReplayProjectionMetadata(
                 loadedDriverCount: selectedDrivers.count,
@@ -248,32 +265,64 @@ final class ReplayService {
         }
     }
 
+
+    private func fetchLapData(sessionKey: Int) async throws -> [Int: [LapPoint]] {
+        let url = URL(string: "\(baseURL)/laps?session_key=\(sessionKey)")!
+        let (data, _) = try await URLSession.shared.data(from: url)
+        let responses = try decoder.decode([LapResponse].self, from: data)
+
+        var result: [Int: [LapPoint]] = [:]
+        for response in responses {
+            guard let dateString = response.dateStart,
+                  let date = parseDate(dateString),
+                  response.lapNumber > 0
+            else { continue }
+            result[response.driverNumber, default: []].append(LapPoint(date: date, lapNumber: response.lapNumber))
+        }
+
+        for key in result.keys {
+            result[key]?.sort { lhs, rhs in
+                if lhs.date == rhs.date { return lhs.lapNumber < rhs.lapNumber }
+                return lhs.date < rhs.date
+            }
+        }
+        return result
+    }
+
     private func buildSnapshots(
         race: Race,
         selectedDrivers: [ReplayDriver],
         allDrivers: [ReplayDriver],
         locationData: [Int: [ReplayLocationPoint]],
-        positionData: [Int: [PositionPoint]]
-    ) -> [ReplaySnapshot] {
+        positionData: [Int: [PositionPoint]],
+        lapData: [Int: [LapPoint]]
+    ) -> ReplayTimeline {
         let selectedNumbers = Set(selectedDrivers.map(\.driverNumber))
         let sourcePoints = selectedNumbers
             .compactMap { locationData[$0] }
             .flatMap { $0 }
 
-        guard !sourcePoints.isEmpty else { return [] }
+        guard !sourcePoints.isEmpty else {
+            return ReplayTimeline(snapshots: [], lapAnchors: [], raceStartSnapshotIndex: 0)
+        }
 
         let allTimes = sourcePoints.map(\.date).sorted()
-        guard let start = allTimes.first, let end = allTimes.last else { return [] }
+        guard let rawStart = allTimes.first, let end = allTimes.last else {
+            return ReplayTimeline(snapshots: [], lapAnchors: [], raceStartSnapshotIndex: 0)
+        }
 
+        let raceStart = inferredRaceStart(from: positionData, lapData: lapData) ?? rawStart
+        let start = min(rawStart, raceStart)
         let trackPoints = race.circuitInfo?.trackMapPoints ?? fallbackTrack(points: sourcePoints)
         let projector = makeProjector(source: sourcePoints, target: trackPoints)
         let driversByNumber = Dictionary(uniqueKeysWithValues: allDrivers.map { ($0.driverNumber, $0) })
+        let lapTimeline = makeLapTimeline(from: lapData)
 
         let totalDuration = end.timeIntervalSince(start)
         let interval: TimeInterval = totalDuration > 7_200 ? 3 : 2
         let snapshotCount = max(2, Int(ceil(totalDuration / interval)) + 1)
 
-        return (0..<snapshotCount).compactMap { index in
+        let snapshots = (0..<snapshotCount).compactMap { index in
             let timestamp = index == snapshotCount - 1 ? end : start.addingTimeInterval(Double(index) * interval)
             let markers = selectedDrivers.compactMap { driver -> ReplayMarker? in
                 guard let points = locationData[driver.driverNumber],
@@ -305,10 +354,64 @@ final class ReplayService {
                 index: index,
                 timestamp: timestamp,
                 elapsedTime: timestamp.timeIntervalSince(start),
+                lapNumber: currentLap(at: timestamp, timeline: lapTimeline),
                 markers: markers,
                 standings: Array(standings.prefix(10)),
                 headline: headline(for: markers, standings: standings, selectedDrivers: selectedDrivers)
             )
+        }
+
+        guard !snapshots.isEmpty else {
+            return ReplayTimeline(snapshots: [], lapAnchors: [], raceStartSnapshotIndex: 0)
+        }
+
+        let lapAnchors = makeLapAnchors(snapshots: snapshots, lapTimeline: lapTimeline)
+        let raceStartSnapshotIndex = snapshots.enumerated().min(by: {
+            abs($0.element.timestamp.timeIntervalSince(raceStart)) < abs($1.element.timestamp.timeIntervalSince(raceStart))
+        })?.offset ?? 0
+
+        return ReplayTimeline(snapshots: snapshots, lapAnchors: lapAnchors, raceStartSnapshotIndex: raceStartSnapshotIndex)
+    }
+
+
+    private func inferredRaceStart(from positionData: [Int: [PositionPoint]], lapData: [Int: [LapPoint]]) -> Date? {
+        let earliestPosition = positionData.values.compactMap { $0.first?.date }.min()
+        let lapOneStarts = lapData.values.flatMap { points in
+            points.filter { $0.lapNumber == 1 }.map(\.date)
+        }
+        let earliestLap = lapOneStarts.min()
+        return [earliestPosition, earliestLap].compactMap { $0 }.min()
+    }
+
+    private func makeLapTimeline(from lapData: [Int: [LapPoint]]) -> [LapBoundary] {
+        var grouped: [Int: [Date]] = [:]
+        for points in lapData.values {
+            for point in points where point.lapNumber > 0 {
+                grouped[point.lapNumber, default: []].append(point.date)
+            }
+        }
+
+        return grouped.keys.sorted().compactMap { lap in
+            guard let dates = grouped[lap], !dates.isEmpty else { return nil }
+            let sorted = dates.sorted()
+            let anchor = sorted[min(sorted.count / 3, sorted.count - 1)]
+            return LapBoundary(lapNumber: lap, start: anchor)
+        }
+    }
+
+    private func currentLap(at time: Date, timeline: [LapBoundary]) -> Int? {
+        guard !timeline.isEmpty else { return nil }
+        let candidates = timeline.filter { $0.start <= time }
+        return candidates.last?.lapNumber ?? timeline.first?.lapNumber
+    }
+
+    private func makeLapAnchors(snapshots: [ReplaySnapshot], lapTimeline: [LapBoundary]) -> [ReplayLapAnchor] {
+        guard !snapshots.isEmpty else { return [] }
+        return lapTimeline.compactMap { lap in
+            guard let best = snapshots.enumerated().min(by: {
+                abs($0.element.timestamp.timeIntervalSince(lap.start)) < abs($1.element.timestamp.timeIntervalSince(lap.start))
+            }) else { return nil }
+            return ReplayLapAnchor(lapNumber: lap.lapNumber, snapshotIndex: best.offset, elapsedTime: best.element.elapsedTime)
         }
     }
 
@@ -391,8 +494,39 @@ final class ReplayService {
 
         return { point in
             let vector = SIMD2<Double>(point.x, point.y)
-            return self.project(vector: vector, option: best, sourceBasis: sourceBasis, targetBasis: targetBasis)
+            guard let projected = self.project(vector: vector, option: best, sourceBasis: sourceBasis, targetBasis: targetBasis) else {
+                return nil
+            }
+            return self.snapToTrack(projected, track: target)
         }
+    }
+
+    private func snapToTrack(_ point: TrackMapPoint, track: [TrackMapPoint]) -> TrackMapPoint {
+        guard track.count >= 2 else { return point }
+        let vector = SIMD2<Double>(point.x, point.y)
+        var best = vector
+        var bestDistance = Double.greatestFiniteMagnitude
+
+        for index in track.indices {
+            let start = SIMD2<Double>(track[index].x, track[index].y)
+            let end = SIMD2<Double>(track[(index + 1) % track.count].x, track[(index + 1) % track.count].y)
+            let candidate = closestPointOnSegment(point: vector, start: start, end: end)
+            let distance = simd_distance(candidate, vector)
+            if distance < bestDistance {
+                bestDistance = distance
+                best = candidate
+            }
+        }
+
+        return TrackMapPoint(best.x, best.y)
+    }
+
+    private func closestPointOnSegment(point: SIMD2<Double>, start: SIMD2<Double>, end: SIMD2<Double>) -> SIMD2<Double> {
+        let segment = end - start
+        let lengthSquared = simd_length_squared(segment)
+        guard lengthSquared > 0.000001 else { return start }
+        let t = max(0, min(1, simd_dot(point - start, segment) / lengthSquared))
+        return start + segment * t
     }
 
     private func alignmentScore(
@@ -463,7 +597,23 @@ final class ReplayService {
     }
 }
 
+private struct ReplayTimeline {
+    let snapshots: [ReplaySnapshot]
+    let lapAnchors: [ReplayLapAnchor]
+    let raceStartSnapshotIndex: Int
+}
+
+private struct LapBoundary {
+    let lapNumber: Int
+    let start: Date
+}
+
 private struct PositionPoint {
     let date: Date
     let position: Int
+}
+
+private struct LapPoint {
+    let date: Date
+    let lapNumber: Int
 }
