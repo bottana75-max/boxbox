@@ -93,15 +93,30 @@ final class ReplayService {
         }
 
         private static func decodeDoubleIfPresent(_ container: KeyedDecodingContainer<CodingKeys>, forKey key: CodingKeys) -> Double? {
-            if let value = try? container.decodeIfPresent(Double.self, forKey: key), let value {
+            if let value = try? container.decodeIfPresent(Double.self, forKey: key) {
                 return value
             }
-            if let intValue = try? container.decodeIfPresent(Int.self, forKey: key), let intValue {
+
+            let intValue: Int?
+            do {
+                intValue = try container.decodeIfPresent(Int.self, forKey: key)
+            } catch {
+                intValue = nil
+            }
+            if let intValue {
                 return Double(intValue)
             }
-            if let stringValue = try? container.decodeIfPresent(String.self, forKey: key), let stringValue {
+
+            let stringValue: String?
+            do {
+                stringValue = try container.decodeIfPresent(String.self, forKey: key)
+            } catch {
+                stringValue = nil
+            }
+            if let stringValue {
                 return Double(stringValue)
             }
+
             return nil
         }
     }
