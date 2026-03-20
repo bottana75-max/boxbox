@@ -301,6 +301,56 @@ struct F1PositionBadge: View {
     }
 }
 
+// MARK: - Inline Error Row
+
+/// Reusable inline error row used inside cards (non-blocking, no retry button).
+struct F1ErrorRow: View {
+    let message: String
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "exclamationmark.triangle.fill")
+                .foregroundStyle(.yellow)
+            Text(message)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, minHeight: 60)
+    }
+}
+
+// MARK: - Weekend Session Row
+
+/// Shared row layout for weekend session timelines (used in Home and Predict).
+struct F1WeekendSessionRow: View {
+    let session: WeekendSession
+
+    var body: some View {
+        HStack(spacing: 14) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(session.label)
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.white)
+                Text(session.subtitle)
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 3) {
+                Text(session.relativeLabel.uppercased())
+                    .font(.system(size: 9, weight: .heavy))
+                    .tracking(0.4)
+                    .foregroundStyle(session.isUpcoming ? Color.f1Red : .secondary)
+                Text(session.timeLabel)
+                    .font(.caption)
+                    .foregroundStyle(.white)
+            }
+        }
+        .f1InnerCard()
+    }
+}
+
 // MARK: - Helpers
 
 struct F1Chevron: View {

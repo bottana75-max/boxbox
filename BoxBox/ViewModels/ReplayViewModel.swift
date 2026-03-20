@@ -60,9 +60,12 @@ final class ReplayViewModel {
         error = nil
 
         do {
-            availableDrivers = try await service.fetchAvailableDrivers(for: race)
+            let drivers = try await service.fetchAvailableDrivers(for: race)
+            guard !Task.isCancelled else { return }
+            availableDrivers = drivers
             hasLoadedDriverList = true
         } catch {
+            guard !Task.isCancelled else { return }
             self.error = error.localizedDescription
         }
 
@@ -97,6 +100,7 @@ final class ReplayViewModel {
 
         do {
             let payload = try await service.fetchReplay(for: race, selectedDriverNumbers: Array(selectedDriverNumbers).sorted())
+            guard !Task.isCancelled else { return }
             availableDrivers = payload.availableDrivers
             snapshots = payload.snapshots
             projection = payload.projection
@@ -105,6 +109,7 @@ final class ReplayViewModel {
                 error = "Replay data is not available for this race yet."
             }
         } catch {
+            guard !Task.isCancelled else { return }
             self.error = error.localizedDescription
         }
 

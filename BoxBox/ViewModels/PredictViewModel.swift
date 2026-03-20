@@ -132,9 +132,7 @@ class PredictViewModel {
                 pressureProfile: pressureProfile
             )
 
-            if !storeKit.isUnlimited {
-                storeKit.consumeCredit()
-            }
+            storeKit.consumeCredit()
         } catch {
             self.error = "Something went wrong generating your prediction. Check your API key, connection and try again."
         }

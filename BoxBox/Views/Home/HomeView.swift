@@ -254,28 +254,7 @@ struct HomeView: View {
                     F1SectionHeader(title: "WEEKEND FLOW", subtitle: "Session cadence for the race weekend")
 
                     ForEach(race.weekendSessions) { session in
-                        HStack(spacing: 14) {
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text(session.label)
-                                    .font(.subheadline)
-                                    .fontWeight(.bold)
-                                    .foregroundStyle(.white)
-                                Text(session.subtitle)
-                                    .font(.caption2)
-                                    .foregroundStyle(.tertiary)
-                            }
-                            Spacer()
-                            VStack(alignment: .trailing, spacing: 3) {
-                                Text(session.relativeLabel.uppercased())
-                                    .font(.system(size: 9, weight: .heavy))
-                                    .tracking(0.4)
-                                    .foregroundStyle(session.isUpcoming ? Color.f1Red : .secondary)
-                                Text(session.timeLabel)
-                                    .font(.caption)
-                                    .foregroundStyle(.white)
-                            }
-                        }
-                        .f1InnerCard()
+                        F1WeekendSessionRow(session: session)
                     }
                 }
                 .f1Card()

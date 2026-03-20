@@ -281,14 +281,7 @@ struct TeamDetailView: View {
     }
 
     private func errorRow(_ message: String) -> some View {
-        HStack(spacing: 8) {
-            Image(systemName: "exclamationmark.triangle.fill")
-                .foregroundStyle(.yellow)
-            Text(message)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, minHeight: 60)
+        F1ErrorRow(message: message)
     }
 }
 

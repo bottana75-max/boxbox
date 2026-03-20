@@ -195,28 +195,7 @@ struct PredictView: View {
                     .f1InnerCard()
             } else {
                 ForEach(race.weekendSessions) { session in
-                    HStack {
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(session.label)
-                                .font(.subheadline)
-                                .fontWeight(.bold)
-                                .foregroundStyle(.white)
-                            Text(session.subtitle)
-                                .font(.caption2)
-                                .foregroundStyle(.tertiary)
-                        }
-                        Spacer()
-                        VStack(alignment: .trailing, spacing: 3) {
-                            Text(session.relativeLabel.uppercased())
-                                .font(.system(size: 9, weight: .heavy))
-                                .tracking(0.4)
-                                .foregroundStyle(session.isUpcoming ? Color.f1Red : .secondary)
-                            Text(session.timeLabel)
-                                .font(.caption)
-                                .foregroundStyle(.white)
-                        }
-                    }
-                    .f1InnerCard()
+                    F1WeekendSessionRow(session: session)
                 }
             }
         }

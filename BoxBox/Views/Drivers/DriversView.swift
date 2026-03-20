@@ -61,9 +61,10 @@ struct DriversView: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(viewModel.isCompareMode ? "Done" : "Compare") {
-                        viewModel.isCompareMode.toggle()
-                        if !viewModel.isCompareMode {
-                            viewModel.selectedDriverIDs.removeAll()
+                        if viewModel.isCompareMode {
+                            viewModel.resetCompareMode()
+                        } else {
+                            viewModel.isCompareMode = true
                         }
                     }
                     .fontWeight(.bold)

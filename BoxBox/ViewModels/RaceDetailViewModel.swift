@@ -9,7 +9,11 @@ class RaceDetailViewModel {
     var error: String?
     var countdown: String = ""
 
-    @ObservationIgnored private var countdownTask: Task<Void, Never>?
+    @ObservationIgnored private var countdownSyncTask: Task<Void, Never>?
+    @ObservationIgnored private lazy var countdownTimer = CountdownTimer(
+        targetDateProvider: { [weak self] in self?.race.raceDate },
+        onExpired: { [weak self] in self?.countdown = "Race started!" }
+    )
 
     init(race: Race) {
         self.race = race
@@ -26,35 +30,25 @@ class RaceDetailViewModel {
             }
             isLoading = false
         } else {
-            startCountdownTimer()
-        }
-    }
-
-    func startCountdownTimer() {
-        countdownTask?.cancel()
-        updateCountdown() // Populate immediately so the UI never shows an empty string on first render.
-        countdownTask = Task { [weak self] in
-            while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(1))
-                self?.updateCountdown()
+            if race.raceDate == nil {
+                countdown = "Date TBD"
+                return
+            }
+            countdownTimer.start()
+            countdown = countdownTimer.text
+            // Sync timer text into the observable property each second.
+            countdownSyncTask?.cancel()
+            countdownSyncTask = Task { [weak self] in
+                while !Task.isCancelled {
+                    try? await Task.sleep(for: .seconds(1))
+                    guard let self else { return }
+                    self.countdown = self.countdownTimer.text.isEmpty ? "Race started!" : self.countdownTimer.text
+                }
             }
         }
     }
 
-    private func updateCountdown() {
-        guard let raceDate = race.raceDate else {
-            countdown = "Date TBD"
-            return
-        }
-        if let text = countdownString(to: raceDate) {
-            countdown = text
-        } else {
-            countdown = "Race started!"
-            countdownTask?.cancel()
-        }
-    }
-
     nonisolated deinit {
-        countdownTask?.cancel()
+        countdownSyncTask?.cancel()
     }
 }

@@ -51,8 +51,8 @@ struct ScheduleView: View {
 
             HStack(spacing: 10) {
                 F1MetricTile(title: "Rounds", value: "\(viewModel.races.count)")
-                F1MetricTile(title: "Completed", value: "\(viewModel.races.filter(\.isPast).count)")
-                F1MetricTile(title: "Next", value: viewModel.races.first(where: { $0.round == viewModel.nextRaceRound })?.raceName ?? "TBD")
+                F1MetricTile(title: "Completed", value: "\(viewModel.completedCount)")
+                F1MetricTile(title: "Next", value: viewModel.nextRace?.raceName ?? "TBD")
             }
         }
         .f1Card(gradient: true, accent: .f1Red)

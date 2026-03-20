@@ -174,14 +174,7 @@ struct DriverDetailView: View {
                 F1LoadingView(message: "Loading results")
                     .frame(minHeight: 100)
             } else if let error = viewModel.error {
-                HStack(spacing: 8) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.yellow)
-                    Text(error)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity, minHeight: 60)
+                F1ErrorRow(message: error)
             } else if viewModel.recentResults.isEmpty {
                 F1EmptyView(icon: "flag.checkered", title: "No results available yet")
             } else {

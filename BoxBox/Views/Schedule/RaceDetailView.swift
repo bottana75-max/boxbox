@@ -157,9 +157,10 @@ struct RaceDetailView: View {
                 .fixedSize(horizontal: false, vertical: true)
 
             HStack(spacing: 10) {
-                F1StatPill(title: "Overtaking", value: info.drsZones >= 2 ? "Live" : "Tough", style: .subtle)
-                F1StatPill(title: "Tyre stress", value: tyreStress(for: info), style: .subtle)
-                F1StatPill(title: "Qualifying", value: qualifyingImportance(for: info), style: .subtle)
+                let profile = CircuitPressureProfile.from(info: info)
+                F1StatPill(title: "Overtaking", value: profile.overtaking, style: .subtle)
+                F1StatPill(title: "Tyre stress", value: profile.tyreStress, style: .subtle)
+                F1StatPill(title: "Qualifying", value: profile.qualifyingImportance, style: .subtle)
             }
         }
         .f1Card()
@@ -172,14 +173,7 @@ struct RaceDetailView: View {
             if viewModel.isLoading {
                 F1LoadingView(message: "Loading...")
             } else if let error = viewModel.error {
-                HStack(spacing: 8) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .foregroundStyle(.yellow)
-                    Text(error)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity, minHeight: 100)
+                F1ErrorRow(message: error)
             } else {
                 ForEach(viewModel.results.prefix(10)) { result in
                     NavigationLink(value: Driver.fallback(driverCode: result.driverCode, driverName: result.driverName, teamName: result.constructor)) {
@@ -288,20 +282,6 @@ struct RaceDetailView: View {
                 .strokeBorder(Color.white.opacity(0.04), lineWidth: 1)
         }
         .clipShape(RoundedRectangle(cornerRadius: F1Design.innerCornerRadius + 2, style: .continuous))
-    }
-
-    // Note: these helpers mirror the logic in CircuitPressureProfile.from(info:) intentionally —
-    // the Weekend Read card uses standalone labels without constructing a full pressure profile.
-    private func tyreStress(for info: CircuitInfo) -> String {
-        if info.lengthKm > 5.7 || info.speedClass.contains("High speed") { return "High" }
-        if info.speedClass.contains("Technical") || info.speedClass.contains("Street") { return "Medium" }
-        return "Balanced"
-    }
-
-    private func qualifyingImportance(for info: CircuitInfo) -> String {
-        if info.drsZones <= 1 || info.speedClass.contains("Street") { return "Massive" }
-        if info.turns <= 12 { return "Important" }
-        return "Balanced"
     }
 
     private func circuitNarrative(for info: CircuitInfo) -> String {

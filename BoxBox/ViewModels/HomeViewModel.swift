@@ -15,7 +15,11 @@ class HomeViewModel {
     var error: String?
     var countdown: String = ""
 
-    @ObservationIgnored private var countdownTask: Task<Void, Never>?
+    @ObservationIgnored private var loadTask: Task<Void, Never>?
+    @ObservationIgnored private var countdownSyncTask: Task<Void, Never>?
+    @ObservationIgnored private lazy var countdownTimer = CountdownTimer(
+        targetDateProvider: { [weak self] in self?.nextRace?.raceDate }
+    )
     private let service = OpenF1Service.shared
 
     var titleFightGapText: String {
@@ -25,63 +29,68 @@ class HomeViewModel {
     }
 
     func loadData() async {
+        loadTask?.cancel()
         isLoading = true
         error = nil
 
-        do {
-            async let scheduleTask = service.fetchCurrentSchedule()
-            async let lastResultsTask = service.fetchLastRaceResults()
-            async let standingsTask = service.fetchDriverStandings()
-            async let recentTask = service.fetchRecentCompletedRaces(limit: 3)
+        let task = Task { [weak self] in
+            guard let self else { return }
+            do {
+                async let scheduleTask = service.fetchCurrentSchedule()
+                async let lastResultsTask = service.fetchLastRaceResults()
+                async let standingsTask = service.fetchDriverStandings()
+                async let recentTask = service.fetchRecentCompletedRaces(limit: 3)
 
-            let schedule = try await scheduleTask
-            let (race, results) = try await lastResultsTask
-            let standings = try await standingsTask
-            let recent = try await recentTask
+                let schedule = try await scheduleTask
+                let (race, results) = try await lastResultsTask
+                let standings = try await standingsTask
+                let recent = try await recentTask
 
-            lastRace = race
-            lastRaceResults = Array(results.prefix(5))
-            recentRaces = recent
-            championshipLeader = standings.first
-            titleChasers = Array(standings.prefix(3))
+                guard !Task.isCancelled else { return }
 
-            let now = Date()
-            nextRace = schedule.first { race in
-                guard let raceDate = race.raceDate else { return false }
-                return raceDate > now
+                lastRace = race
+                lastRaceResults = Array(results.prefix(5))
+                recentRaces = recent
+                championshipLeader = standings.first
+                titleChasers = Array(standings.prefix(3))
+
+                let now = Date()
+                nextRace = schedule.first { race in
+                    guard let raceDate = race.raceDate else { return false }
+                    return raceDate > now
+                }
+
+                pressureProfile = CircuitPressureProfile.from(info: nextRace?.circuitInfo)
+                driverTrends = service.buildTrends(from: standings, recentRaces: recent, limit: 5)
+
+                countdownTimer.start()
+                // Sync timer text into the observable property.
+                countdown = countdownTimer.text
+                startCountdownSync()
+            } catch {
+                guard !Task.isCancelled else { return }
+                self.error = error.localizedDescription
             }
-
-            pressureProfile = CircuitPressureProfile.from(info: nextRace?.circuitInfo)
-            driverTrends = service.buildTrends(from: standings, recentRaces: recent, limit: 5)
-
-            startCountdownTimer()
-        } catch {
-            self.error = error.localizedDescription
+            isLoading = false
         }
-
-        isLoading = false
+        loadTask = task
+        await task.value
     }
 
-    func startCountdownTimer() {
-        countdownTask?.cancel()
-        updateCountdown() // Populate immediately so the UI never shows an empty string on first render.
-        countdownTask = Task { [weak self] in
+    /// Bridges the CountdownTimer text into our @Observable countdown property.
+    private func startCountdownSync() {
+        countdownSyncTask?.cancel()
+        countdownSyncTask = Task { [weak self] in
             while !Task.isCancelled {
                 try? await Task.sleep(for: .seconds(1))
-                self?.updateCountdown()
+                guard let self else { return }
+                self.countdown = self.countdownTimer.text
             }
         }
-    }
-
-    private func updateCountdown() {
-        guard let raceDate = nextRace?.raceDate else {
-            countdown = ""
-            return
-        }
-        countdown = countdownString(to: raceDate) ?? ""
     }
 
     nonisolated deinit {
-        countdownTask?.cancel()
+        loadTask?.cancel()
+        countdownSyncTask?.cancel()
     }
 }
