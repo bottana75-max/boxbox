@@ -25,6 +25,9 @@ struct ContentView: View {
             Tab("Schedule", systemImage: "calendar") {
                 ScheduleView()
             }
+            Tab("Replay", systemImage: "play.circle.fill") {
+                TrackReplayView()
+            }
             Tab("Drivers", systemImage: "person.3.fill") {
                 DriversView()
             }

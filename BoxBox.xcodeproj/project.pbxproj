@@ -16,6 +16,10 @@
 		8341330D724CA51259D09A5E /* BoxBoxWidgetExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = CDF38FFC44E0E85C42316A44 /* BoxBoxWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		8979B858BFC10EA711997E01 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F95989627549CD3CC318DB /* PaywallView.swift */; };
 		8E064DD990E0B8611B1D82FA /* RaceContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D939F5E50D2DC18FC4E0BB8 /* RaceContext.swift */; };
+		A1B2C3D401000040 /* ReplayModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000040 /* ReplayModels.swift */; };
+		A1B2C3D401000041 /* ReplayService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000041 /* ReplayService.swift */; };
+		A1B2C3D401000042 /* ReplayViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000042 /* ReplayViewModel.swift */; };
+		A1B2C3D401000043 /* TrackReplayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000043 /* TrackReplayView.swift */; };
 		99E2F004A02B90ED1CD25438 /* StandingsWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86FB8E3EF96A3DB37D3B65D5 /* StandingsWidget.swift */; };
 		A1B2C3D401000001 /* BoxBoxApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000001 /* BoxBoxApp.swift */; };
 		A1B2C3D401000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000002 /* ContentView.swift */; };
@@ -112,6 +116,10 @@
 		A1B2C3D400000034 /* RaceDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RaceDetailViewModel.swift; sourceTree = "<group>"; };
 		A1B2C3D400000035 /* DriverStandingDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriverStandingDetailViewModel.swift; sourceTree = "<group>"; };
 		A1B2C3D400000036 /* DesignSystem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignSystem.swift; sourceTree = "<group>"; };
+		A1B2C3D400000040 /* ReplayModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReplayModels.swift; sourceTree = "<group>"; };
+		A1B2C3D400000041 /* ReplayService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReplayService.swift; sourceTree = "<group>"; };
+		A1B2C3D400000042 /* ReplayViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReplayViewModel.swift; sourceTree = "<group>"; };
+		A1B2C3D400000043 /* TrackReplayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackReplayView.swift; sourceTree = "<group>"; };
 		A1B2C3D400000037 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		A1B2C3D4F0000001 /* BoxBox.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BoxBox.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A5416964D16F05B9E87671FE /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = Info.plist; path = Info.plist; sourceTree = "<group>"; };
@@ -209,6 +217,7 @@
 				A1B2C3D400000006 /* Prediction.swift */,
 				A1B2C3D400000007 /* Race.swift */,
 				8D939F5E50D2DC18FC4E0BB8 /* RaceContext.swift */,
+				A1B2C3D400000040 /* ReplayModels.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -218,6 +227,7 @@
 			children = (
 				A1B2C3D400000008 /* AIService.swift */,
 				A1B2C3D400000009 /* OpenF1Service.swift */,
+				A1B2C3D400000041 /* ReplayService.swift */,
 				1508E70DA0E9B06DAE605897 /* StoreKitManager.swift */,
 			);
 			path = Services;
@@ -235,6 +245,7 @@
 				A1B2C3D40000000E /* StandingsViewModel.swift */,
 				A1B2C3D400000035 /* DriverStandingDetailViewModel.swift */,
 				76CEFBDE356549A61B42D5C6 /* TeamDetailViewModel.swift */,
+				A1B2C3D400000042 /* ReplayViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -245,10 +256,19 @@
 				A1B2C3D4D0000008 /* Drivers */,
 				A1B2C3D4D0000009 /* Home */,
 				A1B2C3D4D000000A /* Predict */,
+				A1B2C3D4D000000E /* Replay */,
 				A1B2C3D4D000000B /* Schedule */,
 				A1B2C3D4D000000C /* Standings */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		A1B2C3D4D000000E /* Replay */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D400000043 /* TrackReplayView.swift */,
+			);
+			path = Replay;
 			sourceTree = "<group>";
 		};
 		A1B2C3D4D0000008 /* Drivers */ = {
@@ -434,6 +454,10 @@
 				8979B858BFC10EA711997E01 /* PaywallView.swift in Sources */,
 				A1B2C3D401000036 /* DesignSystem.swift in Sources */,
 				8E064DD990E0B8611B1D82FA /* RaceContext.swift in Sources */,
+				A1B2C3D401000040 /* ReplayModels.swift in Sources */,
+				A1B2C3D401000041 /* ReplayService.swift in Sources */,
+				A1B2C3D401000042 /* ReplayViewModel.swift in Sources */,
+				A1B2C3D401000043 /* TrackReplayView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
