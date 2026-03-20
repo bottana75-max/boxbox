@@ -9,6 +9,12 @@ final class ReplayService {
     private var sessionCache: [String: Int] = [:]
     private let freshnessWindow: TimeInterval = 4.5
 
+    private struct APIErrorEnvelope: Decodable {
+        let message: String?
+        let error: String?
+        let detail: String?
+    }
+
     private struct PositionResponse: Decodable {
         let date: String
         let position: Int
@@ -175,6 +181,21 @@ final class ReplayService {
         Self.isoFormatter.date(from: string) ?? Self.isoFormatterNoFrac.date(from: string)
     }
 
+    private func fetchData(from url: URL, label: String) async throws -> Data {
+        let (data, response) = try await URLSession.shared.data(from: url)
+        guard let http = response as? HTTPURLResponse else {
+            throw F1Error.apiError("Replay \(label) failed: invalid server response")
+        }
+
+        guard (200...299).contains(http.statusCode) else {
+            let envelope = try? decoder.decode(APIErrorEnvelope.self, from: data)
+            let message = envelope?.message ?? envelope?.error ?? envelope?.detail ?? HTTPURLResponse.localizedString(forStatusCode: http.statusCode)
+            throw F1Error.apiError("Replay \(label) failed (\(http.statusCode)): \(message)")
+        }
+
+        return data
+    }
+
     func fetchAvailableDrivers(for race: Race) async throws -> [ReplayDriver] {
         let sessionKey = try await fetchSessionKey(for: race)
         return try await fetchDrivers(sessionKey: sessionKey)
@@ -243,7 +264,7 @@ final class ReplayService {
 
         let year = race.seasonYear
         let url = URL(string: "\(baseURL)/sessions?year=\(year)&session_name=Race")!
-        let (data, _) = try await URLSession.shared.data(from: url)
+        let data = try await fetchData(from: url, label: "sessions")
         let sessions = try decoder.decode([SessionResponse].self, from: data)
 
         let targetDate = race.raceDate ?? .distantPast
@@ -272,7 +293,7 @@ final class ReplayService {
 
     private func fetchDrivers(sessionKey: Int) async throws -> [ReplayDriver] {
         let url = URL(string: "\(baseURL)/drivers?session_key=\(sessionKey)")!
-        let (data, _) = try await URLSession.shared.data(from: url)
+        let data = try await fetchData(from: url, label: "drivers")
         let responses = try decoder.decode([DriverResponse].self, from: data)
 
         var seen = Set<Int>()
@@ -294,7 +315,7 @@ final class ReplayService {
 
     private func fetchPositionData(sessionKey: Int) async throws -> [Int: [PositionPoint]] {
         let url = URL(string: "\(baseURL)/position?session_key=\(sessionKey)")!
-        let (data, _) = try await URLSession.shared.data(from: url)
+        let data = try await fetchData(from: url, label: "positions")
         let responses = try decoder.decode([PositionResponse].self, from: data)
 
         var result: [Int: [PositionPoint]] = [:]
@@ -310,36 +331,28 @@ final class ReplayService {
     }
 
     private func fetchLocationData(sessionKey: Int, driverNumbers: [Int]) async throws -> [Int: [ReplayLocationPoint]] {
-        try await withThrowingTaskGroup(of: (Int, [ReplayLocationPoint]).self) { group in
-            for driverNumber in driverNumbers {
-                group.addTask {
-                    let url = URL(string: "\(self.baseURL)/location?session_key=\(sessionKey)&driver_number=\(driverNumber)")!
-                    let (data, _) = try await URLSession.shared.data(from: url)
-                    let responses = try self.decoder.decode([LocationResponse].self, from: data)
-                    let points = responses.compactMap { response -> ReplayLocationPoint? in
-                        guard let date = self.parseDate(response.date),
-                              let x = response.x,
-                              let y = response.y
-                        else { return nil }
-                        return ReplayLocationPoint(date: date, x: x, y: y, z: response.z ?? 0)
-                    }
-                    .sorted { $0.date < $1.date }
-                    return (driverNumber, points)
-                }
+        var result: [Int: [ReplayLocationPoint]] = [:]
+        for driverNumber in driverNumbers {
+            let url = URL(string: "\(baseURL)/location?session_key=\(sessionKey)&driver_number=\(driverNumber)")!
+            let data = try await fetchData(from: url, label: "location for #\(driverNumber)")
+            let responses = try decoder.decode([LocationResponse].self, from: data)
+            let points = responses.compactMap { response -> ReplayLocationPoint? in
+                guard let date = parseDate(response.date),
+                      let x = response.x,
+                      let y = response.y
+                else { return nil }
+                return ReplayLocationPoint(date: date, x: x, y: y, z: response.z ?? 0)
             }
-
-            var result: [Int: [ReplayLocationPoint]] = [:]
-            for try await (driverNumber, points) in group {
-                result[driverNumber] = points
-            }
-            return result
+            .sorted { $0.date < $1.date }
+            result[driverNumber] = points
         }
+        return result
     }
 
 
     private func fetchLapData(sessionKey: Int) async throws -> [Int: [LapPoint]] {
         let url = URL(string: "\(baseURL)/laps?session_key=\(sessionKey)")!
-        let (data, _) = try await URLSession.shared.data(from: url)
+        let data = try await fetchData(from: url, label: "laps")
         let responses = try decoder.decode([LapResponse].self, from: data)
 
         var result: [Int: [LapPoint]] = [:]
