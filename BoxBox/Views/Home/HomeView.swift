@@ -38,6 +38,7 @@ struct HomeView: View {
                         formWatchCard
                         weekendTimelineCard
                         lastRaceCard
+                        infoFooterLink
                     }
                 }
                 .padding()
@@ -322,6 +323,27 @@ struct HomeView: View {
         formatter.timeZone = timeZone
         formatter.dateFormat = "HH:mm"
         return formatter.string(from: date)
+    }
+
+    private var infoFooterLink: some View {
+        NavigationLink {
+            AppInfoView()
+        } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "info.circle")
+                    .font(.caption)
+                Text("About · Legal · Privacy · Info")
+                    .font(.caption)
+                    .fontWeight(.medium)
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.caption2)
+            }
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 4)
+            .padding(.top, 4)
+        }
+        .buttonStyle(.plain)
     }
 
     @ViewBuilder
