@@ -33,6 +33,7 @@
 		A1B2C3D40100000E /* StandingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D40000000E /* StandingsViewModel.swift */; };
 		A1B2C3D40100000F /* DriversView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D40000000F /* DriversView.swift */; };
 		A1B2C3D401000010 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000010 /* HomeView.swift */; };
+		A1B2C3D401000060 /* AppInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000060 /* AppInfoView.swift */; };
 		A1B2C3D401000011 /* PredictView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000011 /* PredictView.swift */; };
 		A1B2C3D401000012 /* ScheduleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000012 /* ScheduleView.swift */; };
 		A1B2C3D401000013 /* StandingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000013 /* StandingsView.swift */; };
@@ -105,6 +106,7 @@
 		A1B2C3D40000000E /* StandingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StandingsViewModel.swift; sourceTree = "<group>"; };
 		A1B2C3D40000000F /* DriversView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriversView.swift; sourceTree = "<group>"; };
 		A1B2C3D400000010 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
+		A1B2C3D400000060 /* AppInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppInfoView.swift; sourceTree = "<group>"; };
 		A1B2C3D400000011 /* PredictView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PredictView.swift; sourceTree = "<group>"; };
 		A1B2C3D400000012 /* ScheduleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleView.swift; sourceTree = "<group>"; };
 		A1B2C3D400000013 /* StandingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StandingsView.swift; sourceTree = "<group>"; };
@@ -258,6 +260,7 @@
 				A1B2C3D4D0000008 /* Drivers */,
 				A1B2C3D4D0000009 /* Home */,
 				A1B2C3D4D000000A /* Predict */,
+				A1B2C3D4D000000F /* Info */,
 				A1B2C3D4D000000E /* Replay */,
 				A1B2C3D4D000000B /* Schedule */,
 				A1B2C3D4D000000C /* Standings */,
@@ -282,6 +285,14 @@
 				A1B2C3D400000010 /* HomeView.swift */,
 			);
 			path = Home;
+			sourceTree = "<group>";
+		};
+		A1B2C3D4D000000F /* Info */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D400000060 /* AppInfoView.swift */,
+			);
+			path = Info;
 			sourceTree = "<group>";
 		};
 		A1B2C3D4D000000A /* Predict */ = {
@@ -442,6 +453,7 @@
 				A1B2C3D40100000F /* DriversView.swift in Sources */,
 				A1B2C3D401000010 /* HomeView.swift in Sources */,
 				A1B2C3D401000011 /* PredictView.swift in Sources */,
+				A1B2C3D401000060 /* AppInfoView.swift in Sources */,
 				A1B2C3D401000012 /* ScheduleView.swift in Sources */,
 				A1B2C3D401000013 /* StandingsView.swift in Sources */,
 				A1B2C3D401000030 /* DriverDetailView.swift in Sources */,
