@@ -53,7 +53,7 @@ class AIService {
         }
 
         let prompt = """
-        You are an elite Formula 1 race strategist producing a premium race call briefing.
+        You are a senior Formula 1 race strategist on the pit wall. This is a premium race call briefing for a paying audience that expects precision, not punditry.
 
         CONTEXT:
         \(contextString)
@@ -61,26 +61,27 @@ class AIService {
         \(phaseInstructions)
 
         ANALYSIS RULES:
-        1. Weigh each contender's overallRating, formScore, trackFitScore, and weekendPaceScore.
+        1. Weigh each contender's overallRating, formScore, trackFitScore, and weekendPaceScore. Cite specific numbers.
         2. Use sessionContext to understand how much real weekend running is available; do not pretend you have data the phase does not support.
-        3. Use weekendPace to discuss long-run bias, first-stint shape, and how grid pressure changes the likely race script.
-        4. If gridPosition is available, factor it heavily — especially when qualifyingImportance is "Massive" or circuit overtaking is "Track position".
-        5. Factor circuit profile: overtaking difficulty, tyre stress, reliability risk.
-        6. Factor weather: use both the seasonal profile AND liveWeather if present. If rainfall is true, consider wet-weather specialists.
-        7. Note confidence level (\(context.confidenceLabel)) and chaos potential (\(context.chaosLabel)) — let these guide your tone.
-        8. Pick a dark horse — someone outside the obvious top 3 who could surprise, with a SPECIFIC reason tied to data.
-        9. Identify the biggest risk — a contender who could underperform, with a concrete reason.
-        10. Identify the key battle — two drivers likely to fight directly, based on proximity in ratings or grid positions.
-        11. Provide a strategy angle — one tactical insight about tyres, undercuts, weather timing, or pit window that could decide the race.
-        12. Write reasoning that references SPECIFIC scores, positions, or data points — never generic statements.
-        13. Write a flip scenario that is specific and plausible, not generic.
+        3. Use weekendPace.tyreStrategy heavily: reference expectedStints, degradationSeverity, likelyCompounds, undercutPotency, safetyCarLikelihood, and pitWindowNarrative in your analysis.
+        4. If gridPosition is available, factor it heavily — especially when qualifyingImportance is "Massive" or circuit overtaking is "Track position". Cross-reference grid vs overallRating to identify over/under-performers.
+        5. Factor circuit profile: overtaking difficulty, tyre stress, reliability risk. Connect these to specific contenders.
+        6. Factor weather: use both the seasonal profile AND liveWeather if present. If rainfall is true, consider wet-weather specialists and tyre crossover windows.
+        7. Confidence score is \(context.confidenceScore)/10 (\(context.confidenceLabel)), chaos score is \(context.chaosScore)/10 (\(context.chaosLabel)). High chaos = hedge more, flag safety car scenarios. High confidence = be more assertive.
+        8. Pick a dark horse — someone outside the obvious top 3 who could surprise. Cite a SPECIFIC data signal (score, grid, trend, circuit fit).
+        9. Identify the biggest risk — a contender who could underperform. Tie it to a concrete vulnerability (tyre deg weakness, poor grid, reliability history).
+        10. Identify the key battle — two drivers likely to fight directly, based on proximity in ratings, grid, or pit window overlap.
+        11. Strategy angle: one tactical insight referencing a specific stint, compound, undercut/overcut, or weather timing.
+        12. Tyre call: one sentence on the tyre decision that will define the race outcome — which compound choice or stint length separates the winner from the rest.
+        13. Pit wall note: one sentence of insider-level tactical nuance — the kind of thing a race engineer would radio to their driver. Think specific, actionable, and non-obvious.
+        14. Write reasoning that reads like a pit wall debrief: assertive, data-driven, referencing specific scores, positions, and circuit factors. 4-5 sentences.
+        15. Flip scenario: specific and plausible, referencing a concrete event (safety car at lap X, rain at stint 2, specific driver DNF).
 
-        QUALITY RULES:
-        - Never say "could" when you mean "will likely". Be assertive.
-        - Reference actual driver names, scores, and positions.
-        - The strategy angle must be actionable — mention a specific phase of the race, tyre compound, or weather window.
-        - Dark horse reason must cite a specific data signal (form trend, track fit, grid position).
-        - Reasoning should read like a pit wall brief, not a TV preview.
+        TONE RULES:
+        - Write like a race engineer, not a commentator. Be direct and assertive.
+        - Never say "could" when you mean "will likely". Never hedge with "might" or "perhaps".
+        - Every claim must reference a data point: a score, a position, a circuit characteristic, or a weather condition.
+        - No filler phrases. No "it will be interesting to see". No "anything can happen".
 
         Respond ONLY with valid JSON matching this exact structure:
         {
@@ -102,19 +103,21 @@ class AIService {
                 "narrative": "One sentence about why these two will fight"
             },
             "strategyAngle": "One sentence tactical insight referencing a specific race phase or compound",
-            "reasoning": "3-4 sentences referencing specific scores, grid positions, and data to justify your podium",
-            "flipScenario": "One specific, plausible event that would change this prediction"
+            "tyreCall": "One sentence on the defining tyre decision — compound choice or stint length",
+            "pitWallNote": "One sentence of insider-level tactical nuance a race engineer would radio",
+            "reasoning": "4-5 sentences of pit-wall-grade analysis referencing specific scores, grid positions, and data",
+            "flipScenario": "One specific, plausible event referencing a concrete trigger"
         }
         """
 
         let requestBody: [String: Any] = [
             "model": "gpt-4o-mini",
             "messages": [
-                ["role": "system", "content": "You are an F1 expert race strategist. Always respond with valid JSON only. Use the driver data, scores, and grid positions provided — do not hallucinate stats. Reference specific numbers from the context. Be assertive and precise, not hedging."],
+                ["role": "system", "content": "You are a senior F1 race strategist on the pit wall. Respond with valid JSON only. Use the driver data, scores, tyre strategy, and grid positions provided — never hallucinate stats. Reference specific numbers. Be assertive and precise like a race engineer, never hedging. Every output field must contain actionable, data-grounded content."],
                 ["role": "user", "content": prompt]
             ],
-            "temperature": 0.65,
-            "max_tokens": 700
+            "temperature": 0.6,
+            "max_tokens": 900
         ]
 
         var request = URLRequest(url: URL(string: "https://api.openai.com/v1/chat/completions")!)
@@ -162,10 +165,14 @@ class AIService {
             keyBattleDrivers: apiResponse.keyBattle.drivers,
             keyBattleNarrative: apiResponse.keyBattle.narrative,
             strategyAngle: apiResponse.strategyAngle,
+            tyreCall: apiResponse.tyreCall,
+            pitWallNote: apiResponse.pitWallNote,
             reasoning: apiResponse.reasoning,
             flipScenario: apiResponse.flipScenario,
             confidenceLabel: context.confidenceLabel,
             chaosLabel: context.chaosLabel,
+            confidenceScore: context.confidenceScore,
+            chaosScore: context.chaosScore,
             weekendPhase: context.weekendPhase,
             createdAt: Date()
         )

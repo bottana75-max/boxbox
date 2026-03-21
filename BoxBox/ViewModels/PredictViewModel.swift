@@ -95,10 +95,10 @@ class PredictViewModel {
         weekendPhase = .baseline
     }
 
-    // MARK: - Confidence & Chaos (V2.1 — stronger logic)
+    // MARK: - Confidence & Chaos (V2.2 — robust scoring with numeric granularity)
 
-    var confidenceLabel: String {
-        guard !contenderProfiles.isEmpty else { return "Medium" }
+    var confidenceRawScore: Int {
+        guard !contenderProfiles.isEmpty else { return 4 }
         let topRating = contenderProfiles.first?.overallRating ?? 50
         let second = contenderProfiles.dropFirst().first?.overallRating ?? 50
         let third = contenderProfiles.dropFirst(2).first?.overallRating ?? 50
@@ -107,61 +107,90 @@ class PredictViewModel {
 
         var score = 0
 
-        // Strong frontrunner
-        if topRating >= 80 { score += 3 }
-        else if topRating >= 70 { score += 2 }
-        else if topRating >= 60 { score += 1 }
+        // Strong frontrunner (clear top dog raises confidence)
+        if topRating >= 85 { score += 4 }
+        else if topRating >= 75 { score += 3 }
+        else if topRating >= 65 { score += 2 }
+        else if topRating >= 55 { score += 1 }
 
-        // Clear separation
-        if spread >= 20 { score += 2 }
-        else if spread >= 12 { score += 1 }
+        // Clear separation in top 3
+        if spread >= 25 { score += 3 }
+        else if spread >= 18 { score += 2 }
+        else if spread >= 10 { score += 1 }
 
-        // Dominant leader gap
-        if topGap >= 10 { score += 1 }
+        // Dominant leader gap (1st vs 2nd)
+        if topGap >= 15 { score += 2 }
+        else if topGap >= 8 { score += 1 }
 
         // Phase bonus: more data = more confidence
         switch weekendPhase {
-        case .postQualifying, .raceReady: score += 2
+        case .raceReady: score += 3
+        case .postQualifying: score += 2
         case .postPractice: score += 1
         case .baseline: break
         }
 
-        // Grid data available
-        if !qualifyingResults.isEmpty { score += 1 }
+        // Grid data available and consistent with ratings
+        if !qualifyingResults.isEmpty {
+            score += 1
+            // Grid-rating consistency: if pole sitter is also top rated, extra confidence
+            if let poleCode = qualifyingResults.first(where: { $0.gridPosition == 1 })?.driverCode,
+               contenderProfiles.first?.driverCode == poleCode {
+                score += 1
+            }
+        }
 
-        // Weather certainty (no rain = more predictable)
+        // Weather certainty
         if let race = nextRace {
             let rain = race.weekendContext.rainChance
             if rain.contains("<10") || rain.contains("0%") { score += 1 }
+            else if rain.contains("40") || rain.contains("50") || rain.contains("60") { score -= 1 }
         }
 
-        switch score {
-        case 7...: return "High"
-        case 4...6: return "Medium"
+        // Live weather corroboration
+        if let live = liveWeather, live.rainfall == false, live.source == "OpenF1 live" { score += 1 }
+
+        // Low circuit chaos circuits (low tyre stress + high overtaking = more predictable)
+        if pressureProfile.tyreStress == "Balanced" && pressureProfile.overtaking == "High" { score += 1 }
+
+        return max(0, min(10, score))
+    }
+
+    var confidenceLabel: String {
+        switch confidenceRawScore {
+        case 8...10: return "High"
+        case 5...7: return "Medium"
         default: return "Low"
         }
     }
 
-    var chaosLabel: String {
-        guard let race = nextRace else { return "Medium" }
+    var chaosRawScore: Int {
+        guard let race = nextRace else { return 3 }
         let weather = race.weekendContext
         var chaos = 0
 
-        // Rain risk (scaled)
+        // Rain risk (scaled with more granularity)
         let rainStr = weather.rainChance.lowercased()
-        if rainStr.contains("55") || rainStr.contains("60") || rainStr.contains("70") { chaos += 3 }
+        if rainStr.contains("70") || rainStr.contains("80") || rainStr.contains("90") { chaos += 4 }
+        else if rainStr.contains("55") || rainStr.contains("60") { chaos += 3 }
         else if rainStr.contains("35") || rainStr.contains("40") || rainStr.contains("45") { chaos += 2 }
         else if rainStr.contains("25") || rainStr.contains("30") { chaos += 1 }
 
         // Live weather override: actual rainfall detected
-        if liveWeather?.rainfall == true { chaos += 2 }
+        if liveWeather?.rainfall == true { chaos += 3 }
 
         // Track characteristics
         if pressureProfile.reliabilityRisk == "Punishing" { chaos += 2 }
         else if pressureProfile.reliabilityRisk == "Medium" { chaos += 1 }
 
         if pressureProfile.overtaking == "Track position" { chaos += 1 }
-        if pressureProfile.tyreStress == "High" { chaos += 1 }
+        if pressureProfile.tyreStress == "High" { chaos += 2 }
+        else if pressureProfile.tyreStress == "Medium" { chaos += 1 }
+
+        // Safety car likelihood from circuit profile
+        let scLikelihood = tyreStrategyContext.safetyCarLikelihood
+        if scLikelihood == "High" { chaos += 2 }
+        else if scLikelihood == "Medium" { chaos += 1 }
 
         // Weather swing risk
         if weather.riskLabel.contains("swing") || weather.riskLabel.contains("Attrition") { chaos += 1 }
@@ -170,19 +199,25 @@ class PredictViewModel {
         if contenderProfiles.count >= 5 {
             let top = contenderProfiles.first?.overallRating ?? 50
             let fifth = contenderProfiles[4].overallRating
-            if top - fifth <= 10 { chaos += 1 }
+            if top - fifth <= 8 { chaos += 2 }
+            else if top - fifth <= 14 { chaos += 1 }
         }
 
         // DNF rates in recent races
         let recentDNFs = recentRaces.flatMap { $0.1 }.filter {
             $0.status != "Finished" && !$0.status.starts(with: "+")
         }.count
-        if recentDNFs >= 6 { chaos += 1 }
+        if recentDNFs >= 8 { chaos += 2 }
+        else if recentDNFs >= 5 { chaos += 1 }
 
-        switch chaos {
-        case 0...1: return "Low"
-        case 2...3: return "Medium"
-        case 4...5: return "High"
+        return max(0, min(10, chaos))
+    }
+
+    var chaosLabel: String {
+        switch chaosRawScore {
+        case 0...2: return "Low"
+        case 3...4: return "Medium"
+        case 5...7: return "High"
         default: return "Extreme"
         }
     }
@@ -278,13 +313,36 @@ class PredictViewModel {
             case "Important": amplifier = 1.05
             default: amplifier = 1.0
             }
-            return min(100, Int(Double(gridScore) * amplifier))
+            // V2.2: factor tyre deg resistance for race pace — grid isn't everything
+            let tyreCtx = tyreStrategyContext
+            var raceAdj = 0
+            if tyreCtx.degradationSeverity == "Extreme" || tyreCtx.degradationSeverity == "High" {
+                let team = standing.constructorName.lowercased()
+                // Teams historically good at tyre management get a race-pace bump
+                if team.contains("mercedes") || team.contains("red bull") || team.contains("aston") {
+                    raceAdj = 5
+                }
+                // Teams that struggle with deg get penalised
+                if team.contains("haas") || team.contains("williams") || team.contains("sauber") || team.contains("kick") {
+                    raceAdj = -5
+                }
+            }
+            return min(100, Int(Double(gridScore) * amplifier) + raceAdj)
         }
 
         if weekendPhase == .postPractice {
             let trackFit = computeTrackFitScore(standing: standing)
-            let practiceBias = pressureProfile.tyreStress == "High" ? 8 : 4
-            return min(100, max(10, (trackFit + computeFormScore(trend: trends.first(where: { $0.id == standing.id }), standing: standing)) / 2 + practiceBias))
+            let form = computeFormScore(trend: trends.first(where: { $0.id == standing.id }), standing: standing)
+            // V2.2: deg-aware practice score — high deg circuits reward consistency
+            let tyreCtx = tyreStrategyContext
+            let degBias: Int
+            switch tyreCtx.degradationSeverity {
+            case "Extreme": degBias = 12
+            case "High": degBias = 8
+            case "Medium": degBias = 5
+            default: degBias = 3
+            }
+            return min(100, max(10, (trackFit + form) / 2 + degBias))
         }
 
         return max(10, 75 - standing.position * 4)
@@ -336,7 +394,8 @@ class PredictViewModel {
             headline: weekendPaceHeadline,
             longRunBias: longRunBias,
             firstStintShape: firstStintShape,
-            gridPressure: gridPressureNarrative
+            gridPressure: gridPressureNarrative,
+            tyreStrategy: tyreStrategyContext
         )
 
         return RaceCallContext(
@@ -355,7 +414,9 @@ class PredictViewModel {
             contenders: contenderProfiles,
             recentRaces: recentContext,
             confidenceLabel: confidenceLabel,
-            chaosLabel: chaosLabel
+            chaosLabel: chaosLabel,
+            confidenceScore: confidenceRawScore,
+            chaosScore: chaosRawScore
         )
     }
 
@@ -379,32 +440,124 @@ class PredictViewModel {
         if nextRace == nil { return "We'll light this up as soon as the next grand prix is on the board." }
         if !storeKit.canPredict { return "You've used all your race calls. Unlock more to keep going." }
         let extras = weekendPhase == .baseline ? "" : " · \(weekendPhase.shortLabel.lowercased()) data"
-        return "Podium · dark horse · risk · key battle · strategy\(extras)"
+        return "Podium · battle · tyres · pit wall · strategy\(extras)"
+    }
+
+    // MARK: - Tyre Strategy Intelligence (V2.2)
+
+    var tyreStrategyContext: TyreStrategyContext {
+        let info = nextRace?.circuitInfo
+        let laps = info?.laps ?? 55
+        let tyreStress = pressureProfile.tyreStress
+        let overtaking = pressureProfile.overtaking
+        let speedClass = (info?.speedClass ?? "balanced").lowercased()
+        let turns = info?.turns ?? 15
+        let isStreet = speedClass.contains("street")
+        let lengthKm = info?.lengthKm ?? 5.0
+
+        // Expected stints based on tyre stress + lap count
+        let expectedStints: Int
+        if tyreStress == "High" && laps >= 55 { expectedStints = 2 }
+        else if tyreStress == "High" || laps >= 65 { expectedStints = 2 }
+        else if isStreet && laps <= 55 { expectedStints = 1 }
+        else { expectedStints = laps >= 57 ? 2 : 1 }
+
+        // Degradation severity
+        let degradation: String
+        if tyreStress == "High" && (speedClass.contains("high") || lengthKm > 5.5) { degradation = "Extreme" }
+        else if tyreStress == "High" { degradation = "High" }
+        else if tyreStress == "Medium" || turns >= 18 { degradation = "Medium" }
+        else { degradation = "Low" }
+
+        // Likely compounds
+        let compounds: String
+        if expectedStints >= 2 {
+            if degradation == "Extreme" || degradation == "High" {
+                compounds = "Medium \u{2192} Hard or Soft \u{2192} Hard"
+            } else {
+                compounds = "Soft \u{2192} Medium \u{2192} Hard"
+            }
+        } else {
+            compounds = isStreet ? "Medium \u{2192} Hard" : "Soft \u{2192} Medium"
+        }
+
+        // Undercut potency
+        let undercut: String
+        if overtaking == "Track position" { undercut = "Strong" }
+        else if overtaking == "Medium" || tyreStress == "High" { undercut = "Moderate" }
+        else { undercut = "Weak" }
+
+        // Overcut viability
+        let overcutViable = tyreStress == "Balanced" && overtaking != "Track position"
+
+        // Safety car likelihood from circuit geometry
+        let scLikelihood: String
+        if isStreet || turns >= 20 { scLikelihood = "High" }
+        else if turns >= 15 || lengthKm > 5.8 { scLikelihood = "Medium" }
+        else { scLikelihood = "Low" }
+
+        // Pit window narrative
+        let pitNarrative: String
+        if expectedStints == 1 {
+            let windowStart = Int(Double(laps) * 0.4)
+            let windowEnd = Int(Double(laps) * 0.6)
+            pitNarrative = "Single-stop window opens around lap \(windowStart)-\(windowEnd). Teams running hard compounds can push later."
+        } else {
+            let firstStop = Int(Double(laps) * 0.28)
+            let secondStop = Int(Double(laps) * 0.62)
+            pitNarrative = "Two-stop baseline: first window ~lap \(firstStop), second ~lap \(secondStop). Deg could force early first stops."
+        }
+
+        return TyreStrategyContext(
+            expectedStints: expectedStints,
+            degradationSeverity: degradation,
+            likelyCompounds: compounds,
+            undercutPotency: undercut,
+            overcutViable: overcutViable,
+            safetyCarLikelihood: scLikelihood,
+            pitWindowNarrative: pitNarrative
+        )
     }
 
     var weekendPaceHeadline: String {
+        let tyreCtx = tyreStrategyContext
         switch weekendPhase {
-        case .baseline: return "No live running yet — lean on season form and circuit fit."
-        case .postPractice: return "Practice data shifts the call toward long-run stability and tyre behaviour."
-        case .postQualifying: return "Grid is live now — front-row control matters more than headline race sims."
-        case .raceReady: return "Weekend picture is complete — first-stint execution and weather timing decide it."
+        case .baseline:
+            return "No live running yet — \(tyreCtx.expectedStints == 1 ? "one-stop baseline" : "two-stop territory") shapes the early read."
+        case .postPractice:
+            return "Practice data shifts the call toward long-run stability — \(tyreCtx.degradationSeverity.lowercased()) deg expected."
+        case .postQualifying:
+            return "Grid is live — \(tyreCtx.undercutPotency.lowercased()) undercut potency means \(tyreCtx.undercutPotency == "Strong" ? "pit timing is decisive" : "race pace can still override grid")."
+        case .raceReady:
+            return "Full picture: \(tyreCtx.likelyCompounds) is the base call, \(tyreCtx.safetyCarLikelihood.lowercased()) safety car risk."
         }
     }
 
     var longRunBias: String {
-        if pressureProfile.tyreStress == "High" { return "Tyre deg will punish anyone who leans too hard on the fronts in stint one." }
-        if pressureProfile.overtaking == "Track position" { return "Clean air matters more than raw deg, so expect teams to defend track position early." }
-        return "Balanced circuit: usable long-run pace should keep the undercut live without forcing panic stops." }
+        let deg = tyreStrategyContext.degradationSeverity
+        if deg == "Extreme" { return "Severe degradation — any driver who pushes hard early will crater in the second half of stints. Tyre management is the race." }
+        if deg == "High" { return "High deg will punish anyone who leans on the fronts in stint one. Expect the tyre-whisperers to gain 5+ seconds by the pit window." }
+        if pressureProfile.overtaking == "Track position" { return "Clean air matters more than raw deg, so expect teams to defend track position early and manage from the front." }
+        return "Balanced degradation: usable long-run pace should keep the undercut live without forcing panic stops."
+    }
 
     var firstStintShape: String {
-        if liveWeather?.rainfall == true { return "Opening stint is fragile: crossover timing can wreck the first pit window." }
-        if pressureProfile.tyreStress == "High" { return "Expect the first stint to stretch around tyre protection, not all-out attack." }
-        return "Opening stint should be stable enough for teams to split strategy on lap-time delta rather than survival." }
+        if liveWeather?.rainfall == true { return "Opening stint is fragile: crossover timing can wreck the first pit window. Teams will split between immediate inters and staying out." }
+        let deg = tyreStrategyContext.degradationSeverity
+        if deg == "Extreme" || deg == "High" { return "Expect the first stint to stretch around tyre protection, not all-out attack. Lap-one aggression will cost in the pit window." }
+        if tyreStrategyContext.expectedStints >= 2 { return "Two-stop race shape means first stints stay short — teams can afford to push harder and pit early." }
+        return "Opening stint should be stable enough for teams to split strategy on lap-time delta rather than survival."
+    }
 
     var gridPressureNarrative: String {
         if qualifyingResults.isEmpty { return "Grid edge still estimated — qualifying will be the big swing factor." }
-        if pressureProfile.qualifyingImportance == "Massive" { return "Track position is king here, so any top-three start carries oversized win equity." }
-        return "Grid matters, but pure race pace can still rewrite the order after the first stop cycle." }
+        let undercut = tyreStrategyContext.undercutPotency
+        if pressureProfile.qualifyingImportance == "Massive" {
+            return "Track position is king here (\(undercut.lowercased()) undercut), so any top-three start carries oversized win equity."
+        }
+        if undercut == "Strong" { return "Strong undercut potency means grid isn't final — a driver starting P4-P6 with better pace can jump through the pit window." }
+        return "Grid matters, but pure race pace can still rewrite the order after the first stop cycle."
+    }
 
     // MARK: - Data Loading
 

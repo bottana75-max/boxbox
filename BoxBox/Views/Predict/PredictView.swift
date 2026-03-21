@@ -20,6 +20,8 @@ struct PredictView: View {
                         }
                         // 4. Pace + Stints
                         paceAndStintsCard
+                        // 4b. Tyre Strategy
+                        tyreStrategyCard
                         // 5. Contenders
                         contendersCard
                         // 5. Confidence & Chaos
@@ -41,6 +43,8 @@ struct PredictView: View {
                         podiumCard(call)
                         keyBattleCard(call)
                         strategyAngleCard(call)
+                        tyreCallCard(call)
+                        pitWallNoteCard(call)
                         darkHorseCard(call)
                         biggestRiskCard(call)
                         reasoningCard(call)
@@ -354,6 +358,41 @@ struct PredictView: View {
         }
     }
 
+    // MARK: - 4b. Tyre Strategy
+
+    private var tyreStrategyCard: some View {
+        VStack(alignment: .leading, spacing: F1Design.innerSpacing) {
+            F1SectionHeader(title: "TYRE STRATEGY", subtitle: "Degradation, compounds, and pit windows")
+
+            let ctx = viewModel.tyreStrategyContext
+
+            HStack(spacing: 10) {
+                F1StatPill(title: "Stints", value: "\(ctx.expectedStints)-stop", style: .subtle)
+                F1StatPill(title: "Deg", value: ctx.degradationSeverity, style: .subtle)
+                F1StatPill(title: "Undercut", value: ctx.undercutPotency, style: .subtle)
+            }
+
+            HStack(spacing: 10) {
+                F1MetricTile(title: "Compounds", value: ctx.likelyCompounds)
+                F1MetricTile(title: "Safety Car", value: ctx.safetyCarLikelihood)
+            }
+
+            insightRow(icon: "circle.circle", title: "Pit window", body: ctx.pitWindowNarrative)
+
+            if ctx.overcutViable {
+                HStack(spacing: 6) {
+                    Image(systemName: "arrow.up.right.circle.fill")
+                        .font(.caption2)
+                        .foregroundStyle(.green)
+                    Text("Overcut is viable at this circuit")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .f1Card()
+    }
+
     // MARK: - 5. Confidence & Chaos
 
     private var confidenceChaosCard: some View {
@@ -361,11 +400,62 @@ struct PredictView: View {
             F1SectionHeader(title: "CALL CONFIDENCE", subtitle: "How predictable is this race?")
 
             HStack(spacing: 10) {
+                VStack(spacing: 4) {
+                    Text("\(viewModel.confidenceRawScore)")
+                        .font(.system(size: 28, weight: .black, design: .rounded))
+                        .foregroundStyle(confidenceScoreColor)
+                    Text("/ 10")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(.secondary)
+                    Text("Confidence")
+                        .font(.system(size: 9, weight: .heavy))
+                        .tracking(0.5)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+
+                Rectangle()
+                    .fill(Color.f1SecondaryBackground)
+                    .frame(width: 1, height: 50)
+
+                VStack(spacing: 4) {
+                    Text("\(viewModel.chaosRawScore)")
+                        .font(.system(size: 28, weight: .black, design: .rounded))
+                        .foregroundStyle(chaosScoreColor)
+                    Text("/ 10")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(.secondary)
+                    Text("Chaos")
+                        .font(.system(size: 9, weight: .heavy))
+                        .tracking(0.5)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity)
+            }
+
+            HStack(spacing: 10) {
                 F1StatPill(title: "Confidence", value: viewModel.confidenceLabel)
                 F1StatPill(title: "Chaos Potential", value: viewModel.chaosLabel)
             }
         }
         .f1Card()
+    }
+
+    private var confidenceScoreColor: Color {
+        switch viewModel.confidenceRawScore {
+        case 8...10: return .green
+        case 5...7: return .yellow
+        default: return .orange
+        }
+    }
+
+    private var chaosScoreColor: Color {
+        switch viewModel.chaosRawScore {
+        case 0...2: return .green
+        case 3...4: return .yellow
+        case 5...7: return .orange
+        default: return .red
+        }
     }
 
     // MARK: - 6. Session Radar
@@ -529,6 +619,51 @@ struct PredictView: View {
         .transition(.opacity)
     }
 
+    // MARK: - Tyre Call (NEW V2.2)
+
+    private func tyreCallCard(_ call: RaceCall) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            F1SectionHeader(title: "TYRE CALL")
+
+            HStack(spacing: 12) {
+                Image(systemName: "circle.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(.red)
+
+                Text(call.tyreCall)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineSpacing(2)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .f1Card()
+        .transition(.opacity)
+    }
+
+    // MARK: - Pit Wall Note (NEW V2.2)
+
+    private func pitWallNoteCard(_ call: RaceCall) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            F1SectionHeader(title: "PIT WALL NOTE")
+
+            HStack(spacing: 12) {
+                Image(systemName: "antenna.radiowaves.left.and.right")
+                    .font(.title2)
+                    .foregroundStyle(.purple)
+
+                Text(call.pitWallNote)
+                    .font(.subheadline)
+                    .italic()
+                    .foregroundStyle(.secondary)
+                    .lineSpacing(2)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .f1Card()
+        .transition(.opacity)
+    }
+
     private func darkHorseCard(_ call: RaceCall) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             F1SectionHeader(title: "DARK HORSE")
@@ -589,8 +724,8 @@ struct PredictView: View {
                 .lineSpacing(4)
 
             HStack(spacing: 10) {
-                F1StatPill(title: "Confidence", value: call.confidenceLabel)
-                F1StatPill(title: "Chaos", value: call.chaosLabel)
+                F1StatPill(title: "Confidence", value: "\(call.confidenceLabel) (\(call.confidenceScore)/10)")
+                F1StatPill(title: "Chaos", value: "\(call.chaosLabel) (\(call.chaosScore)/10)")
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

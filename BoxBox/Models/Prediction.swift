@@ -65,6 +65,8 @@ struct RaceCallContext: Codable {
     let recentRaces: [RecentRaceContext]
     let confidenceLabel: String   // "High", "Medium", "Low"
     let chaosLabel: String        // "Low", "Medium", "High", "Extreme"
+    let confidenceScore: Int      // 0–10 numeric
+    let chaosScore: Int           // 0–10 numeric
 }
 
 struct CircuitProfileContext: Codable {
@@ -109,6 +111,17 @@ struct WeekendPaceContext: Codable {
     let longRunBias: String
     let firstStintShape: String
     let gridPressure: String
+    let tyreStrategy: TyreStrategyContext
+}
+
+struct TyreStrategyContext: Codable {
+    let expectedStints: Int          // 1-stop, 2-stop, 3-stop baseline
+    let degradationSeverity: String  // "Low", "Medium", "High", "Extreme"
+    let likelyCompounds: String      // e.g. "Medium → Hard" or "Soft → Medium → Hard"
+    let undercutPotency: String      // "Strong", "Moderate", "Weak"
+    let overcutViable: Bool
+    let safetyCarLikelihood: String  // "Low", "Medium", "High" based on circuit history
+    let pitWindowNarrative: String   // one-line about when pit action peaks
 }
 
 struct RecentRaceContext: Codable {
@@ -124,6 +137,8 @@ struct RaceCallAPIResponse: Codable {
     let biggestRisk: BiggestRisk
     let keyBattle: KeyBattle
     let strategyAngle: String
+    let tyreCall: String
+    let pitWallNote: String
     let reasoning: String
     let flipScenario: String
 
@@ -165,10 +180,14 @@ struct RaceCall: Identifiable, Codable {
     let keyBattleDrivers: [String]
     let keyBattleNarrative: String
     let strategyAngle: String
+    let tyreCall: String
+    let pitWallNote: String
     let reasoning: String
     let flipScenario: String
     let confidenceLabel: String
     let chaosLabel: String
+    let confidenceScore: Int     // 0–10 numeric for granularity
+    let chaosScore: Int          // 0–10 numeric for granularity
     let weekendPhase: String
     let createdAt: Date
 }
