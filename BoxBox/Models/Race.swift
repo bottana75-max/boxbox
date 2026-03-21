@@ -152,10 +152,10 @@ struct DriverTrend: Identifiable, Hashable {
 
     var momentumLabel: String {
         switch trendScore {
-        case 22...: return "White hot"
-        case 16...: return "Charging"
-        case 10...: return "Stable"
-        default: return "Needs a reset"
+        case 22...: return "Surging"
+        case 16...: return "Strong Form"
+        case 10...: return "Steady"
+        default: return "Fading"
         }
     }
 

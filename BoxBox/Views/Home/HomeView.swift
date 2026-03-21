@@ -2,6 +2,14 @@ import SwiftUI
 
 struct HomeView: View {
     @State private var viewModel = HomeViewModel()
+    @State private var weekendTimeMode: WeekendTimeMode = .track
+
+    private enum WeekendTimeMode: String, CaseIterable, Identifiable {
+        case track = "Track Time"
+        case your = "Your Time"
+
+        var id: String { rawValue }
+    }
 
     var body: some View {
         NavigationStack {
@@ -251,16 +259,69 @@ struct HomeView: View {
         if let race = viewModel.nextRace, !race.weekendSessions.isEmpty {
             NavigationLink(value: race) {
                 VStack(alignment: .leading, spacing: F1Design.innerSpacing) {
-                    F1SectionHeader(title: "WEEKEND FLOW", subtitle: "Session cadence for the race weekend")
+                    HStack(alignment: .top, spacing: 12) {
+                        F1SectionHeader(title: "WEEKEND FLOW", subtitle: "Session cadence for the race weekend")
+                        Spacer()
+                        Picker("Weekend time mode", selection: $weekendTimeMode) {
+                            ForEach(WeekendTimeMode.allCases) { mode in
+                                Text(mode.rawValue).tag(mode)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+                        .frame(maxWidth: 220)
+                    }
 
                     ForEach(race.weekendSessions) { session in
-                        F1WeekendSessionRow(session: session)
+                        weekendSessionRow(session, race: race)
                     }
                 }
                 .f1Card()
             }
             .buttonStyle(.plain)
         }
+    }
+
+    @ViewBuilder
+    private func weekendSessionRow(_ session: WeekendSession, race: Race) -> some View {
+        let trackTimezone = RaceLocalTime.lookup(country: race.country, city: race.circuitInfo?.city)
+        let timeZone = weekendTimeMode == .track
+            ? (TimeZone(identifier: trackTimezone.identifier) ?? .gmt)
+            : .current
+        let timeLabel = timeString(for: session.date, in: timeZone)
+        let subtitle = weekendTimeMode == .track ? "Track Time" : "Your Time"
+
+        HStack(spacing: 14) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(session.label)
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.white)
+                Text(session.subtitle)
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 3) {
+                Text(session.relativeLabel.uppercased())
+                    .font(.system(size: 9, weight: .heavy))
+                    .tracking(0.4)
+                    .foregroundStyle(session.isUpcoming ? Color.f1Red : .secondary)
+                Text(timeLabel)
+                    .font(.caption)
+                    .foregroundStyle(.white)
+                Text(subtitle)
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+        }
+        .f1InnerCard()
+    }
+
+    private func timeString(for date: Date, in timeZone: TimeZone) -> String {
+        let formatter = DateFormatter()
+        formatter.timeZone = timeZone
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: date)
     }
 
     @ViewBuilder
