@@ -8,6 +8,7 @@ class StandingsViewModel {
     var selectedTab = 0
     var isLoading = false
     var error: String?
+    var driverHeadshots: [String: String] = [:]
 
     @ObservationIgnored private var loadTask: Task<Void, Never>?
     private let service = OpenF1Service.shared
@@ -22,10 +23,12 @@ class StandingsViewModel {
             do {
                 async let driversTask = service.fetchDriverStandings()
                 async let constructorsTask = service.fetchConstructorStandings()
-                let (drivers, constructors) = try await (driversTask, constructorsTask)
+                async let rosterTask = service.fetchDrivers()
+                let (drivers, constructors, roster) = try await (driversTask, constructorsTask, rosterTask)
                 guard !Task.isCancelled else { return }
                 driverStandings = drivers
                 constructorStandings = constructors
+                driverHeadshots = Dictionary(uniqueKeysWithValues: roster.map { ($0.nameAcronym.uppercased(), $0.headshotUrl ?? "") })
             } catch {
                 guard !Task.isCancelled else { return }
                 self.error = error.localizedDescription
@@ -34,6 +37,11 @@ class StandingsViewModel {
         }
         loadTask = task
         await task.value
+    }
+
+    func headshotURL(for standing: DriverStanding) -> String? {
+        let value = driverHeadshots[standing.driverCode.uppercased()]?.trimmingCharacters(in: .whitespacesAndNewlines)
+        return (value?.isEmpty == false) ? value : nil
     }
 
     nonisolated deinit {
