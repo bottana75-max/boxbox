@@ -59,6 +59,8 @@ struct RaceCallContext: Codable {
     let circuitProfile: CircuitProfileContext
     let weatherProfile: WeatherProfileContext
     let liveWeather: LiveWeatherContext?
+    let sessionContext: SessionContext
+    let weekendPace: WeekendPaceContext
     let contenders: [ContenderProfile]
     let recentRaces: [RecentRaceContext]
     let confidenceLabel: String   // "High", "Medium", "Low"
@@ -93,6 +95,20 @@ struct LiveWeatherContext: Codable {
     let windSpeed: Double?
     let windDirection: Int?
     let source: String  // "OpenF1 live" or "seasonal estimate"
+}
+
+struct SessionContext: Codable {
+    let availableSessions: [String]
+    let lastCompletedSession: String?
+    let sessionCount: Int
+    let source: String
+}
+
+struct WeekendPaceContext: Codable {
+    let headline: String
+    let longRunBias: String
+    let firstStintShape: String
+    let gridPressure: String
 }
 
 struct RecentRaceContext: Codable {

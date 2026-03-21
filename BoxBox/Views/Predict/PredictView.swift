@@ -18,7 +18,9 @@ struct PredictView: View {
                         if let context = viewModel.weekendContext {
                             weatherContextCard(context)
                         }
-                        // 4. Contenders
+                        // 4. Pace + Stints
+                        paceAndStintsCard
+                        // 5. Contenders
                         contendersCard
                         // 5. Confidence & Chaos
                         confidenceChaosCard
@@ -210,7 +212,43 @@ struct PredictView: View {
         }
     }
 
-    // MARK: - 4. Contenders with Scores
+    // MARK: - 4. Pace + Stints
+
+    private var paceAndStintsCard: some View {
+        VStack(alignment: .leading, spacing: F1Design.innerSpacing) {
+            F1SectionHeader(title: "PACE & STINTS", subtitle: "Weekend read without overfitting the data")
+
+            Text(viewModel.weekendPaceHeadline)
+                .font(.subheadline)
+                .foregroundStyle(.white)
+
+            VStack(alignment: .leading, spacing: 8) {
+                insightRow(icon: "speedometer", title: "Long run bias", body: viewModel.longRunBias)
+                insightRow(icon: "timer", title: "Opening stint", body: viewModel.firstStintShape)
+                insightRow(icon: "square.grid.3x3.topleft.filled", title: "Grid pressure", body: viewModel.gridPressureNarrative)
+            }
+        }
+        .f1Card()
+    }
+
+    private func insightRow(icon: String, title: String, body: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: icon)
+                .foregroundStyle(Color.f1Red)
+                .frame(width: 18)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.caption)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.white)
+                Text(body)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    // MARK: - 5. Contenders with Scores
 
     private var contendersCard: some View {
         VStack(alignment: .leading, spacing: F1Design.innerSpacing) {

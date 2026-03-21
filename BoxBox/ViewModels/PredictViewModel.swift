@@ -10,6 +10,7 @@ class PredictViewModel {
     var trends: [DriverTrend] = []
     var contenderProfiles: [ContenderProfile] = []
     var qualifyingResults: [QualifyingResult] = []
+    var openF1Sessions: [OpenF1Service.OpenF1Session] = []
     var liveWeather: LiveWeatherContext?
     var pressureProfile = CircuitPressureProfile.from(info: nil)
     var weekendPhase: WeekendPhase = .baseline
@@ -47,31 +48,44 @@ class PredictViewModel {
     // MARK: - Phase Detection
 
     func detectWeekendPhase() {
+        if !openF1Sessions.isEmpty {
+            let names = openF1Sessions.compactMap { $0.session_name ?? $0.session_type }
+            let normalized = names.map { $0.lowercased() }
+            if normalized.contains(where: { $0.contains("race") }) {
+                weekendPhase = .raceReady
+                return
+            }
+            if normalized.contains(where: { $0.contains("qualifying") || $0 == "sprint shootout" }) || !qualifyingResults.isEmpty {
+                weekendPhase = .postQualifying
+                return
+            }
+            if normalized.contains(where: { $0.contains("practice") || $0 == "fp1" || $0 == "fp2" || $0 == "fp3" }) {
+                weekendPhase = .postPractice
+                return
+            }
+        }
+
         guard let race = nextRace, let raceDate = race.raceDate else {
             weekendPhase = .baseline
             return
         }
         let calendar = Calendar(identifier: .gregorian)
         let now = Date()
-
-        // Race day: if within 4 hours before race start
         let raceStart = calendar.date(bySettingHour: 14, minute: 0, second: 0, of: raceDate) ?? raceDate
-        if now >= calendar.date(byAdding: .hour, value: -4, to: raceStart)! && now <= raceStart {
+
+        if let preRaceWindow = calendar.date(byAdding: .hour, value: -4, to: raceStart), now >= preRaceWindow && now <= raceStart {
             weekendPhase = .raceReady
             return
         }
 
-        // Qualifying day: Saturday (1 day before race)
-        let qualiDay = calendar.date(byAdding: .day, value: -1, to: raceDate)!
+        let qualiDay = calendar.date(byAdding: .day, value: -1, to: raceDate) ?? raceDate
         let qualiEnd = calendar.date(bySettingHour: 17, minute: 0, second: 0, of: qualiDay) ?? qualiDay
         if now > qualiEnd {
-            // After qualifying ended — check if we have qualifying data
             weekendPhase = qualifyingResults.isEmpty ? .postPractice : .postQualifying
             return
         }
 
-        // Practice days: Friday (2 days before) through Saturday morning
-        let fp1Day = calendar.date(byAdding: .day, value: -2, to: raceDate)!
+        let fp1Day = calendar.date(byAdding: .day, value: -2, to: raceDate) ?? raceDate
         let fp1Start = calendar.date(bySettingHour: 10, minute: 0, second: 0, of: fp1Day) ?? fp1Day
         if now >= fp1Start {
             weekendPhase = .postPractice
@@ -256,29 +270,24 @@ class PredictViewModel {
     }
 
     private func computeWeekendPaceScore(standing: DriverStanding) -> Int {
-        guard !qualifyingResults.isEmpty else {
-            // No weekend data — use championship position as proxy
-            return max(10, 75 - standing.position * 4)
-        }
-
-        // Grid-based scoring: P1=95, P2=90, ..., P20=5
         if let qual = qualifyingResults.first(where: { $0.driverCode == standing.driverCode }) {
             let gridScore = max(5, 100 - (qual.gridPosition - 1) * 5)
-
-            // Grid advantage: circuits where qualifying matters more amplify the grid score
-            let qualiImportance = pressureProfile.qualifyingImportance
             let amplifier: Double
-            switch qualiImportance {
+            switch pressureProfile.qualifyingImportance {
             case "Massive": amplifier = 1.15
             case "Important": amplifier = 1.05
             default: amplifier = 1.0
             }
-
             return min(100, Int(Double(gridScore) * amplifier))
         }
 
-        // Driver not in qualifying results — fallback
-        return max(5, 60 - standing.position * 3)
+        if weekendPhase == .postPractice {
+            let trackFit = computeTrackFitScore(standing: standing)
+            let practiceBias = pressureProfile.tyreStress == "High" ? 8 : 4
+            return min(100, max(10, (trackFit + computeFormScore(trend: trends.first(where: { $0.id == standing.id }), standing: standing)) / 2 + practiceBias))
+        }
+
+        return max(10, 75 - standing.position * 4)
     }
 
     // MARK: - Build Structured Context for AI
@@ -315,6 +324,21 @@ class PredictViewModel {
             )
         }
 
+        let sessionNames = openF1Sessions.compactMap { $0.session_name ?? $0.session_type }
+        let sessionContext = SessionContext(
+            availableSessions: sessionNames,
+            lastCompletedSession: sessionNames.last,
+            sessionCount: sessionNames.count,
+            source: sessionNames.isEmpty ? "Schedule estimate" : "OpenF1 sessions"
+        )
+
+        let weekendPace = WeekendPaceContext(
+            headline: weekendPaceHeadline,
+            longRunBias: longRunBias,
+            firstStintShape: firstStintShape,
+            gridPressure: gridPressureNarrative
+        )
+
         return RaceCallContext(
             raceName: race.raceName,
             circuitName: race.circuitName,
@@ -326,6 +350,8 @@ class PredictViewModel {
             circuitProfile: circuitProfile,
             weatherProfile: weatherProfile,
             liveWeather: liveWeather,
+            sessionContext: sessionContext,
+            weekendPace: weekendPace,
             contenders: contenderProfiles,
             recentRaces: recentContext,
             confidenceLabel: confidenceLabel,
@@ -355,6 +381,30 @@ class PredictViewModel {
         let extras = weekendPhase == .baseline ? "" : " · \(weekendPhase.shortLabel.lowercased()) data"
         return "Podium · dark horse · risk · key battle · strategy\(extras)"
     }
+
+    var weekendPaceHeadline: String {
+        switch weekendPhase {
+        case .baseline: return "No live running yet — lean on season form and circuit fit."
+        case .postPractice: return "Practice data shifts the call toward long-run stability and tyre behaviour."
+        case .postQualifying: return "Grid is live now — front-row control matters more than headline race sims."
+        case .raceReady: return "Weekend picture is complete — first-stint execution and weather timing decide it."
+        }
+    }
+
+    var longRunBias: String {
+        if pressureProfile.tyreStress == "High" { return "Tyre deg will punish anyone who leans too hard on the fronts in stint one." }
+        if pressureProfile.overtaking == "Track position" { return "Clean air matters more than raw deg, so expect teams to defend track position early." }
+        return "Balanced circuit: usable long-run pace should keep the undercut live without forcing panic stops." }
+
+    var firstStintShape: String {
+        if liveWeather?.rainfall == true { return "Opening stint is fragile: crossover timing can wreck the first pit window." }
+        if pressureProfile.tyreStress == "High" { return "Expect the first stint to stretch around tyre protection, not all-out attack." }
+        return "Opening stint should be stable enough for teams to split strategy on lap-time delta rather than survival." }
+
+    var gridPressureNarrative: String {
+        if qualifyingResults.isEmpty { return "Grid edge still estimated — qualifying will be the big swing factor." }
+        if pressureProfile.qualifyingImportance == "Massive" { return "Track position is king here, so any top-three start carries oversized win equity." }
+        return "Grid matters, but pure race pace can still rewrite the order after the first stop cycle." }
 
     // MARK: - Data Loading
 
@@ -389,14 +439,19 @@ class PredictViewModel {
                 pressureProfile = CircuitPressureProfile.from(info: nextRace?.circuitInfo)
                 trends = service.buildTrends(from: fetchedStandings, recentRaces: fetchedRecent, limit: 10)
 
-                // Phase-aware: try to fetch qualifying and live weather
+                // Phase-aware: qualify, sessions and live weather where available
                 if let race = nextRace {
                     async let qualTask = service.fetchQualifyingResults(round: race.round)
                     async let weatherTask = service.fetchLiveWeather()
-                    let (qual, weather) = try await (qualTask, weatherTask)
+                    async let sessionsTask = service.fetchSessions(countryName: race.country, year: race.seasonYear)
+                    let (qual, weather, sessions) = try await (qualTask, weatherTask, sessionsTask)
                     if !Task.isCancelled {
                         qualifyingResults = qual
                         liveWeather = weather
+                        openF1Sessions = sessions.filter { session in
+                            let name = (session.session_name ?? session.session_type ?? "").lowercased()
+                            return name.contains("practice") || name.contains("qualifying") || name.contains("race") || name.contains("sprint")
+                        }
                     }
                 }
 

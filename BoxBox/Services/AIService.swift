@@ -62,16 +62,18 @@ class AIService {
 
         ANALYSIS RULES:
         1. Weigh each contender's overallRating, formScore, trackFitScore, and weekendPaceScore.
-        2. If gridPosition is available, factor it heavily — especially when qualifyingImportance is "Massive" or circuit overtaking is "Track position".
-        3. Factor circuit profile: overtaking difficulty, tyre stress, reliability risk.
-        4. Factor weather: use both the seasonal profile AND liveWeather if present. If rainfall is true, consider wet-weather specialists.
-        5. Note confidence level (\(context.confidenceLabel)) and chaos potential (\(context.chaosLabel)) — let these guide your tone.
-        6. Pick a dark horse — someone outside the obvious top 3 who could surprise, with a SPECIFIC reason tied to data.
-        7. Identify the biggest risk — a contender who could underperform, with a concrete reason.
-        8. Identify the key battle — two drivers likely to fight directly, based on proximity in ratings or grid positions.
-        9. Provide a strategy angle — one tactical insight about tyres, undercuts, weather timing, or pit window that could decide the race.
-        10. Write reasoning that references SPECIFIC scores, positions, or data points — never generic statements.
-        11. Write a flip scenario that is specific and plausible, not generic.
+        2. Use sessionContext to understand how much real weekend running is available; do not pretend you have data the phase does not support.
+        3. Use weekendPace to discuss long-run bias, first-stint shape, and how grid pressure changes the likely race script.
+        4. If gridPosition is available, factor it heavily — especially when qualifyingImportance is "Massive" or circuit overtaking is "Track position".
+        5. Factor circuit profile: overtaking difficulty, tyre stress, reliability risk.
+        6. Factor weather: use both the seasonal profile AND liveWeather if present. If rainfall is true, consider wet-weather specialists.
+        7. Note confidence level (\(context.confidenceLabel)) and chaos potential (\(context.chaosLabel)) — let these guide your tone.
+        8. Pick a dark horse — someone outside the obvious top 3 who could surprise, with a SPECIFIC reason tied to data.
+        9. Identify the biggest risk — a contender who could underperform, with a concrete reason.
+        10. Identify the key battle — two drivers likely to fight directly, based on proximity in ratings or grid positions.
+        11. Provide a strategy angle — one tactical insight about tyres, undercuts, weather timing, or pit window that could decide the race.
+        12. Write reasoning that references SPECIFIC scores, positions, or data points — never generic statements.
+        13. Write a flip scenario that is specific and plausible, not generic.
 
         QUALITY RULES:
         - Never say "could" when you mean "will likely". Be assertive.
