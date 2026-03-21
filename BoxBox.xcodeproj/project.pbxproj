@@ -13,7 +13,7 @@
 		33BDE43328D166E2BB0A38ED /* DriverComparisonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AFBC482F2D7707CFADD5A2D /* DriverComparisonView.swift */; };
 		3DC4BC69AB98E397DD1F9970 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4F041C9F8234BBB4C3593CB8 /* WidgetKit.framework */; };
 		7A1DD61A45033D49067CA3E3 /* BoxBoxWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FC0810A95EFBD26870CA7B3 /* BoxBoxWidgetBundle.swift */; };
-		8341330D724CA51259D09A5E /* BoxBoxWidgetExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = CDF38FFC44E0E85C42316A44 /* BoxBoxWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		8341330D724CA51259D09A5E /* BoxBoxWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CDF38FFC44E0E85C42316A44 /* BoxBoxWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		8979B858BFC10EA711997E01 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F95989627549CD3CC318DB /* PaywallView.swift */; };
 		8E064DD990E0B8611B1D82FA /* RaceContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D939F5E50D2DC18FC4E0BB8 /* RaceContext.swift */; };
 		99E2F004A02B90ED1CD25438 /* StandingsWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86FB8E3EF96A3DB37D3B65D5 /* StandingsWidget.swift */; };
@@ -66,15 +66,15 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
-		68E2D6280F4C9A17D9BF5324 /* Embed App Extensions */ = {
+		68E2D6280F4C9A17D9BF5324 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				8341330D724CA51259D09A5E /* BoxBoxWidgetExtension.appex in Embed App Extensions */,
+				8341330D724CA51259D09A5E /* BoxBoxWidgetExtension.appex in Embed Foundation Extensions */,
 			);
-			name = "Embed App Extensions";
+			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -355,7 +355,7 @@
 				A1B2C3D4E0000002 /* Sources */,
 				A1B2C3D4E0000001 /* Frameworks */,
 				A1B2C3D4E0000003 /* Resources */,
-				68E2D6280F4C9A17D9BF5324 /* Embed App Extensions */,
+				68E2D6280F4C9A17D9BF5324 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
@@ -492,7 +492,6 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 8GH7D2H8MW;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BoxBoxWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -518,7 +517,6 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 8GH7D2H8MW;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BoxBoxWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -574,6 +572,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 8GH7D2H8MW;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -639,6 +638,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 8GH7D2H8MW;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -670,7 +670,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
-				DEVELOPMENT_TEAM = 8GH7D2H8MW;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BoxBox/Info.plist;
@@ -702,7 +701,6 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
-				DEVELOPMENT_TEAM = 8GH7D2H8MW;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = BoxBox/Info.plist;
