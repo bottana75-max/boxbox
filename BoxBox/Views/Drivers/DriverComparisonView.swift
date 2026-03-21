@@ -59,16 +59,27 @@ struct DriverComparisonView: View {
 
     private func driverHero(_ driver: Driver) -> some View {
         VStack(spacing: 10) {
-            Circle()
-                .fill(driver.teamColor.opacity(0.15))
-                .frame(width: 74, height: 74)
-                .overlay(
-                    Text(driver.nameAcronym)
-                        .font(.headline)
-                        .fontWeight(.black)
-                        .foregroundStyle(driver.teamColor)
-                )
-                .overlay(Circle().strokeBorder(driver.teamColor.opacity(0.35), lineWidth: 2))
+            AsyncImage(url: driver.headshotUrl.flatMap(URL.init(string:))) { phase in
+                switch phase {
+                case .success(let image):
+                    image
+                        .resizable()
+                        .aspectRatio(contentMode: .fill)
+                        .frame(width: 74, height: 74)
+                        .clipShape(Circle())
+                default:
+                    Circle()
+                        .fill(driver.teamColor.opacity(0.15))
+                        .frame(width: 74, height: 74)
+                        .overlay(
+                            Text(driver.nameAcronym)
+                                .font(.headline)
+                                .fontWeight(.black)
+                                .foregroundStyle(driver.teamColor)
+                        )
+                }
+            }
+            .overlay(Circle().strokeBorder(driver.teamColor.opacity(0.35), lineWidth: 2))
 
             Text(driver.fullName)
                 .font(.subheadline)
