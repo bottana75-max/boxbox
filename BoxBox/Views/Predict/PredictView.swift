@@ -28,8 +28,6 @@ struct PredictView: View {
                         weekendScenarioMapCard
                         // 5. Confidence & Chaos
                         confidenceChaosCard
-                        // 6. Session Radar
-                        weekendPlanCard(race)
                     } else {
                         emptyStateCard
                     }
@@ -318,10 +316,10 @@ struct PredictView: View {
                             }
 
                             VStack(alignment: .trailing, spacing: 4) {
-                                HStack(spacing: 4) {
-                                    scoreBar(label: "F", value: contender.formScore)
-                                    scoreBar(label: "T", value: contender.trackFitScore)
-                                    scoreBar(label: "W", value: contender.weekendPaceScore)
+                                HStack(spacing: 6) {
+                                    scorePill(label: "Form", value: contender.formScore)
+                                    scorePill(label: "Fit", value: contender.trackFitScore)
+                                    scorePill(label: "Pace", value: contender.weekendPaceScore)
                                 }
                             }
                         }
@@ -407,23 +405,19 @@ struct PredictView: View {
         .f1InnerCard()
     }
 
-    private func scoreBar(label: String, value: Int) -> some View {
-        VStack(spacing: 2) {
+    private func scorePill(label: String, value: Int) -> some View {
+        HStack(spacing: 5) {
             Text(label)
-                .font(.system(size: 8, weight: .heavy))
+                .font(.system(size: 9, weight: .heavy))
                 .foregroundStyle(.secondary)
-            ZStack(alignment: .bottom) {
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(Color.f1SecondaryBackground)
-                    .frame(width: 6, height: 24)
-                RoundedRectangle(cornerRadius: 2)
-                    .fill(scoreColor(value))
-                    .frame(width: 6, height: CGFloat(value) / 100.0 * 24.0)
-            }
             Text("\(value)")
-                .font(.system(size: 7, weight: .bold))
-                .foregroundStyle(.tertiary)
+                .font(.system(size: 10, weight: .bold, design: .rounded))
+                .foregroundStyle(scoreColor(value))
         }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 5)
+        .background(Color.f1SecondaryBackground)
+        .clipShape(Capsule())
     }
 
     private func scoreColor(_ score: Int) -> Color {
