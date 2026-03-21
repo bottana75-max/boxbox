@@ -14,65 +14,59 @@ class AIService {
 
     // Reuse decoder — allocating JSONDecoder on every prediction call is wasteful.
     private let decoder = JSONDecoder()
+    private let encoder: JSONEncoder = {
+        let e = JSONEncoder()
+        e.outputFormatting = [.sortedKeys]
+        return e
+    }()
 
-    func predictRace(
-        nextRace: Race,
-        driverStandings: [DriverStanding],
-        recentRaces: [(Race, [RaceResult])],
-        trends: [DriverTrend],
-        pressureProfile: CircuitPressureProfile
-    ) async throws -> Prediction {
-        let top10 = driverStandings.prefix(10)
-            .map { "\($0.position). \($0.driverName) (\($0.constructorName)) - \($0.points.cleanNumber) pts, \($0.wins) wins" }
-            .joined(separator: "\n")
-
-        let recentSummary = recentRaces.prefix(3).map { race, results in
-            let podium = results.prefix(3).map { "P\($0.position) \($0.driverCode)" }.joined(separator: ", ")
-            return "- \(race.raceWeekendTitle): \(podium)"
-        }.joined(separator: "\n")
-
-        let trendSummary = trends.prefix(5).map {
-            "- \($0.driverName): \($0.recentSummary.isEmpty ? "No recent results" : $0.recentSummary) | momentum \($0.momentumLabel) | avg finish \(String(format: "%.1f", $0.averageFinish))"
-        }.joined(separator: "\n")
+    func predictRace(context: RaceCallContext) async throws -> RaceCall {
+        let contextJSON = try encoder.encode(context)
+        let contextString = String(data: contextJSON, encoding: .utf8) ?? "{}"
 
         let prompt = """
-        You are an expert Formula 1 analyst. Predict the podium (top 3) for the upcoming race.
+        You are an elite Formula 1 race analyst. You receive structured race context and must produce a structured race call.
 
-        Race: \(nextRace.raceName)
-        Circuit: \(nextRace.circuitName), \(nextRace.country)
-        Date: \(nextRace.formattedDate)
+        CONTEXT:
+        \(contextString)
 
-        Driver standings:
-        \(top10)
+        ANALYSIS INSTRUCTIONS:
+        1. Weigh each contender's formScore (recent results), trackFitScore (circuit suitability), and overallRating.
+        2. Factor in the circuit profile (overtaking difficulty, tyre stress, qualifying importance).
+        3. Consider the weather profile and its impact on race strategy.
+        4. Note the confidence level (\(context.confidenceLabel)) and chaos potential (\(context.chaosLabel)).
+        5. Pick a dark horse — someone outside the obvious top 3 who could surprise.
+        6. Identify the biggest risk — a contender who could underperform or DNF.
+        7. Write a flip scenario — one realistic event that would completely change your podium prediction.
 
-        Recent races:
-        \(recentSummary)
-
-        Momentum:
-        \(trendSummary)
-
-        Circuit profile:
-        - Overtaking: \(pressureProfile.overtaking)
-        - Tyre stress: \(pressureProfile.tyreStress)
-        - Qualifying importance: \(pressureProfile.qualifyingImportance)
-
-        Respond ONLY with valid JSON:
+        Respond ONLY with valid JSON matching this exact structure:
         {
-            "first": "Driver Full Name",
-            "second": "Driver Full Name",
-            "third": "Driver Full Name",
-            "reasoning": "2-3 sentence explanation"
+            "podium": {
+                "first": "Driver Full Name",
+                "second": "Driver Full Name",
+                "third": "Driver Full Name"
+            },
+            "darkHorse": {
+                "driver": "Driver Full Name",
+                "why": "One sentence reason"
+            },
+            "biggestRisk": {
+                "driver": "Driver Full Name",
+                "why": "One sentence reason"
+            },
+            "reasoning": "2-3 sentences explaining your podium picks using the data provided",
+            "flipScenario": "One sentence describing what event would flip this prediction"
         }
         """
 
         let requestBody: [String: Any] = [
             "model": "gpt-4o-mini",
             "messages": [
-                ["role": "system", "content": "You are an F1 expert analyst. Always respond with valid JSON only."],
+                ["role": "system", "content": "You are an F1 expert analyst. Always respond with valid JSON only. Use driver data and scores provided — do not hallucinate stats."],
                 ["role": "user", "content": prompt]
             ],
             "temperature": 0.7,
-            "max_tokens": 300
+            "max_tokens": 500
         ]
 
         var request = URLRequest(url: URL(string: "https://api.openai.com/v1/chat/completions")!)
@@ -105,16 +99,23 @@ class AIService {
             throw AIError.parseError
         }
 
-        let predictionResponse = try decoder.decode(PredictionAPIResponse.self, from: jsonData)
+        let apiResponse = try decoder.decode(RaceCallAPIResponse.self, from: jsonData)
 
-        return Prediction(
+        return RaceCall(
             id: UUID(),
-            raceId: nextRace.id,
-            raceName: nextRace.raceName,
-            first: predictionResponse.first,
-            second: predictionResponse.second,
-            third: predictionResponse.third,
-            reasoning: predictionResponse.reasoning,
+            raceId: context.round.description,
+            raceName: context.raceName,
+            first: apiResponse.podium.first,
+            second: apiResponse.podium.second,
+            third: apiResponse.podium.third,
+            darkHorse: apiResponse.darkHorse.driver,
+            darkHorseWhy: apiResponse.darkHorse.why,
+            biggestRisk: apiResponse.biggestRisk.driver,
+            biggestRiskWhy: apiResponse.biggestRisk.why,
+            reasoning: apiResponse.reasoning,
+            flipScenario: apiResponse.flipScenario,
+            confidenceLabel: context.confidenceLabel,
+            chaosLabel: context.chaosLabel,
             createdAt: Date()
         )
     }

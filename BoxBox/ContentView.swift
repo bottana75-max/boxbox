@@ -19,7 +19,7 @@ struct ContentView: View {
             Tab("Drivers", systemImage: "person.3.fill") {
                 DriversView()
             }
-            Tab("Predict", systemImage: "sparkles") {
+            Tab("Race Call", systemImage: "flag.checkered") {
                 PredictView()
             }
             Tab("Standings", systemImage: "chart.bar.fill") {

@@ -23,12 +23,12 @@ struct PaywallView: View {
 
     private var paywallFootnote: String {
         if storeKit.isUnlimited {
-            return "BoxBox Pro unlocked. Unlimited predictions are active on this device."
+            return "BoxBox Pro unlocked. Unlimited race calls are active on this device."
         }
         if featuredProduct == nil {
             return "Purchases are temporarily unavailable on this build. You can still restore previous purchases."
         }
-        return "One-time unlock for unlimited AI predictions. No subscription."
+        return "One-time unlock for unlimited AI race calls. No subscription."
     }
 
     private var purchaseStatusNote: String? {
@@ -52,7 +52,7 @@ struct PaywallView: View {
             VStack(spacing: 24) {
                 Spacer()
 
-                Image(systemName: "sparkles")
+                Image(systemName: "flag.checkered")
                     .font(.system(size: 56))
                     .foregroundStyle(Color.f1Red)
 
@@ -61,17 +61,17 @@ struct PaywallView: View {
                     .fontWeight(.black)
                     .foregroundStyle(.white)
 
-                Text("Unlimited AI race predictions after your first 3 free shots")
+                Text("Unlimited AI race calls after your first 3 free shots")
                     .font(.title3)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
 
                 VStack(spacing: 12) {
-                    featureRow(icon: "brain.head.profile", text: "AI-powered podium predictions")
+                    featureRow(icon: "brain.head.profile", text: "AI-powered podium, dark horse and risk calls")
                     featureRow(icon: "cloud.sun.fill", text: "Weekend context: timing, weather pressure and circuit cues")
-                    featureRow(icon: "chart.line.uptrend.xyaxis", text: "Analysis using standings, recent form and track profile")
-                    featureRow(icon: "infinity", text: "Unlimited predictions all season")
+                    featureRow(icon: "chart.line.uptrend.xyaxis", text: "Scoring engine: form, track fit and contender ranking")
+                    featureRow(icon: "infinity", text: "Unlimited race calls all season")
                 }
                 .padding(.vertical)
 
@@ -102,7 +102,7 @@ struct PaywallView: View {
                     VStack(spacing: 4) {
                         Text(paywallCTA)
                             .fontWeight(.bold)
-                        Text(storeKit.isUnlimited ? "Ready to race" : "Unlock once, predict all season")
+                        Text(storeKit.isUnlimited ? "Ready to race" : "Unlock once, call every race all season")
                             .font(.caption)
                             .foregroundStyle(.white.opacity(0.8))
                     }
