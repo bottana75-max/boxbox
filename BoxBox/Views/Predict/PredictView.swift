@@ -42,15 +42,10 @@ struct PredictView: View {
 
                     // 8. Structured Result
                     if let call = viewModel.raceCall {
+                        resultLeadCard(call)
                         podiumCard(call)
-                        winnerEdgeCard(call)
+                        resultSignalGrid(call)
                         weekendScenariosCard(call)
-                        keyBattleCard(call)
-                        strategyAngleCard(call)
-                        tyreCallCard(call)
-                        pitWallNoteCard(call)
-                        darkHorseCard(call)
-                        biggestRiskCard(call)
                         reasoningCard(call)
                         flipScenarioCard(call)
                     }
@@ -105,6 +100,11 @@ struct PredictView: View {
             Text(viewModel.projectedStoryline)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+                .lineSpacing(2)
+
+            Text("Built from season form, circuit fit, weekend signals, and tyre shape — then sharpened into one decisive read.")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
                 .lineSpacing(2)
 
             HStack(spacing: 10) {
@@ -556,32 +556,37 @@ struct PredictView: View {
     // MARK: - 7. CTA Button
 
     private var raceCallButton: some View {
-        Button {
-            Task { await viewModel.predict() }
-        } label: {
-            VStack(spacing: 8) {
-                HStack(spacing: 8) {
-                    if viewModel.isLoading {
-                        ProgressView()
-                            .tint(.white)
-                    } else {
-                        Image(systemName: buttonIcon)
+        VStack(alignment: .leading, spacing: 12) {
+            F1SectionHeader(title: "GENERATE THE CALL", subtitle: "One premium race brief per tap. Credits and Pro unlock stay unchanged.")
+
+            Button {
+                Task { await viewModel.predict() }
+            } label: {
+                VStack(spacing: 8) {
+                    HStack(spacing: 8) {
+                        if viewModel.isLoading {
+                            ProgressView()
+                                .tint(.white)
+                        } else {
+                            Image(systemName: buttonIcon)
+                        }
+                        Text(viewModel.predictButtonTitle)
+                            .fontWeight(.bold)
                     }
-                    Text(viewModel.predictButtonTitle)
-                        .fontWeight(.bold)
+                    Text(viewModel.predictButtonSubtitle)
+                        .font(.caption)
+                        .foregroundStyle(.white.opacity(0.85))
+                        .multilineTextAlignment(.center)
                 }
-                Text(viewModel.predictButtonSubtitle)
-                    .font(.caption)
-                    .foregroundStyle(.white.opacity(0.85))
-                    .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
+                .padding()
             }
-            .frame(maxWidth: .infinity)
-            .padding()
+            .buttonStyle(.borderedProminent)
+            .tint(Color.f1Red)
+            .disabled(viewModel.isLoading)
+            .controlSize(.large)
         }
-        .buttonStyle(.borderedProminent)
-        .tint(Color.f1Red)
-        .disabled(viewModel.isLoading)
-        .controlSize(.large)
+        .f1Card(accent: .f1Red)
     }
 
     private var buttonIcon: String {
@@ -591,21 +596,44 @@ struct PredictView: View {
 
     // MARK: - 8. Structured Result Cards
 
-    private func podiumCard(_ call: RaceCall) -> some View {
-        VStack(spacing: 16) {
-            HStack {
-                F1SectionHeader(title: "THE CALL")
+    private func resultLeadCard(_ call: RaceCall) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top) {
+                F1SectionHeader(title: "THE RACE CALL", subtitle: "A finished race brief — tight, specific, and ready before lights out.")
                 Spacer()
                 Text(call.weekendPhase.uppercased())
                     .font(.system(size: 9, weight: .heavy))
-                    .tracking(0.4)
+                    .tracking(0.6)
                     .foregroundStyle(.secondary)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 6)
+                    .background(Color.white.opacity(0.05))
+                    .clipShape(Capsule())
             }
 
+            Text(call.winnerEdge)
+                .font(.headline)
+                .foregroundStyle(.white)
+                .lineSpacing(3)
+
+            HStack(spacing: 10) {
+                F1StatPill(title: "Winner", value: call.first)
+                F1StatPill(title: "Confidence", value: "\(call.confidenceScore)/10 · \(call.confidenceLabel)")
+                F1StatPill(title: "Chaos", value: "\(call.chaosScore)/10 · \(call.chaosLabel)")
+            }
+        }
+        .f1Card(gradient: true, accent: .f1Red)
+        .transition(.opacity)
+    }
+
+    private func podiumCard(_ call: RaceCall) -> some View {
+        VStack(alignment: .leading, spacing: 18) {
+            F1SectionHeader(title: "PROJECTED PODIUM", subtitle: "The headline order, stripped of noise.")
+
             HStack(alignment: .bottom, spacing: 12) {
-                podiumPlace(position: 2, name: call.second, height: 80)
-                podiumPlace(position: 1, name: call.first, height: 110)
-                podiumPlace(position: 3, name: call.third, height: 60)
+                podiumPlace(position: 2, name: call.second, height: 84)
+                podiumPlace(position: 1, name: call.first, height: 118)
+                podiumPlace(position: 3, name: call.third, height: 68)
             }
         }
         .f1Card(accent: .f1Red)
@@ -613,22 +641,33 @@ struct PredictView: View {
     }
 
     private func podiumPlace(position: Int, name: String, height: CGFloat) -> some View {
-        VStack(spacing: 8) {
-            Text(name.components(separatedBy: " ").last ?? name)
-                .font(.caption)
-                .fontWeight(.bold)
-                .multilineTextAlignment(.center)
-                .lineLimit(2)
+        VStack(spacing: 10) {
+            VStack(spacing: 3) {
+                Text(name.components(separatedBy: " ").last ?? name)
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.white)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                Text(positionLabel(position))
+                    .font(.system(size: 10, weight: .heavy))
+                    .tracking(0.5)
+                    .foregroundStyle(.secondary)
+            }
 
-            ZStack {
-                RoundedRectangle(cornerRadius: 10)
+            ZStack(alignment: .topTrailing) {
+                RoundedRectangle(cornerRadius: 12)
                     .fill(podiumGradient(for: position))
                     .frame(height: height)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 12)
+                            .strokeBorder(Color.white.opacity(0.08), lineWidth: 1)
+                    }
 
-                Text("\(position)")
-                    .font(.system(.largeTitle, design: .rounded))
-                    .fontWeight(.black)
-                    .foregroundStyle(.white)
+                Text("P\(position)")
+                    .font(.system(size: 11, weight: .heavy))
+                    .foregroundStyle(.white.opacity(0.9))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 6)
             }
             .frame(maxWidth: .infinity)
         }
@@ -648,23 +687,14 @@ struct PredictView: View {
     }
 
     private func winnerEdgeCard(_ call: RaceCall) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            F1SectionHeader(title: "WINNER'S EDGE", subtitle: "Why P1 beats P2, specifically")
-
-            HStack(spacing: 12) {
-                Image(systemName: "target")
-                    .font(.title2)
-                    .foregroundStyle(.orange)
-
-                Text(call.winnerEdge)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .lineSpacing(2)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .f1Card(accent: .orange)
-        .transition(.opacity)
+        editorialSignalCard(
+            title: "Winner's Edge",
+            subtitle: "The single lever that decides P1.",
+            icon: "target",
+            iconColor: .orange,
+            accent: .orange,
+            body: call.winnerEdge
+        )
     }
 
     private func weekendScenariosCard(_ call: RaceCall) -> some View {
@@ -702,155 +732,87 @@ struct PredictView: View {
     // MARK: - Key Battle (NEW V2.1)
 
     private func keyBattleCard(_ call: RaceCall) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            F1SectionHeader(title: "KEY BATTLE")
-
-            HStack(spacing: 12) {
-                Image(systemName: "bolt.fill")
-                    .font(.title2)
-                    .foregroundStyle(.cyan)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(call.keyBattleDrivers.joined(separator: " vs "))
-                        .font(.headline)
-                        .foregroundStyle(.white)
-                    Text(call.keyBattleNarrative)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .lineSpacing(2)
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .f1Card()
-        .transition(.opacity)
+        editorialSignalCard(
+            title: "Key Battle",
+            subtitle: call.keyBattleDrivers.joined(separator: " vs "),
+            icon: "bolt.fill",
+            iconColor: .cyan,
+            accent: .cyan,
+            body: call.keyBattleNarrative
+        )
     }
 
     // MARK: - Strategy Angle (NEW V2.1)
 
     private func strategyAngleCard(_ call: RaceCall) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            F1SectionHeader(title: "STRATEGY ANGLE")
-
-            HStack(spacing: 12) {
-                Image(systemName: "gearshape.2.fill")
-                    .font(.title2)
-                    .foregroundStyle(.mint)
-
-                Text(call.strategyAngle)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .lineSpacing(2)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .f1Card()
-        .transition(.opacity)
+        editorialSignalCard(
+            title: "Strategy Angle",
+            subtitle: "The move that shapes the race from the pit wall.",
+            icon: "gearshape.2.fill",
+            iconColor: .mint,
+            accent: .mint,
+            body: call.strategyAngle
+        )
     }
 
     // MARK: - Tyre Call (NEW V2.2)
 
     private func tyreCallCard(_ call: RaceCall) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            F1SectionHeader(title: "TYRE CALL")
-
-            HStack(spacing: 12) {
-                Image(systemName: "circle.circle.fill")
-                    .font(.title2)
-                    .foregroundStyle(.red)
-
-                Text(call.tyreCall)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .lineSpacing(2)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .f1Card()
-        .transition(.opacity)
+        editorialSignalCard(
+            title: "Tyre Call",
+            subtitle: "The compound decision with the biggest swing.",
+            icon: "circle.circle.fill",
+            iconColor: .red,
+            accent: .red,
+            body: call.tyreCall
+        )
     }
 
     // MARK: - Pit Wall Note (NEW V2.2)
 
     private func pitWallNoteCard(_ call: RaceCall) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            F1SectionHeader(title: "PIT WALL NOTE")
-
-            HStack(spacing: 12) {
-                Image(systemName: "antenna.radiowaves.left.and.right")
-                    .font(.title2)
-                    .foregroundStyle(.purple)
-
-                Text(call.pitWallNote)
-                    .font(.subheadline)
-                    .italic()
-                    .foregroundStyle(.secondary)
-                    .lineSpacing(2)
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .f1Card()
-        .transition(.opacity)
+        editorialSignalCard(
+            title: "Pit Wall Note",
+            subtitle: "The kind of detail you'd hear in the headset, not on the broadcast.",
+            icon: "antenna.radiowaves.left.and.right",
+            iconColor: .purple,
+            accent: .purple,
+            body: call.pitWallNote
+        )
     }
 
     private func darkHorseCard(_ call: RaceCall) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            F1SectionHeader(title: "DARK HORSE")
-
-            HStack(spacing: 12) {
-                Image(systemName: "eye.fill")
-                    .font(.title2)
-                    .foregroundStyle(.yellow)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(call.darkHorse)
-                        .font(.headline)
-                        .foregroundStyle(.white)
-                    Text(call.darkHorseWhy)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .lineSpacing(2)
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .f1Card()
-        .transition(.opacity)
+        editorialDriverCard(
+            title: "Dark Horse",
+            subtitle: "The outside bet with a real route into the fight.",
+            icon: "eye.fill",
+            iconColor: .yellow,
+            accent: .yellow,
+            driver: call.darkHorse,
+            body: call.darkHorseWhy
+        )
     }
 
     private func biggestRiskCard(_ call: RaceCall) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            F1SectionHeader(title: "BIGGEST RISK")
-
-            HStack(spacing: 12) {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .font(.title2)
-                    .foregroundStyle(.orange)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(call.biggestRisk)
-                        .font(.headline)
-                        .foregroundStyle(.white)
-                    Text(call.biggestRiskWhy)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                        .lineSpacing(2)
-                }
-            }
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .f1Card()
-        .transition(.opacity)
+        editorialDriverCard(
+            title: "Biggest Risk",
+            subtitle: "The pick most likely to slip off-script.",
+            icon: "exclamationmark.triangle.fill",
+            iconColor: .orange,
+            accent: .orange,
+            driver: call.biggestRisk,
+            body: call.biggestRiskWhy
+        )
     }
 
     private func reasoningCard(_ call: RaceCall) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            F1SectionHeader(title: "RACE CALL ANALYSIS")
+        VStack(alignment: .leading, spacing: 14) {
+            F1SectionHeader(title: "STRATEGIST'S READ", subtitle: "The full case behind the podium order.")
 
             Text(call.reasoning)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
-                .lineSpacing(4)
+                .lineSpacing(5)
 
             HStack(spacing: 10) {
                 F1StatPill(title: "Confidence", value: "\(call.confidenceLabel) (\(call.confidenceScore)/10)")
@@ -863,23 +825,107 @@ struct PredictView: View {
     }
 
     private func flipScenarioCard(_ call: RaceCall) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            F1SectionHeader(title: "FLIP SCENARIO")
+        editorialSignalCard(
+            title: "Flip Scenario",
+            subtitle: "The cleanest way the whole brief gets rewritten mid-race.",
+            icon: "arrow.triangle.2.circlepath",
+            iconColor: Color.f1Red,
+            accent: Color.f1Red,
+            body: call.flipScenario
+        )
+    }
 
-            HStack(spacing: 12) {
-                Image(systemName: "arrow.triangle.2.circlepath")
-                    .font(.title2)
-                    .foregroundStyle(Color.f1Red)
+    private func resultSignalGrid(_ call: RaceCall) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            F1SectionHeader(title: "KEY SIGNALS", subtitle: "Six sharp reads that make the brief feel complete.")
 
-                Text(call.flipScenario)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .lineSpacing(2)
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+                winnerEdgeCard(call)
+                keyBattleCard(call)
+                strategyAngleCard(call)
+                tyreCallCard(call)
+                pitWallNoteCard(call)
+                darkHorseCard(call)
+                biggestRiskCard(call)
             }
         }
+    }
+
+    private func editorialSignalCard(title: String, subtitle: String, icon: String, iconColor: Color, accent: Color, body: String) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: icon)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(iconColor)
+                    .frame(width: 28, height: 28)
+                    .background(iconColor.opacity(0.12))
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title.uppercased())
+                        .font(.system(size: 10, weight: .heavy))
+                        .tracking(0.7)
+                        .foregroundStyle(.white)
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            Text(body)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .lineSpacing(3)
+        }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .f1Card()
+        .f1Card(accent: accent)
         .transition(.opacity)
+    }
+
+    private func editorialDriverCard(title: String, subtitle: String, icon: String, iconColor: Color, accent: Color, driver: String, body: String) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: icon)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(iconColor)
+                    .frame(width: 28, height: 28)
+                    .background(iconColor.opacity(0.12))
+                    .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title.uppercased())
+                        .font(.system(size: 10, weight: .heavy))
+                        .tracking(0.7)
+                        .foregroundStyle(.white)
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            Text(driver)
+                .font(.headline)
+                .foregroundStyle(.white)
+
+            Text(body)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .lineSpacing(3)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .f1Card(accent: accent)
+        .transition(.opacity)
+    }
+
+    private func positionLabel(_ position: Int) -> String {
+        switch position {
+        case 1: return "Projected winner"
+        case 2: return "Best shot at P2"
+        case 3: return "Final podium slot"
+        default: return "Projected finish"
+        }
     }
 
     // MARK: - Trial Status
