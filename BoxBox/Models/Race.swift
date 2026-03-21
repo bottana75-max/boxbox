@@ -743,3 +743,43 @@ struct JolpicaConstructorStanding: Codable {
     let wins: String
     let Constructor: JolpicaConstructor
 }
+
+// MARK: - Qualifying Models
+
+struct JolpicaQualifyingResponse: Codable {
+    let MRData: QualifyingMRData
+}
+
+struct QualifyingMRData: Codable {
+    let RaceTable: QualifyingRaceTable
+}
+
+struct QualifyingRaceTable: Codable {
+    let Races: [JolpicaQualifyingRace]
+}
+
+struct JolpicaQualifyingRace: Codable {
+    let round: String
+    let raceName: String
+    let QualifyingResults: [JolpicaQualifyingResult]?
+}
+
+struct JolpicaQualifyingResult: Codable {
+    let position: String
+    let Driver: JolpicaDriver
+    let Constructor: JolpicaConstructor
+    let Q1: String?
+    let Q2: String?
+    let Q3: String?
+}
+
+struct QualifyingResult: Identifiable {
+    let id: String
+    let position: Int
+    let driverName: String
+    let driverCode: String
+    let constructor: String
+    let bestTime: String?
+
+    var gridPosition: Int { position }
+}

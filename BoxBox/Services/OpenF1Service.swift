@@ -176,6 +176,82 @@ actor OpenF1Service {
         }
     }
 
+    // MARK: - Qualifying (Jolpica)
+
+    func fetchQualifyingResults(round: Int) async throws -> [QualifyingResult] {
+        let url = URL(string: "\(jolpicaBase)/current/\(round)/qualifying.json")!
+        let (data, response) = try await URLSession.shared.data(from: url)
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            return []
+        }
+        let decoded = try decoder.decode(JolpicaQualifyingResponse.self, from: data)
+        guard let race = decoded.MRData.RaceTable.Races.first,
+              let results = race.QualifyingResults else {
+            return []
+        }
+        return results.map { q in
+            let best = q.Q3 ?? q.Q2 ?? q.Q1
+            return QualifyingResult(
+                id: "\(round)-\(q.Driver.driverId)-qual",
+                position: Int(q.position) ?? 0,
+                driverName: "\(q.Driver.givenName) \(q.Driver.familyName)",
+                driverCode: q.Driver.code ?? String(q.Driver.familyName.prefix(3)).uppercased(),
+                constructor: q.Constructor.name,
+                bestTime: best
+            )
+        }
+    }
+
+    // MARK: - Live Weather (OpenF1)
+
+    struct OpenF1Weather: Codable {
+        let air_temperature: Double?
+        let track_temperature: Double?
+        let humidity: Double?
+        let rainfall: Int?
+        let wind_speed: Double?
+        let wind_direction: Int?
+    }
+
+    func fetchLiveWeather() async throws -> LiveWeatherContext? {
+        let url = URL(string: "\(openF1Base)/weather?session_key=latest")!
+        let (data, response) = try await URLSession.shared.data(from: url)
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            return nil
+        }
+        let items = try decoder.decode([OpenF1Weather].self, from: data)
+        guard let latest = items.last else { return nil }
+        return LiveWeatherContext(
+            airTemp: latest.air_temperature,
+            trackTemp: latest.track_temperature,
+            humidity: latest.humidity,
+            rainfall: latest.rainfall == 1,
+            windSpeed: latest.wind_speed,
+            windDirection: latest.wind_direction,
+            source: "OpenF1 live"
+        )
+    }
+
+    // MARK: - Session Status (OpenF1)
+
+    struct OpenF1Session: Codable {
+        let session_key: Int?
+        let session_name: String?
+        let session_type: String?
+        let date_start: String?
+        let date_end: String?
+    }
+
+    func fetchSessions(countryName: String, year: Int) async throws -> [OpenF1Session] {
+        let encoded = countryName.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? countryName
+        let url = URL(string: "\(openF1Base)/sessions?country_name=\(encoded)&year=\(year)")!
+        let (data, response) = try await URLSession.shared.data(from: url)
+        guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {
+            return []
+        }
+        return (try? decoder.decode([OpenF1Session].self, from: data)) ?? []
+    }
+
     func fetchConstructorStandings() async throws -> [Constructor] {
         let url = URL(string: "\(jolpicaBase)/current/constructorStandings.json")!
         let (data, _) = try await URLSession.shared.data(from: url)

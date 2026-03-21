@@ -37,6 +37,8 @@ struct PredictView: View {
                     // 8. Structured Result
                     if let call = viewModel.raceCall {
                         podiumCard(call)
+                        keyBattleCard(call)
+                        strategyAngleCard(call)
                         darkHorseCard(call)
                         biggestRiskCard(call)
                         reasoningCard(call)
@@ -72,6 +74,7 @@ struct PredictView: View {
             HStack {
                 F1SectionHeader(title: "RACE CALL")
                 Spacer()
+                phaseBadge
                 Text("ROUND \(race.round)")
                     .font(.system(size: 10, weight: .heavy, design: .monospaced))
                     .tracking(0.8)
@@ -102,6 +105,32 @@ struct PredictView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .f1Card(gradient: true, accent: .f1Red)
+    }
+
+    // MARK: - Phase Badge
+
+    private var phaseBadge: some View {
+        HStack(spacing: 4) {
+            Image(systemName: viewModel.weekendPhase.icon)
+                .font(.system(size: 8))
+            Text(viewModel.weekendPhase.shortLabel.uppercased())
+                .font(.system(size: 8, weight: .heavy))
+                .tracking(0.5)
+        }
+        .foregroundStyle(phaseColor)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(phaseColor.opacity(0.15))
+        .clipShape(Capsule())
+    }
+
+    private var phaseColor: Color {
+        switch viewModel.weekendPhase {
+        case .baseline: return .secondary
+        case .postPractice: return .yellow
+        case .postQualifying: return .green
+        case .raceReady: return Color.f1Red
+        }
     }
 
     // MARK: - 2. Track Profile
@@ -155,6 +184,11 @@ struct PredictView: View {
                 F1MetricTile(title: "Sunset", value: context.sunsetCue)
             }
 
+            // Live weather overlay if available
+            if let live = viewModel.liveWeather {
+                liveWeatherRow(live)
+            }
+
             Text("\(context.weatherDetail) \(context.windNote)")
                 .font(.caption)
                 .foregroundStyle(.secondary)
@@ -162,11 +196,25 @@ struct PredictView: View {
         .f1Card()
     }
 
+    private func liveWeatherRow(_ live: LiveWeatherContext) -> some View {
+        HStack(spacing: 10) {
+            if let airTemp = live.airTemp {
+                F1MetricTile(title: "Live Air", value: String(format: "%.1f°C", airTemp))
+            }
+            if let trackTemp = live.trackTemp {
+                F1MetricTile(title: "Live Track", value: String(format: "%.1f°C", trackTemp))
+            }
+            if let humidity = live.humidity {
+                F1MetricTile(title: "Humidity", value: String(format: "%.0f%%", humidity))
+            }
+        }
+    }
+
     // MARK: - 4. Contenders with Scores
 
     private var contendersCard: some View {
         VStack(alignment: .leading, spacing: F1Design.innerSpacing) {
-            F1SectionHeader(title: "CONTENDERS", subtitle: "Ranked by form + track fit")
+            F1SectionHeader(title: "CONTENDERS", subtitle: contendersSubtitle)
 
             if viewModel.contenderProfiles.isEmpty {
                 F1EmptyView(icon: "person.3.fill", title: "Standings are still loading", subtitle: "Pull to refresh and we'll rebuild the contender board.")
@@ -182,9 +230,20 @@ struct PredictView: View {
                                 .frame(width: 24)
 
                             VStack(alignment: .leading, spacing: 4) {
-                                Text(contender.driverName)
-                                    .font(.headline)
-                                    .foregroundStyle(.white)
+                                HStack(spacing: 6) {
+                                    Text(contender.driverName)
+                                        .font(.headline)
+                                        .foregroundStyle(.white)
+                                    if let grid = contender.gridPosition {
+                                        Text("P\(grid)")
+                                            .font(.system(size: 10, weight: .heavy))
+                                            .foregroundStyle(.green)
+                                            .padding(.horizontal, 5)
+                                            .padding(.vertical, 2)
+                                            .background(Color.green.opacity(0.15))
+                                            .clipShape(Capsule())
+                                    }
+                                }
                                 Text(contender.team)
                                     .font(.caption)
                                     .foregroundStyle(.secondary)
@@ -209,6 +268,7 @@ struct PredictView: View {
                                 HStack(spacing: 4) {
                                     scoreBar(label: "F", value: contender.formScore)
                                     scoreBar(label: "T", value: contender.trackFitScore)
+                                    scoreBar(label: "W", value: contender.weekendPaceScore)
                                 }
                             }
                         }
@@ -218,6 +278,14 @@ struct PredictView: View {
             }
         }
         .f1Card()
+    }
+
+    private var contendersSubtitle: String {
+        switch viewModel.weekendPhase {
+        case .baseline: return "Ranked by form + track fit"
+        case .postPractice: return "Ranked by form + track fit + practice pace"
+        case .postQualifying, .raceReady: return "Ranked by form + track fit + weekend pace (grid set)"
+        }
     }
 
     private func scoreBar(label: String, value: Int) -> some View {
@@ -320,8 +388,14 @@ struct PredictView: View {
 
     private func podiumCard(_ call: RaceCall) -> some View {
         VStack(spacing: 16) {
-            F1SectionHeader(title: "THE CALL")
-                .frame(maxWidth: .infinity, alignment: .center)
+            HStack {
+                F1SectionHeader(title: "THE CALL")
+                Spacer()
+                Text(call.weekendPhase.uppercased())
+                    .font(.system(size: 9, weight: .heavy))
+                    .tracking(0.4)
+                    .foregroundStyle(.secondary)
+            }
 
             HStack(alignment: .bottom, spacing: 12) {
                 podiumPlace(position: 2, name: call.second, height: 80)
@@ -366,6 +440,55 @@ struct PredictView: View {
         default:
             return LinearGradient(colors: [.gray], startPoint: .top, endPoint: .bottom)
         }
+    }
+
+    // MARK: - Key Battle (NEW V2.1)
+
+    private func keyBattleCard(_ call: RaceCall) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            F1SectionHeader(title: "KEY BATTLE")
+
+            HStack(spacing: 12) {
+                Image(systemName: "bolt.fill")
+                    .font(.title2)
+                    .foregroundStyle(.cyan)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(call.keyBattleDrivers.joined(separator: " vs "))
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                    Text(call.keyBattleNarrative)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .lineSpacing(2)
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .f1Card()
+        .transition(.opacity)
+    }
+
+    // MARK: - Strategy Angle (NEW V2.1)
+
+    private func strategyAngleCard(_ call: RaceCall) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            F1SectionHeader(title: "STRATEGY ANGLE")
+
+            HStack(spacing: 12) {
+                Image(systemName: "gearshape.2.fill")
+                    .font(.title2)
+                    .foregroundStyle(.mint)
+
+                Text(call.strategyAngle)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineSpacing(2)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .f1Card()
+        .transition(.opacity)
     }
 
     private func darkHorseCard(_ call: RaceCall) -> some View {

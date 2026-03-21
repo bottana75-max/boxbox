@@ -1,5 +1,34 @@
 import Foundation
 
+// MARK: - Weekend Phase
+
+enum WeekendPhase: String, Codable, CaseIterable {
+    case baseline = "Baseline"
+    case postPractice = "Post-Practice"
+    case postQualifying = "Post-Qualifying"
+    case raceReady = "Race Ready"
+
+    var shortLabel: String { rawValue }
+
+    var description: String {
+        switch self {
+        case .baseline: return "Pre-weekend — using championship form and historical data only."
+        case .postPractice: return "Practice data available — long-run pace and tyre behaviour visible."
+        case .postQualifying: return "Grid is set — qualifying pace and grid positions confirmed."
+        case .raceReady: return "All weekend data in — final conditions and grid locked."
+        }
+    }
+
+    var icon: String {
+        switch self {
+        case .baseline: return "chart.bar"
+        case .postPractice: return "gauge.with.dots.needle.33percent"
+        case .postQualifying: return "flag.checkered"
+        case .raceReady: return "light.beacon.max"
+        }
+    }
+}
+
 // MARK: - Structured Race Call Context (sent to AI)
 
 struct ContenderProfile: Codable {
@@ -11,10 +40,12 @@ struct ContenderProfile: Codable {
     let wins: Int
     let formScore: Int          // 0–100 based on recent results weighted
     let trackFitScore: Int      // 0–100 based on circuit characteristics vs driver traits
+    let weekendPaceScore: Int   // 0–100 based on practice/qualifying when available
     let overallRating: Int      // combined ranking 0–100
     let momentumLabel: String   // "White hot", "Charging", "Stable", "Needs a reset"
     let recentForm: String      // "P1 · P3 · P5"
     let averageFinish: Double
+    let gridPosition: Int?      // nil if qualifying hasn't happened
 }
 
 struct RaceCallContext: Codable {
@@ -23,8 +54,11 @@ struct RaceCallContext: Codable {
     let country: String
     let date: String
     let round: Int
+    let weekendPhase: String
+    let phaseDescription: String
     let circuitProfile: CircuitProfileContext
     let weatherProfile: WeatherProfileContext
+    let liveWeather: LiveWeatherContext?
     let contenders: [ContenderProfile]
     let recentRaces: [RecentRaceContext]
     let confidenceLabel: String   // "High", "Medium", "Low"
@@ -51,6 +85,16 @@ struct WeatherProfileContext: Codable {
     let rainChance: String
 }
 
+struct LiveWeatherContext: Codable {
+    let airTemp: Double?
+    let trackTemp: Double?
+    let humidity: Double?
+    let rainfall: Bool?
+    let windSpeed: Double?
+    let windDirection: Int?
+    let source: String  // "OpenF1 live" or "seasonal estimate"
+}
+
 struct RecentRaceContext: Codable {
     let raceName: String
     let podium: [String]  // driver codes P1, P2, P3
@@ -62,6 +106,8 @@ struct RaceCallAPIResponse: Codable {
     let podium: PodiumPick
     let darkHorse: DarkHorsePick
     let biggestRisk: BiggestRisk
+    let keyBattle: KeyBattle
+    let strategyAngle: String
     let reasoning: String
     let flipScenario: String
 
@@ -80,6 +126,11 @@ struct RaceCallAPIResponse: Codable {
         let driver: String
         let why: String
     }
+
+    struct KeyBattle: Codable {
+        let drivers: [String]  // 2 driver names
+        let narrative: String
+    }
 }
 
 // MARK: - Race Call Result (stored locally)
@@ -95,10 +146,14 @@ struct RaceCall: Identifiable, Codable {
     let darkHorseWhy: String
     let biggestRisk: String
     let biggestRiskWhy: String
+    let keyBattleDrivers: [String]
+    let keyBattleNarrative: String
+    let strategyAngle: String
     let reasoning: String
     let flipScenario: String
     let confidenceLabel: String
     let chaosLabel: String
+    let weekendPhase: String
     let createdAt: Date
 }
 
