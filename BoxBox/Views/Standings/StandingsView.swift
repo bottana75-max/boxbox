@@ -133,9 +133,10 @@ struct StandingsView: View {
                                 .foregroundStyle(.white)
                             F1TeamDot(teamName: standing.constructorName)
                         }
-                    Text(standing.constructorName)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                        Text(standing.constructorName)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
 
                 Spacer()
