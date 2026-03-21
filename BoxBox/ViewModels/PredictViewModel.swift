@@ -224,55 +224,6 @@ class PredictViewModel {
 
     // MARK: - Scoring (V2.1)
 
-    var contenderComparisonBoard: [ContenderComparisonContext] {
-        let pairs = zip(contenderProfiles, contenderProfiles.dropFirst())
-        return Array(pairs.prefix(3)).map { leader, challenger in
-            let gap = leader.overallRating - challenger.overallRating
-            let leaderStrengths = scoreEdges(for: leader)
-            let challengerStrengths = scoreEdges(for: challenger)
-            let leaderAdvantage = strongestAdvantage(leader: leader, challenger: challenger)
-            let chasePath = strongestCounterPath(leader: leader, challenger: challenger)
-
-            return ContenderComparisonContext(
-                leader: leader.driverName,
-                challenger: challenger.driverName,
-                overallGap: gap,
-                leaderEdge: "\(leader.driverCode) sits ahead by \(gap) on overall rating because \(leaderAdvantage).",
-                challengerPath: "The route back for \(challenger.driverCode) is \(chasePath).",
-                verdict: "Score mix: \(leader.driverCode) \(leaderStrengths); \(challenger.driverCode) \(challengerStrengths)."
-            )
-        }
-    }
-
-    var weekendScenarioContext: WeekendScenarioContext {
-        let lead = contenderProfiles.first
-        let runnerUp = contenderProfiles.dropFirst().first
-        let leaderCode = lead?.driverCode ?? "P1 seed"
-        let runnerCode = runnerUp?.driverCode ?? "next best car"
-        let trackPositionMatters = pressureProfile.qualifyingImportance == "Massive" || pressureProfile.overtaking == "Track position"
-        let undercut = tyreStrategyContext.undercutPotency.lowercased()
-        let deg = tyreStrategyContext.degradationSeverity.lowercased()
-        let rainLive = liveWeather?.rainfall == true
-        let rainChance = nextRace?.weekendContext.rainChance ?? "unknown rain risk"
-        let volatility = chaosLabel.lowercased()
-        let pitWindow = tyreStrategyContext.pitWindowNarrative
-
-        return WeekendScenarioContext(
-            poleConversion: trackPositionMatters
-                ? "If \(leaderCode) locks pole or starts front row, the race tilts heavily toward clean-air control because overtaking is \(pressureProfile.overtaking.lowercased()) and qualifying importance is \(pressureProfile.qualifyingImportance.lowercased())."
-                : "Pole helps, but it does not close the door here; \(runnerCode) still stays live if long-run pace holds through the first stop.",
-            frontRowMiss: trackPositionMatters
-                ? "If \(leaderCode) misses the front row, win equity drops fast because passing the top cars on-track is expensive and teams will defend track position aggressively."
-                : "A poor Saturday is survivable here; missing the front row matters less than arriving at lap one with stronger race pace and cleaner tyre usage.",
-            tyreStressSwing: "This is a \(deg) tyre-stress weekend. If degradation runs hotter than expected, the advantage shifts toward cars that can protect the fronts and still extend to the main pit window.",
-            weatherSwing: rainLive
-                ? "Rain is already in play live, so crossover timing becomes the race. The order can flip instantly if a lead contender commits one lap too late to intermediates."
-                : "Weather risk sits at \(rainChance). Any shower around stint two rewards drivers with grid position first, then punishes teams that burn tyre life before the crossover.",
-            strategyVolatility: "Strategy volatility is \(volatility). With a \(undercut) undercut and \(pitWindow.lowercased()), anyone boxed in traffic after the first stop can lose the race without being slower.",
-            safetyCarWindow: "Safety-car threat is \(tyreStrategyContext.safetyCarLikelihood.lowercased()). If neutralisation lands near the first key pit window, the race resets toward whoever has track position plus a free stop."
-        )
-    }
-
     func buildContenderProfiles() {
         let limit = min(10, standings.count)
         guard limit > 0 else { contenderProfiles = []; return }
