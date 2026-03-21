@@ -46,6 +46,7 @@ struct ContenderProfile: Codable {
     let recentForm: String      // "P1 · P3 · P5"
     let averageFinish: Double
     let gridPosition: Int?      // nil if qualifying hasn't happened
+    let edgeNarrative: String   // V2.3: one-line explanation of why this contender is ranked here
 }
 
 struct RaceCallContext: Codable {
@@ -62,11 +63,31 @@ struct RaceCallContext: Codable {
     let sessionContext: SessionContext
     let weekendPace: WeekendPaceContext
     let contenders: [ContenderProfile]
+    let comparisonBoard: [ContenderComparisonContext]
+    let weekendScenarios: WeekendScenarioContext
     let recentRaces: [RecentRaceContext]
     let confidenceLabel: String   // "High", "Medium", "Low"
     let chaosLabel: String        // "Low", "Medium", "High", "Extreme"
     let confidenceScore: Int      // 0–10 numeric
     let chaosScore: Int           // 0–10 numeric
+}
+
+struct ContenderComparisonContext: Codable {
+    let leader: String
+    let challenger: String
+    let overallGap: Int
+    let leaderEdge: String
+    let challengerPath: String
+    let verdict: String
+}
+
+struct WeekendScenarioContext: Codable {
+    let poleConversion: String
+    let frontRowMiss: String
+    let tyreStressSwing: String
+    let weatherSwing: String
+    let strategyVolatility: String
+    let safetyCarWindow: String
 }
 
 struct CircuitProfileContext: Codable {
@@ -141,6 +162,8 @@ struct RaceCallAPIResponse: Codable {
     let pitWallNote: String
     let reasoning: String
     let flipScenario: String
+    let winnerEdge: String                         // V2.3: why P1 beats P2 — specific, concrete
+    let weekendScenarios: [WeekendScenarioResult]  // V2.3: 2-3 conditional outcomes
 
     struct PodiumPick: Codable {
         let first: String
@@ -164,6 +187,13 @@ struct RaceCallAPIResponse: Codable {
     }
 }
 
+// V2.3: Weekend Scenario — conditional outcome based on a specific trigger
+struct WeekendScenarioResult: Codable {
+    let trigger: String      // e.g. "Rain in stint 2", "Safety car before lap 15", "Clean qualifying for VER"
+    let outcome: String      // e.g. "Verstappen wins by 8+ seconds — tyre advantage compounds in the wet"
+    let likelihood: String   // "Low", "Medium", "High"
+}
+
 // MARK: - Race Call Result (stored locally)
 
 struct RaceCall: Identifiable, Codable {
@@ -184,6 +214,8 @@ struct RaceCall: Identifiable, Codable {
     let pitWallNote: String
     let reasoning: String
     let flipScenario: String
+    let winnerEdge: String                          // V2.3: why P1 beats P2
+    let weekendScenarios: [WeekendScenarioResult]   // V2.3: conditional outcomes
     let confidenceLabel: String
     let chaosLabel: String
     let confidenceScore: Int     // 0–10 numeric for granularity

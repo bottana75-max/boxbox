@@ -24,6 +24,8 @@ struct PredictView: View {
                         tyreStrategyCard
                         // 5. Contenders
                         contendersCard
+                        contenderComparisonCard
+                        weekendScenarioMapCard
                         // 5. Confidence & Chaos
                         confidenceChaosCard
                         // 6. Session Radar
@@ -41,6 +43,8 @@ struct PredictView: View {
                     // 8. Structured Result
                     if let call = viewModel.raceCall {
                         podiumCard(call)
+                        winnerEdgeCard(call)
+                        weekendScenariosCard(call)
                         keyBattleCard(call)
                         strategyAngleCard(call)
                         tyreCallCard(call)
@@ -292,6 +296,13 @@ struct PredictView: View {
                                 Text("\(contender.recentForm) · \(contender.momentumLabel)")
                                     .font(.caption2)
                                     .foregroundStyle(.tertiary)
+                                if !contender.edgeNarrative.isEmpty {
+                                    Text(contender.edgeNarrative)
+                                        .font(.caption2)
+                                        .foregroundStyle(.orange)
+                                        .lineSpacing(1)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
                             }
 
                             Spacer()
@@ -328,6 +339,72 @@ struct PredictView: View {
         case .postPractice: return "Ranked by form + track fit + practice pace"
         case .postQualifying, .raceReady: return "Ranked by form + track fit + weekend pace (grid set)"
         }
+    }
+
+    private var contenderComparisonCard: some View {
+        VStack(alignment: .leading, spacing: F1Design.innerSpacing) {
+            F1SectionHeader(title: "WHY THE ORDER LOOKS LIKE THIS", subtitle: "Head-to-head gaps, not just ratings")
+
+            ForEach(Array(viewModel.contenderComparisonBoard.enumerated()), id: \.offset) { _, comparison in
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("\(comparison.leader) > \(comparison.challenger)")
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(.white)
+                        Spacer()
+                        Text("+\(comparison.overallGap)")
+                            .font(.caption.weight(.heavy))
+                            .foregroundStyle(.orange)
+                    }
+
+                    Text(comparison.leaderEdge)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text(comparison.challengerPath)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Text(comparison.verdict)
+                        .font(.caption2)
+                        .foregroundStyle(.tertiary)
+                }
+                .f1InnerCard()
+            }
+        }
+        .f1Card()
+    }
+
+    private var weekendScenarioMapCard: some View {
+        let scenarios = viewModel.weekendScenarioContext
+
+        return VStack(alignment: .leading, spacing: F1Design.innerSpacing) {
+            F1SectionHeader(title: "SCENARIO MAP", subtitle: "How the weekend flips when one variable changes")
+
+            scenarioInsightRow(icon: "flag.checkered", title: "If Saturday goes to plan", body: scenarios.poleConversion)
+            scenarioInsightRow(icon: "arrow.down.right", title: "If the favourite misses the front row", body: scenarios.frontRowMiss)
+            scenarioInsightRow(icon: "circle.lefthalf.filled", title: "If tyre stress spikes", body: scenarios.tyreStressSwing)
+            scenarioInsightRow(icon: "cloud.rain", title: "If weather cuts across the race", body: scenarios.weatherSwing)
+            scenarioInsightRow(icon: "shuffle", title: "If strategy gets messy", body: scenarios.strategyVolatility)
+            scenarioInsightRow(icon: "car.rear.waves.up", title: "If a safety car lands in-window", body: scenarios.safetyCarWindow)
+        }
+        .f1Card()
+    }
+
+    private func scenarioInsightRow(icon: String, title: String, body: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: icon)
+                .foregroundStyle(Color.f1Red)
+                .frame(width: 18)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.white)
+                Text(body)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineSpacing(2)
+            }
+        }
+        .f1InnerCard()
     }
 
     private func scoreBar(label: String, value: Int) -> some View {
@@ -568,6 +645,58 @@ struct PredictView: View {
         default:
             return LinearGradient(colors: [.gray], startPoint: .top, endPoint: .bottom)
         }
+    }
+
+    private func winnerEdgeCard(_ call: RaceCall) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            F1SectionHeader(title: "WINNER'S EDGE", subtitle: "Why P1 beats P2, specifically")
+
+            HStack(spacing: 12) {
+                Image(systemName: "target")
+                    .font(.title2)
+                    .foregroundStyle(.orange)
+
+                Text(call.winnerEdge)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .lineSpacing(2)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .f1Card(accent: .orange)
+        .transition(.opacity)
+    }
+
+    private func weekendScenariosCard(_ call: RaceCall) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            F1SectionHeader(title: "WEEKEND SCENARIOS", subtitle: "Three specific ways this race can break")
+
+            ForEach(Array(call.weekendScenarios.enumerated()), id: \.offset) { index, scenario in
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack {
+                        Text("Scenario \(index + 1)")
+                            .font(.caption.weight(.heavy))
+                            .foregroundStyle(.white)
+                        Spacer()
+                        Text(scenario.likelihood.uppercased())
+                            .font(.system(size: 9, weight: .heavy))
+                            .tracking(0.5)
+                            .foregroundStyle(.orange)
+                    }
+                    Text(scenario.trigger)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(.white)
+                    Text(scenario.outcome)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineSpacing(2)
+                }
+                .f1InnerCard()
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .f1Card()
+        .transition(.opacity)
     }
 
     // MARK: - Key Battle (NEW V2.1)

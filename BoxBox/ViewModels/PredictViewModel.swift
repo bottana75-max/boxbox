@@ -224,6 +224,55 @@ class PredictViewModel {
 
     // MARK: - Scoring (V2.1)
 
+    var contenderComparisonBoard: [ContenderComparisonContext] {
+        let pairs = zip(contenderProfiles, contenderProfiles.dropFirst())
+        return Array(pairs.prefix(3)).map { leader, challenger in
+            let gap = leader.overallRating - challenger.overallRating
+            let leaderStrengths = scoreEdges(for: leader)
+            let challengerStrengths = scoreEdges(for: challenger)
+            let leaderAdvantage = strongestAdvantage(leader: leader, challenger: challenger)
+            let chasePath = strongestCounterPath(leader: leader, challenger: challenger)
+
+            return ContenderComparisonContext(
+                leader: leader.driverName,
+                challenger: challenger.driverName,
+                overallGap: gap,
+                leaderEdge: "\(leader.driverCode) sits ahead by \(gap) on overall rating because \(leaderAdvantage).",
+                challengerPath: "The route back for \(challenger.driverCode) is \(chasePath).",
+                verdict: "Score mix: \(leader.driverCode) \(leaderStrengths); \(challenger.driverCode) \(challengerStrengths)."
+            )
+        }
+    }
+
+    var weekendScenarioContext: WeekendScenarioContext {
+        let lead = contenderProfiles.first
+        let runnerUp = contenderProfiles.dropFirst().first
+        let leaderCode = lead?.driverCode ?? "P1 seed"
+        let runnerCode = runnerUp?.driverCode ?? "next best car"
+        let trackPositionMatters = pressureProfile.qualifyingImportance == "Massive" || pressureProfile.overtaking == "Track position"
+        let undercut = tyreStrategyContext.undercutPotency.lowercased()
+        let deg = tyreStrategyContext.degradationSeverity.lowercased()
+        let rainLive = liveWeather?.rainfall == true
+        let rainChance = nextRace?.weekendContext.rainChance ?? "unknown rain risk"
+        let volatility = chaosLabel.lowercased()
+        let pitWindow = tyreStrategyContext.pitWindowNarrative
+
+        return WeekendScenarioContext(
+            poleConversion: trackPositionMatters
+                ? "If \(leaderCode) locks pole or starts front row, the race tilts heavily toward clean-air control because overtaking is \(pressureProfile.overtaking.lowercased()) and qualifying importance is \(pressureProfile.qualifyingImportance.lowercased())."
+                : "Pole helps, but it does not close the door here; \(runnerCode) still stays live if long-run pace holds through the first stop.",
+            frontRowMiss: trackPositionMatters
+                ? "If \(leaderCode) misses the front row, win equity drops fast because passing the top cars on-track is expensive and teams will defend track position aggressively."
+                : "A poor Saturday is survivable here; missing the front row matters less than arriving at lap one with stronger race pace and cleaner tyre usage.",
+            tyreStressSwing: "This is a \(deg) tyre-stress weekend. If degradation runs hotter than expected, the advantage shifts toward cars that can protect the fronts and still extend to the main pit window.",
+            weatherSwing: rainLive
+                ? "Rain is already in play live, so crossover timing becomes the race. The order can flip instantly if a lead contender commits one lap too late to intermediates."
+                : "Weather risk sits at \(rainChance). Any shower around stint two rewards drivers with grid position first, then punishes teams that burn tyre life before the crossover.",
+            strategyVolatility: "Strategy volatility is \(volatility). With a \(undercut) undercut and \(pitWindow.lowercased()), anyone boxed in traffic after the first stop can lose the race without being slower.",
+            safetyCarWindow: "Safety-car threat is \(tyreStrategyContext.safetyCarLikelihood.lowercased()). If neutralisation lands near the first key pit window, the race resets toward whoever has track position plus a free stop."
+        )
+    }
+
     func buildContenderProfiles() {
         let limit = min(10, standings.count)
         guard limit > 0 else { contenderProfiles = []; return }
@@ -260,9 +309,126 @@ class PredictViewModel {
                 momentumLabel: trend?.momentumLabel ?? "Unknown",
                 recentForm: trend?.recentSummary ?? "—",
                 averageFinish: trend?.averageFinish ?? 10.0,
-                gridPosition: gridPos
+                gridPosition: gridPos,
+                edgeNarrative: "" // placeholder, built after sort
             )
         }.sorted { $0.overallRating > $1.overallRating }
+
+        // V2.3: Build edge narratives now that we have the sorted order
+        contenderProfiles = contenderProfiles.enumerated().map { index, profile in
+            let narrative = buildEdgeNarrative(for: profile, rank: index + 1)
+            return ContenderProfile(
+                driverName: profile.driverName,
+                driverCode: profile.driverCode,
+                team: profile.team,
+                championshipPosition: profile.championshipPosition,
+                points: profile.points,
+                wins: profile.wins,
+                formScore: profile.formScore,
+                trackFitScore: profile.trackFitScore,
+                weekendPaceScore: profile.weekendPaceScore,
+                overallRating: profile.overallRating,
+                momentumLabel: profile.momentumLabel,
+                recentForm: profile.recentForm,
+                averageFinish: profile.averageFinish,
+                gridPosition: profile.gridPosition,
+                edgeNarrative: narrative
+            )
+        }
+    }
+
+    private func scoreEdges(for contender: ContenderProfile) -> String {
+        ["form \(contender.formScore)", "track \(contender.trackFitScore)", "weekend \(contender.weekendPaceScore)"]
+            .joined(separator: " · ")
+    }
+
+    private func strongestAdvantage(leader: ContenderProfile, challenger: ContenderProfile) -> String {
+        let deltas = [
+            ("stronger recent form (\(leader.formScore) vs \(challenger.formScore))", leader.formScore - challenger.formScore),
+            ("better track fit for this circuit (\(leader.trackFitScore) vs \(challenger.trackFitScore))", leader.trackFitScore - challenger.trackFitScore),
+            ("more convincing weekend pace so far (\(leader.weekendPaceScore) vs \(challenger.weekendPaceScore))", leader.weekendPaceScore - challenger.weekendPaceScore)
+        ].sorted { $0.1 > $1.1 }
+
+        if let best = deltas.first, best.1 > 0 {
+            return best.0
+        }
+
+        if let gridA = leader.gridPosition, let gridB = challenger.gridPosition, gridA < gridB {
+            return "the better grid slot (P\(gridA) vs P\(gridB)) on a weekend where track position matters"
+        }
+
+        return "the cleaner overall mix of form, track fit and race pace"
+    }
+
+    private func strongestCounterPath(leader: ContenderProfile, challenger: ContenderProfile) -> String {
+        if let gridA = leader.gridPosition, let gridB = challenger.gridPosition, gridB < gridA {
+            return "using the better grid slot (P\(gridB)) to control stint one before \(leader.driverCode) gets clean air"
+        }
+
+        let deltas = [
+            ("leaning on stronger form if Sunday execution matches the last three rounds", challenger.formScore - leader.formScore),
+            ("turning a better circuit fit into lower tyre loss over the long run", challenger.trackFitScore - leader.trackFitScore),
+            ("keeping pressure on through the first stop because current weekend pace is stronger", challenger.weekendPaceScore - leader.weekendPaceScore)
+        ].sorted { $0.1 > $1.1 }
+
+        if let best = deltas.first, best.1 > 0 {
+            return best.0
+        }
+
+        return "forcing strategy offset — the undercut, overcut or a safety-car stop is the cleanest way past"
+    }
+
+    // V2.3: Explain why a contender is ranked where they are
+    private func buildEdgeNarrative(for profile: ContenderProfile, rank: Int) -> String {
+        let strongestFactor: String
+        let scores = [(label: "form", value: profile.formScore),
+                      (label: "track fit", value: profile.trackFitScore),
+                      (label: "weekend pace", value: profile.weekendPaceScore)]
+        let best = scores.max(by: { $0.value < $1.value })!
+        let worst = scores.min(by: { $0.value < $1.value })!
+        strongestFactor = best.label
+
+        let tyreCtx = tyreStrategyContext
+        let overtaking = pressureProfile.overtaking
+        let qualImportance = pressureProfile.qualifyingImportance
+
+        // Build a concrete, editorial narrative
+        if rank == 1 {
+            if let grid = profile.gridPosition, grid <= 2 && qualImportance == "Massive" {
+                return "Starting P\(grid) on a track-position circuit with the highest \(strongestFactor) score (\(best.value)) — hardest to beat."
+            }
+            if best.value >= 80 {
+                return "Leading on \(strongestFactor) (\(best.value)) and \(profile.momentumLabel.lowercased()) momentum. The benchmark this weekend."
+            }
+            return "Strongest combined profile — \(best.value) \(strongestFactor), \(profile.overallRating) overall. Clear frontrunner."
+        }
+
+        // Contenders 2-3: explain the gap to #1
+        if rank <= 3 {
+            if let grid = profile.gridPosition {
+                let gridNote = grid <= 3 ? "grid advantage (P\(grid))" : "needs to make up ground from P\(grid)"
+                if worst.value < 45 {
+                    return "\(gridNote.capitalized), but \(worst.label) vulnerability (\(worst.value)) could cost positions in \(tyreCtx.degradationSeverity.lowercased()) deg."
+                }
+                return "\(gridNote.capitalized). \(strongestFactor.capitalized) (\(best.value)) keeps them in the podium fight."
+            }
+            if worst.value < 45 {
+                return "\(strongestFactor.capitalized) strength (\(best.value)) offset by weaker \(worst.label) (\(worst.value)) — podium depends on strategy."
+            }
+            return "Balanced profile, \(profile.overallRating) overall. Podium upside if \(strongestFactor) holds under race stress."
+        }
+
+        // Mid-pack (4-6): focus on what could lift them
+        if overtaking == "High" && profile.formScore >= 60 {
+            return "\(strongestFactor.capitalized) (\(best.value)) and high-overtaking layout give a route into the top 3 from P\(profile.gridPosition.map { "\($0)" } ?? "mid-grid")."
+        }
+        if let grid = profile.gridPosition, grid <= 5 {
+            return "P\(grid) grid start outperforms their \(profile.overallRating) rating — track position could hold if deg stays \(tyreCtx.degradationSeverity.lowercased())."
+        }
+        if worst.value < 35 {
+            return "\(worst.label.capitalized) weakness (\(worst.value)) limits ceiling, but \(strongestFactor) (\(best.value)) could matter if chaos hits."
+        }
+        return "\(strongestFactor.capitalized) (\(best.value)) is the lever — needs a safety car or strategy split to break into the top 4."
     }
 
     private func computeFormScore(trend: DriverTrend?, standing: DriverStanding) -> Int {
@@ -398,6 +564,9 @@ class PredictViewModel {
             tyreStrategy: tyreStrategyContext
         )
 
+        let comparisons = contenderComparisonBoard
+        let scenarios = weekendScenarioContext
+
         return RaceCallContext(
             raceName: race.raceName,
             circuitName: race.circuitName,
@@ -412,11 +581,156 @@ class PredictViewModel {
             sessionContext: sessionContext,
             weekendPace: weekendPace,
             contenders: contenderProfiles,
+            comparisonBoard: comparisons,
+            weekendScenarios: scenarios,
             recentRaces: recentContext,
             confidenceLabel: confidenceLabel,
             chaosLabel: chaosLabel,
             confidenceScore: confidenceRawScore,
             chaosScore: chaosRawScore
+        )
+    }
+
+    // MARK: - V2.3 Comparison Board
+
+    var contenderComparisonBoard: [ContenderComparisonContext] {
+        guard contenderProfiles.count >= 2 else { return [] }
+        let tyreCtx = tyreStrategyContext
+
+        // Build pairwise comparisons: #1 vs #2, #1 vs #3, #2 vs #3
+        var pairs: [(Int, Int)] = [(0, 1)]
+        if contenderProfiles.count >= 3 { pairs.append(contentsOf: [(0, 2), (1, 2)]) }
+
+        return pairs.map { i, j in
+            let top = contenderProfiles[i]
+            let challenger = contenderProfiles[j]
+            let gap = top.overallRating - challenger.overallRating
+
+            let formGap = top.formScore - challenger.formScore
+            let trackGap = top.trackFitScore - challenger.trackFitScore
+            let paceGap = top.weekendPaceScore - challenger.weekendPaceScore
+            let edges = [(label: "form", gap: formGap), (label: "track fit", gap: trackGap), (label: "weekend pace", gap: paceGap)]
+            let bestEdge = edges.max(by: { $0.gap < $1.gap })!
+
+            let leaderEdge: String
+            if bestEdge.gap > 0 {
+                leaderEdge = "\(top.driverCode) leads on \(bestEdge.label) by \(bestEdge.gap) points — \(bestEdge.label == "track fit" ? "circuit suits their car" : bestEdge.label == "form" ? "recent results give them momentum" : "stronger weekend running")."
+            } else {
+                leaderEdge = "\(top.driverCode) has the higher combined rating despite no single dominant factor — consistency across form, track fit, and pace."
+            }
+
+            let challengerBest = edges.min(by: { $0.gap < $1.gap })!
+            var path: String
+            if let cGrid = challenger.gridPosition, let tGrid = top.gridPosition, cGrid < tGrid {
+                path = "Grid advantage (P\(cGrid) vs P\(tGrid)) — if track position holds through stint 1, \(challenger.driverCode) can control the race."
+            } else if tyreCtx.degradationSeverity == "High" || tyreCtx.degradationSeverity == "Extreme" {
+                path = "\(tyreCtx.degradationSeverity) deg could close the gap — if \(challenger.driverCode) manages tyres better through \(tyreCtx.likelyCompounds), the \(gap)-point rating gap shrinks."
+            } else if challengerBest.gap <= 0 {
+                path = "\(challenger.driverCode) actually leads on \(challengerBest.label) — a strategy split or undercut could overturn the overall gap."
+            } else {
+                path = "\(challenger.driverCode) needs a safety car or weather change to close the \(gap)-point overall deficit."
+            }
+
+            let verdict: String
+            if gap >= 15 {
+                verdict = "\(top.driverCode) is the clear favourite — \(challenger.driverCode) needs disruption."
+            } else if gap >= 8 {
+                verdict = "\(top.driverCode) has the edge, but \(challenger.driverCode) is within striking distance through strategy."
+            } else {
+                verdict = "Razor-thin margins — this matchup will be decided by pit wall execution and lap-1 positioning."
+            }
+
+            return ContenderComparisonContext(
+                leader: top.driverName,
+                challenger: challenger.driverName,
+                overallGap: gap,
+                leaderEdge: leaderEdge,
+                challengerPath: path,
+                verdict: verdict
+            )
+        }
+    }
+
+    // MARK: - V2.3 Weekend Scenario Context
+
+    var weekendScenarioContext: WeekendScenarioContext {
+        let tyreCtx = tyreStrategyContext
+        let overtaking = pressureProfile.overtaking
+        let qualImportance = pressureProfile.qualifyingImportance
+        let laps = nextRace?.circuitInfo?.laps ?? 55
+
+        let poleConversion: String
+        if qualImportance == "Massive" || overtaking == "Track position" {
+            poleConversion = "Pole is near-decisive. Converting from P1 has historically been 70%+ at low-overtaking circuits — whoever qualifies ahead controls the race."
+        } else if overtaking == "High" {
+            poleConversion = "Pole matters less here. High overtaking and \(tyreCtx.expectedStints == 2 ? "two" : "one") stop\(tyreCtx.expectedStints == 2 ? "s" : "") mean race pace can override grid by lap \(laps / 3)."
+        } else {
+            poleConversion = "Pole is an advantage but not decisive. The undercut window around lap \(Int(Double(laps) * 0.28)) will determine whether P1 holds or gets jumped."
+        }
+
+        let frontRowMiss: String
+        if qualImportance == "Massive" {
+            frontRowMiss = "Missing the front row is costly — starting P3+ on a track-position circuit drops win probability by 40%+. Recovery depends entirely on the undercut."
+        } else {
+            frontRowMiss = "Starting outside the front row is recoverable. \(overtaking) overtaking and \(tyreCtx.undercutPotency.lowercased()) undercut potency mean P3-P5 starters can still win through strategy."
+        }
+
+        let tyreStressSwing: String
+        switch tyreCtx.degradationSeverity {
+        case "Extreme":
+            tyreStressSwing = "Extreme deg reshuffles the field. Teams that overheat fronts in stints 1-2 will drop 3+ positions through the pit window. Tyre-saving drivers gain 8-12 seconds over stint pushers."
+        case "High":
+            tyreStressSwing = "High deg favours patience. Drivers who push in the first 10 laps of each stint will pay in the final third — expect 5-8 second swings between tyre managers and sprint-style runners."
+        case "Medium":
+            tyreStressSwing = "Medium deg keeps strategy honest. Enough degradation to reward good management, but not enough to force defensive driving — the pit wall has real choices."
+        default:
+            tyreStressSwing = "Low deg neutralises tyre strategy as a differentiator. Race pace and track position dominate — the tyre-whisperer advantage is minimal."
+        }
+
+        let weatherSwing: String
+        if liveWeather?.rainfall == true {
+            weatherSwing = "Rain is active. Crossover to inters/wets could happen any lap — teams that time the switch within a 2-lap window will gain 15+ seconds on those who gamble."
+        } else if let race = nextRace {
+            let rain = race.weekendContext.rainChance
+            if rain.contains("60") || rain.contains("70") || rain.contains("80") || rain.contains("90") {
+                weatherSwing = "High rain risk (\(rain)) makes strategy volatile. A mid-race shower would trigger a full-field scramble — teams on older tyres benefit from a free pit stop."
+            } else if rain.contains("30") || rain.contains("40") || rain.contains("50") {
+                weatherSwing = "Moderate rain risk (\(rain)) adds a wildcard. Teams may split strategy pre-emptively — one car short-fuelling for a rain gamble, the other running dry baseline."
+            } else {
+                weatherSwing = "Low rain risk — weather is unlikely to disrupt the baseline strategy. Track evolution follows the normal rubber-down pattern."
+            }
+        } else {
+            weatherSwing = "Weather data unavailable — assume dry baseline."
+        }
+
+        let strategyVolatility: String
+        if tyreCtx.undercutPotency == "Strong" && tyreCtx.expectedStints >= 2 {
+            strategyVolatility = "Strategy is the primary battleground. Strong undercut + 2 stops = 4 potential position changes through pit sequencing alone."
+        } else if tyreCtx.overcutViable {
+            strategyVolatility = "Overcut is live alongside the undercut — teams have genuine optionality. Expect strategy divergence creating temporary on-track battles."
+        } else {
+            strategyVolatility = "Strategy convergence likely — most teams will follow a similar \(tyreCtx.expectedStints)-stop \(tyreCtx.likelyCompounds) plan. Differentiation comes from execution."
+        }
+
+        let earlyLap = Int(Double(laps) * 0.15)
+        let midLap = Int(Double(laps) * 0.45)
+        let scWindow: String
+        switch tyreCtx.safetyCarLikelihood {
+        case "High":
+            scWindow = "High SC probability. An SC before lap \(earlyLap) helps leaders (free tyre change), around lap \(midLap) helps those who haven't pitted. Circuit geometry makes incidents likely."
+        case "Medium":
+            scWindow = "Medium SC risk. If it happens around lap \(midLap), it inverts strategy — teams committed to their first stop lose the tyre advantage, while those who delayed get a free pit."
+        default:
+            scWindow = "Low SC probability — plan for a green-flag race. Strategy should assume uninterrupted running."
+        }
+
+        return WeekendScenarioContext(
+            poleConversion: poleConversion,
+            frontRowMiss: frontRowMiss,
+            tyreStressSwing: tyreStressSwing,
+            weatherSwing: weatherSwing,
+            strategyVolatility: strategyVolatility,
+            safetyCarWindow: scWindow
         )
     }
 

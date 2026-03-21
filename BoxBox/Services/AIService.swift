@@ -61,21 +61,23 @@ class AIService {
         \(phaseInstructions)
 
         ANALYSIS RULES:
-        1. Weigh each contender's overallRating, formScore, trackFitScore, and weekendPaceScore. Cite specific numbers.
+        1. Weigh each contender's overallRating, formScore, trackFitScore, and weekendPaceScore. Cite specific numbers. When two contenders are close, explain the SPECIFIC factor that separates them — "Norris leads on trackFit (78 vs 65) because McLaren's high-downforce setup suits this circuit's 18 turns."
         2. Use sessionContext to understand how much real weekend running is available; do not pretend you have data the phase does not support.
-        3. Use weekendPace.tyreStrategy heavily: reference expectedStints, degradationSeverity, likelyCompounds, undercutPotency, safetyCarLikelihood, and pitWindowNarrative in your analysis.
-        4. If gridPosition is available, factor it heavily — especially when qualifyingImportance is "Massive" or circuit overtaking is "Track position". Cross-reference grid vs overallRating to identify over/under-performers.
-        5. Factor circuit profile: overtaking difficulty, tyre stress, reliability risk. Connect these to specific contenders.
-        6. Factor weather: use both the seasonal profile AND liveWeather if present. If rainfall is true, consider wet-weather specialists and tyre crossover windows.
-        7. Confidence score is \(context.confidenceScore)/10 (\(context.confidenceLabel)), chaos score is \(context.chaosScore)/10 (\(context.chaosLabel)). High chaos = hedge more, flag safety car scenarios. High confidence = be more assertive.
-        8. Pick a dark horse — someone outside the obvious top 3 who could surprise. Cite a SPECIFIC data signal (score, grid, trend, circuit fit).
-        9. Identify the biggest risk — a contender who could underperform. Tie it to a concrete vulnerability (tyre deg weakness, poor grid, reliability history).
-        10. Identify the key battle — two drivers likely to fight directly, based on proximity in ratings, grid, or pit window overlap.
-        11. Strategy angle: one tactical insight referencing a specific stint, compound, undercut/overcut, or weather timing.
-        12. Tyre call: one sentence on the tyre decision that will define the race outcome — which compound choice or stint length separates the winner from the rest.
-        13. Pit wall note: one sentence of insider-level tactical nuance — the kind of thing a race engineer would radio to their driver. Think specific, actionable, and non-obvious.
-        14. Write reasoning that reads like a pit wall debrief: assertive, data-driven, referencing specific scores, positions, and circuit factors. 4-5 sentences.
-        15. Flip scenario: specific and plausible, referencing a concrete event (safety car at lap X, rain at stint 2, specific driver DNF).
+        3. Use weekendPace.tyreStrategy heavily: reference expectedStints, degradationSeverity, likelyCompounds, undercutPotency, safetyCarLikelihood, and pitWindowNarrative in your analysis. Name specific lap ranges for pit windows.
+        4. If gridPosition is available, factor it heavily — especially when qualifyingImportance is "Massive" or circuit overtaking is "Track position". Cross-reference grid vs overallRating to identify over/under-performers. Quantify overtaking difficulty: "only 2 on-track overtakes per 10-lap stint historically" vs "high DRS efficiency."
+        5. Factor circuit profile: overtaking difficulty, tyre stress, reliability risk. Connect these to SPECIFIC contenders by name — never generic.
+        6. Factor weather: use both the seasonal profile AND liveWeather if present. If rainfall is true, specify the crossover lap range for intermediates and how it reshuffles the field.
+        7. Confidence score is \(context.confidenceScore)/10 (\(context.confidenceLabel)), chaos score is \(context.chaosScore)/10 (\(context.chaosLabel)). High chaos = hedge more, flag safety car scenarios. High confidence = be more assertive and narrow the margin.
+        8. Pick a dark horse — someone outside the obvious top 3 who could surprise. Cite a SPECIFIC data signal (score, grid, trend, circuit fit). Explain the MECHANISM: how they get on the podium (strategy split? wet weather? safety car timing?).
+        9. Identify the biggest risk — a contender who could underperform. Tie it to a concrete vulnerability (tyre deg weakness, poor grid, reliability history). Name the FAILURE MODE: what goes wrong and when.
+        10. Identify the key battle — two drivers likely to fight directly, based on proximity in ratings, grid, or pit window overlap. Specify WHERE the battle happens: on track (turn X), in the pit window, or through strategy divergence.
+        11. Strategy angle: one tactical insight referencing a specific stint, compound, undercut/overcut, or weather timing. Include a lap range.
+        12. Tyre call: one sentence on the tyre decision that will define the race outcome — which compound choice or stint length separates the winner. Reference specific stint lengths.
+        13. Pit wall note: one sentence of insider-level tactical nuance a race engineer would radio. Be SPECIFIC: reference a lap number, a tyre delta, a gap threshold, or a weather window.
+        14. Write reasoning that reads like a senior strategist's debrief: assertive, referencing exact scores, grid positions, stint lengths, and deg severity. 4-5 sentences. Never use filler. Every sentence must contain at least one number or specific circuit/driver reference.
+        15. Flip scenario: specific and plausible, referencing a concrete event (safety car at lap X, rain at stint 2, specific driver DNF). State the EXACT podium change it causes.
+        16. Winner's edge: one sentence explaining the SPECIFIC reason P1 beats P2. Not generic — cite the exact scoring advantage, circuit factor, or strategic lever. Example: "Verstappen's 12-point trackFit advantage on a high-tyre-stress circuit means he'll gain 0.3s per stint on Norris through turn-2 traction."
+        17. Weekend scenarios: provide exactly 3 conditional scenarios. Each must have a specific trigger (qualifying result, weather event, safety car timing, strategy divergence), a concrete outcome (who wins, who drops), and likelihood (Low/Medium/High). These should cover DIFFERENT conditions — don't repeat rain three times.
 
         TONE RULES:
         - Write like a race engineer, not a commentator. Be direct and assertive.
@@ -92,32 +94,38 @@ class AIService {
             },
             "darkHorse": {
                 "driver": "Driver Full Name",
-                "why": "One sentence with specific data reference"
+                "why": "One sentence with specific data reference and mechanism"
             },
             "biggestRisk": {
                 "driver": "Driver Full Name",
-                "why": "One sentence with specific data reference"
+                "why": "One sentence with specific vulnerability and failure mode"
             },
             "keyBattle": {
                 "drivers": ["Driver Full Name", "Driver Full Name"],
-                "narrative": "One sentence about why these two will fight"
+                "narrative": "One sentence: where they fight and why"
             },
-            "strategyAngle": "One sentence tactical insight referencing a specific race phase or compound",
-            "tyreCall": "One sentence on the defining tyre decision — compound choice or stint length",
-            "pitWallNote": "One sentence of insider-level tactical nuance a race engineer would radio",
-            "reasoning": "4-5 sentences of pit-wall-grade analysis referencing specific scores, grid positions, and data",
-            "flipScenario": "One specific, plausible event referencing a concrete trigger"
+            "strategyAngle": "One sentence tactical insight with lap range and compound reference",
+            "tyreCall": "One sentence on the defining tyre decision with stint length reference",
+            "pitWallNote": "One sentence of insider tactical nuance with a specific number (lap, gap, delta)",
+            "reasoning": "4-5 sentences of senior strategist analysis — every sentence has at least one number",
+            "flipScenario": "One specific trigger with exact podium change it causes",
+            "winnerEdge": "One sentence: the specific factor that gives P1 the win over P2 — cite exact score, circuit factor, or strategic lever",
+            "weekendScenarios": [
+                {"trigger": "Specific condition", "outcome": "Who wins and who drops, named", "likelihood": "Low/Medium/High"},
+                {"trigger": "Different condition", "outcome": "Different result", "likelihood": "Low/Medium/High"},
+                {"trigger": "Third condition", "outcome": "Third result", "likelihood": "Low/Medium/High"}
+            ]
         }
         """
 
         let requestBody: [String: Any] = [
             "model": "gpt-4o-mini",
             "messages": [
-                ["role": "system", "content": "You are a senior F1 race strategist on the pit wall. Respond with valid JSON only. Use the driver data, scores, tyre strategy, and grid positions provided — never hallucinate stats. Reference specific numbers. Be assertive and precise like a race engineer, never hedging. Every output field must contain actionable, data-grounded content."],
+                ["role": "system", "content": "You are a senior F1 race strategist on the pit wall giving a premium pre-race briefing. Respond with valid JSON only. Use the driver data, scores, tyre strategy, and grid positions provided — never hallucinate stats. Reference specific numbers. Be assertive and precise like a race engineer, never hedging. Every output field must contain actionable, data-grounded content. When comparing drivers, explain WHY one beats another — cite the exact score gap, circuit factor, or strategic lever. Include lap numbers and stint references wherever possible."],
                 ["role": "user", "content": prompt]
             ],
             "temperature": 0.6,
-            "max_tokens": 900
+            "max_tokens": 1400
         ]
 
         var request = URLRequest(url: URL(string: "https://api.openai.com/v1/chat/completions")!)
@@ -169,6 +177,8 @@ class AIService {
             pitWallNote: apiResponse.pitWallNote,
             reasoning: apiResponse.reasoning,
             flipScenario: apiResponse.flipScenario,
+            winnerEdge: apiResponse.winnerEdge,
+            weekendScenarios: apiResponse.weekendScenarios,
             confidenceLabel: context.confidenceLabel,
             chaosLabel: context.chaosLabel,
             confidenceScore: context.confidenceScore,
