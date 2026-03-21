@@ -1,6 +1,19 @@
 # BoxBox — Legal Texts
 Generated: 2026-03-21
-Status: REVIEWED DRAFT — verify publisher/contact details, URLs, and final product scope before submission
+Status: DRAFT — verify checklist below before App Store submission
+
+## PRE-SUBMISSION CHECKLIST
+
+- [ ] **Publisher / legal entity** — "Andrea Murru" come persona fisica è ok per App Store. Se hai una società (Ltd/ecc.), aggiornare ovunque nel testo.
+- [ ] **Support email** — an.murru@gmail.com funziona. Considera un indirizzo dedicato (es. support@boxboxapp.com) per sembrare più professionale.
+- [ ] **Jurisdiction** — "England and Wales" è corretto se sei residente UK. Verifica se vendi anche nell'UE (GDPR potrebbe richiedere un rappresentante EU).
+- [ ] **Analytics / ad SDK** — confermare che NON ci sono Firebase, Mixpanel, AdMob o altri SDK di terze parti nell'app. Se presenti, aggiornare la Privacy Policy.
+- [ ] **Purchase configuration finale** — verificare che i Product ID su App Store Connect corrispondano esattamente:
+  - `com.bottana.boxbox.credits5` → 5 predictions, $0.99
+  - `com.bottana.boxbox.credits20` → 20 predictions, $2.99
+  - `com.bottana.boxbox.unlimited` → Unlimited, $4.99
+- [ ] **Bundle ID** — `com.bottana.boxbox` deve corrispondere all'account App Store Connect di Andrea.
+- [ ] **URL Privacy Policy pubblica** — caricare il testo Privacy Policy su una URL pubblica (GitHub Pages, sito personale, ecc.) e inserirla su App Store Connect. Apple la richiede obbligatoriamente.
 
 ---
 
