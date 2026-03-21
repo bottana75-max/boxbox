@@ -26,9 +26,6 @@ struct TeamDetailView: View {
         .background(Color.f1Background)
         .navigationTitle(viewModel.teamName)
         .navigationBarTitleDisplayMode(.inline)
-        .navigationDestination(for: Driver.self) { driver in
-            DriverDetailView(driver: driver)
-        }
         .navigationDestination(for: Race.self) { race in
             RaceDetailView(race: race)
         }
@@ -123,7 +120,9 @@ struct TeamDetailView: View {
                 F1EmptyView(icon: "person.2", title: "No driver data available")
             } else {
                 ForEach(viewModel.teamDrivers) { driver in
-                    NavigationLink(value: Driver.fallback(driverCode: driver.driverCode, driverName: driver.driverName, teamName: viewModel.teamName)) {
+                    NavigationLink {
+                        DriverDetailView(driver: Driver.fallback(driverCode: driver.driverCode, driverName: driver.driverName, teamName: viewModel.teamName))
+                    } label: {
                         F1ListRow(accent: teamColor) {
                             HStack(spacing: 12) {
                                 VStack(alignment: .leading, spacing: 4) {

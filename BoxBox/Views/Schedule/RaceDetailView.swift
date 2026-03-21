@@ -32,9 +32,6 @@ struct RaceDetailView: View {
         .background(Color.f1Background)
         .navigationTitle(viewModel.race.raceName)
         .navigationBarTitleDisplayMode(.inline)
-        .navigationDestination(for: Driver.self) { driver in
-            DriverDetailView(driver: driver)
-        }
         .task {
             await viewModel.loadData()
         }
@@ -176,7 +173,9 @@ struct RaceDetailView: View {
                 F1ErrorRow(message: error)
             } else {
                 ForEach(viewModel.results.prefix(10)) { result in
-                    NavigationLink(value: Driver.fallback(driverCode: result.driverCode, driverName: result.driverName, teamName: result.constructor)) {
+                    NavigationLink {
+                        DriverDetailView(driver: Driver.fallback(driverCode: result.driverCode, driverName: result.driverName, teamName: result.constructor))
+                    } label: {
                         resultRow(result)
                             .f1InnerCard()
                     }
