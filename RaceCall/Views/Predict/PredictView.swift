@@ -972,13 +972,12 @@ struct PredictView: View {
     }
 
     private var progressText: String {
-        let used = max(0, 3 - viewModel.storeKit.credits)
-        return "Free trial used: \(used)/3"
+        let used = viewModel.storeKit.credits <= 0 ? 1 : 0
+        return "Free trial used: \(used)/1"
     }
 
     private var progressValue: CGFloat {
-        let used = max(0, min(3, 3 - viewModel.storeKit.credits))
-        return CGFloat(Double(used) / 3.0)
+        return viewModel.storeKit.credits <= 0 ? 1.0 : 0.0
     }
 
     // MARK: - Empty State
