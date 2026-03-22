@@ -266,67 +266,44 @@ struct PredictView: View {
                 F1EmptyView(icon: "person.3.fill", title: "Standings are still loading", subtitle: "Pull to refresh and we'll rebuild the contender board.")
                     .f1InnerCard()
             } else {
-                ForEach(Array(viewModel.contenderProfiles.prefix(6).enumerated()), id: \.element.driverCode) { index, contender in
-                    F1ListRow(accent: F1Design.teamColor(for: contender.team)) {
-                        HStack(spacing: 12) {
-                            Text("\(index + 1)")
+                ForEach(Array(viewModel.contenderProfiles.prefix(5).enumerated()), id: \.element.driverCode) { index, contender in
+                    HStack(spacing: 14) {
+                        // Position
+                        Text("\(index + 1)")
+                            .font(.system(size: 18, weight: .black, design: .rounded))
+                            .foregroundStyle(index == 0 ? Color.f1Red : .secondary)
+                            .frame(width: 28, alignment: .center)
+
+                        // Team color bar
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(F1Design.teamColor(for: contender.team))
+                            .frame(width: 3, height: 36)
+
+                        // Driver info
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(contender.driverName)
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.white)
+                                .lineLimit(1)
+                            Text(contender.team)
                                 .font(.caption)
-                                .fontWeight(.heavy)
-                                .foregroundStyle(Color.f1Red)
-                                .frame(width: 24)
-
-                            VStack(alignment: .leading, spacing: 4) {
-                                HStack(spacing: 6) {
-                                    Text(contender.driverName)
-                                        .font(.headline)
-                                        .foregroundStyle(.white)
-                                    if let grid = contender.gridPosition {
-                                        Text("P\(grid)")
-                                            .font(.system(size: 10, weight: .heavy))
-                                            .foregroundStyle(.green)
-                                            .padding(.horizontal, 5)
-                                            .padding(.vertical, 2)
-                                            .background(Color.green.opacity(0.15))
-                                            .clipShape(Capsule())
-                                    }
-                                }
-                                Text(contender.team)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                Text("\(contender.recentForm) · \(contender.momentumLabel)")
-                                    .font(.caption2)
-                                    .foregroundStyle(.tertiary)
-                                if !contender.edgeNarrative.isEmpty {
-                                    Text(contender.edgeNarrative)
-                                        .font(.caption2)
-                                        .foregroundStyle(.orange)
-                                        .lineSpacing(1)
-                                        .fixedSize(horizontal: false, vertical: true)
-                                }
-                            }
-
-                            Spacer()
-
-                            VStack(alignment: .trailing, spacing: 4) {
-                                Text("\(contender.overallRating)")
-                                    .font(.headline)
-                                    .fontWeight(.bold)
-                                    .foregroundStyle(.white)
-                                Text("rating")
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
-                            }
-
-                            VStack(alignment: .trailing, spacing: 4) {
-                                HStack(spacing: 6) {
-                                    scorePill(label: "Form", value: contender.formScore)
-                                    scorePill(label: "Fit", value: contender.trackFitScore)
-                                    scorePill(label: "Pace", value: contender.weekendPaceScore)
-                                }
-                            }
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
                         }
+
+                        Spacer(minLength: 8)
+
+                        // Momentum badge only
+                        Text(contender.momentumLabel)
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundStyle(contender.momentumLabel.contains("↑") ? .green : contender.momentumLabel.contains("↓") ? .red : .secondary)
+                            .lineLimit(1)
                     }
-                    .f1InnerCard()
+                    .padding(.vertical, 10)
+                    .padding(.horizontal, 14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.f1SecondaryBackground)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
             }
         }
@@ -394,15 +371,19 @@ struct PredictView: View {
             Image(systemName: icon)
                 .foregroundStyle(Color.f1Red)
                 .frame(width: 18)
+                .padding(.top, 1)
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
                     .font(.caption.weight(.bold))
                     .foregroundStyle(.white)
+                    .fixedSize(horizontal: false, vertical: true)
                 Text(body)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .lineSpacing(2)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .f1InnerCard()
     }
