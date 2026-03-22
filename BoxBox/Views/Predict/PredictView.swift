@@ -5,8 +5,9 @@ struct PredictView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
+            ScrollView(.vertical) {
                 VStack(spacing: F1Design.cardSpacing) {
+
                     if viewModel.isLoading && viewModel.nextRace == nil {
                         F1LoadingView(message: "Building your race brief")
                     } else if let race = viewModel.nextRace {
@@ -55,6 +56,7 @@ struct PredictView: View {
                     }
                 }
                 .padding()
+                .frame(maxWidth: .infinity)
             }
             .background(Color.f1Background)
             .navigationTitle("Race Call")
