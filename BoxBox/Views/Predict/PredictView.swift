@@ -568,7 +568,16 @@ struct PredictView: View {
 
     private var buttonIcon: String {
         if viewModel.nextRace == nil { return "calendar.badge.exclamationmark" }
+        if viewModel.raceCallState?.source == .cacheExact { return "internaldrive" }
         return viewModel.storeKit.canPredict ? "flag.checkered" : "lock.fill"
+    }
+
+    private func cacheBadgeColor(for state: RaceCallPresentationState) -> Color {
+        switch state.source {
+        case .live: return .green
+        case .cacheExact: return .blue
+        case .cacheOutdated: return .yellow
+        }
     }
 
     // MARK: - 8. Structured Result Cards
@@ -578,14 +587,29 @@ struct PredictView: View {
             HStack(alignment: .top) {
                 F1SectionHeader(title: "THE RACE CALL", subtitle: "A finished race brief — tight, specific, and ready before lights out.")
                 Spacer()
-                Text(call.weekendPhase.uppercased())
-                    .font(.system(size: 9, weight: .heavy))
-                    .tracking(0.6)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 6)
-                    .background(Color.white.opacity(0.05))
-                    .clipShape(Capsule())
+                VStack(alignment: .trailing, spacing: 8) {
+                    Text(call.weekendPhase.uppercased())
+                        .font(.system(size: 9, weight: .heavy))
+                        .tracking(0.6)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 6)
+                        .background(Color.white.opacity(0.05))
+                        .clipShape(Capsule())
+
+                    if let state = viewModel.raceCallState {
+                        VStack(alignment: .trailing, spacing: 4) {
+                            Text(state.badgeTitle.uppercased())
+                                .font(.system(size: 9, weight: .heavy))
+                                .tracking(0.6)
+                                .foregroundStyle(cacheBadgeColor(for: state))
+                            Text(state.subtitle)
+                                .font(.system(size: 11))
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.trailing)
+                        }
+                    }
+                }
             }
 
             Text(call.winnerEdge)

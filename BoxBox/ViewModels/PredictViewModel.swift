@@ -1,5 +1,32 @@
 import Foundation
 
+struct RaceCallPresentationState {
+    enum Source: Equatable {
+        case live
+        case cacheExact
+        case cacheOutdated
+    }
+
+    let source: Source
+    let cachedAt: Date
+
+    var badgeTitle: String {
+        switch source {
+        case .live: return "Fresh"
+        case .cacheExact: return "Cached"
+        case .cacheOutdated: return "Outdated"
+        }
+    }
+
+    var subtitle: String {
+        switch source {
+        case .live: return "Fresh AI call generated from the latest race context."
+        case .cacheExact: return "Saved locally — same race context, no new AI call needed."
+        case .cacheOutdated: return "Showing the last saved call. Refresh to rebuild against the latest context."
+        }
+    }
+}
+
 @MainActor
 @Observable
 class PredictViewModel {
@@ -17,11 +44,13 @@ class PredictViewModel {
     var isLoading = false
     var error: String?
     var showPaywall = false
+    var raceCallState: RaceCallPresentationState?
 
     @ObservationIgnored private var loadTask: Task<Void, Never>?
     @ObservationIgnored private var predictTask: Task<Void, Never>?
     private let service = OpenF1Service.shared
     private let aiService = AIService.shared
+    private let cacheService = RaceCallCacheService.shared
     let storeKit = StoreKitManager.shared
 
     var prediction: RaceCall? { raceCall }
@@ -689,6 +718,9 @@ class PredictViewModel {
 
     var trialStatusText: String {
         let remaining = max(0, storeKit.credits)
+        if let state = raceCallState, state.source == .cacheExact {
+            return "\(remaining) race call\(remaining == 1 ? "" : "s") remaining — cached view did not spend a credit"
+        }
         if remaining == 0 { return "Free trial finished — top up to keep making Race Calls" }
         return "\(remaining) free race call\(remaining == 1 ? "" : "s") remaining"
     }
@@ -696,13 +728,23 @@ class PredictViewModel {
     var predictButtonTitle: String {
         if isLoading { return "Analyzing context..." }
         if nextRace == nil { return "No Race To Call Yet" }
-        if !storeKit.canPredict { return "Get More Race Calls" }
-        return "Make the Call"
+        if !storeKit.canPredict && raceCallState?.source != .cacheExact { return "Get More Race Calls" }
+        switch raceCallState?.source {
+        case .cacheExact:
+            return "View Cached Call"
+        case .cacheOutdated:
+            return "Update The Call"
+        default:
+            return "Make the Call"
+        }
     }
 
     var predictButtonSubtitle: String {
         if nextRace == nil { return "We'll light this up as soon as the next grand prix is on the board." }
-        if !storeKit.canPredict { return "You've used all your race calls. Unlock more to keep going." }
+        if !storeKit.canPredict && raceCallState?.source != .cacheExact { return "You've used all your race calls. Unlock more to keep going." }
+        if let state = raceCallState {
+            return state.subtitle
+        }
         let extras = weekendPhase == .baseline ? "" : " · \(weekendPhase.shortLabel.lowercased()) data"
         return "Podium · battle · tyres · pit wall · strategy\(extras)"
     }
@@ -823,6 +865,29 @@ class PredictViewModel {
         return "Grid matters, but pure race pace can still rewrite the order after the first stop cycle."
     }
 
+    private func refreshRaceCallFromCache() {
+        guard let context = buildRaceCallContext() else { return }
+        do {
+            let fingerprint = try cacheService.fingerprint(for: context)
+            let lookup = cacheService.lookup(round: context.round, weekendPhase: context.weekendPhase, contextFingerprint: fingerprint)
+            if let exact = lookup.exact {
+                raceCall = exact.call
+                raceCallState = RaceCallPresentationState(source: .cacheExact, cachedAt: exact.createdAt)
+                return
+            }
+            if let latest = lookup.latestForRacePhase {
+                raceCall = latest.call
+                raceCallState = RaceCallPresentationState(source: .cacheOutdated, cachedAt: latest.createdAt)
+                return
+            }
+            raceCall = nil
+            raceCallState = nil
+        } catch {
+            raceCall = nil
+            raceCallState = nil
+        }
+    }
+
     // MARK: - Data Loading
 
     func loadNextRace(forceRefresh: Bool = false) async {
@@ -874,6 +939,7 @@ class PredictViewModel {
 
                 detectWeekendPhase()
                 buildContenderProfiles()
+                refreshRaceCallFromCache()
             } catch {
                 guard !Task.isCancelled else { return }
                 self.error = error.localizedDescription
@@ -892,11 +958,6 @@ class PredictViewModel {
     func predict() async {
         guard let _ = nextRace else {
             error = "The next grand prix is not available yet. Pull to refresh and try again shortly."
-            return
-        }
-
-        guard storeKit.canPredict else {
-            showPaywall = true
             return
         }
 
@@ -924,10 +985,28 @@ class PredictViewModel {
                     return
                 }
 
+                let fingerprint = try cacheService.fingerprint(for: context)
+                let lookup = cacheService.lookup(round: context.round, weekendPhase: context.weekendPhase, contextFingerprint: fingerprint)
+
+                if let exact = lookup.exact {
+                    raceCall = exact.call
+                    raceCallState = RaceCallPresentationState(source: .cacheExact, cachedAt: exact.createdAt)
+                    isLoading = false
+                    return
+                }
+
+                guard storeKit.canPredict else {
+                    showPaywall = true
+                    isLoading = false
+                    return
+                }
+
                 let result = try await aiService.predictRace(context: context)
                 guard !Task.isCancelled else { return }
 
                 raceCall = result
+                raceCallState = RaceCallPresentationState(source: .live, cachedAt: result.createdAt)
+                try? cacheService.save(call: result, for: context)
                 storeKit.consumeCredit()
             } catch {
                 guard !Task.isCancelled else { return }

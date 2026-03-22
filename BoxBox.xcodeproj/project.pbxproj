@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		0D4CB09296ED2340C38736D4 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A5856908E55AC68E7DDE7106 /* Foundation.framework */; };
 		21E567374285DF152843CA89 /* StoreKitManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1508E70DA0E9B06DAE605897 /* StoreKitManager.swift */; };
+		21E567374285DF152843CA8A /* RaceCallCacheService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1508E70DA0E9B06DAE605898 /* RaceCallCacheService.swift */; };
 		33BDE43328D166E2BB0A38EC /* TeamDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AFBC482F2D7707CFADD5A2C /* TeamDetailView.swift */; };
 		33BDE43328D166E2BB0A38ED /* DriverComparisonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AFBC482F2D7707CFADD5A2D /* DriverComparisonView.swift */; };
 		3DC4BC69AB98E397DD1F9970 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4F041C9F8234BBB4C3593CB8 /* WidgetKit.framework */; };
@@ -82,6 +83,7 @@
 
 /* Begin PBXFileReference section */
 		1508E70DA0E9B06DAE605897 /* StoreKitManager.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StoreKitManager.swift; sourceTree = "<group>"; };
+		1508E70DA0E9B06DAE605898 /* RaceCallCacheService.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RaceCallCacheService.swift; sourceTree = "<group>"; };
 		3AFBC482F2D7707CFADD5A2C /* TeamDetailView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TeamDetailView.swift; sourceTree = "<group>"; };
 		3AFBC482F2D7707CFADD5A2D /* DriverComparisonView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = DriverComparisonView.swift; sourceTree = "<group>"; };
 		4F041C9F8234BBB4C3593CB8 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/WidgetKit.framework; sourceTree = DEVELOPER_DIR; };
@@ -233,6 +235,7 @@
 				A1B2C3D400000009 /* OpenF1Service.swift */,
 				A1B2C3D400000041 /* ReplayService.swift */,
 				1508E70DA0E9B06DAE605897 /* StoreKitManager.swift */,
+				1508E70DA0E9B06DAE605898 /* RaceCallCacheService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -466,6 +469,7 @@
 				33BDE43328D166E2BB0A38EC /* TeamDetailView.swift in Sources */,
 				33BDE43328D166E2BB0A38ED /* DriverComparisonView.swift in Sources */,
 				21E567374285DF152843CA89 /* StoreKitManager.swift in Sources */,
+				21E567374285DF152843CA8A /* RaceCallCacheService.swift in Sources */,
 				8979B858BFC10EA711997E01 /* PaywallView.swift in Sources */,
 				A1B2C3D401000036 /* DesignSystem.swift in Sources */,
 				8E064DD990E0B8611B1D82FA /* RaceContext.swift in Sources */,
