@@ -48,7 +48,7 @@ struct PaywallView: View {
                             .fontWeight(.black)
                             .foregroundStyle(.white)
 
-                        Text("Start with 3 free. Then top up with simple credit packs.")
+                        Text("Your first Race Call is on us. Top up anytime with simple credit packs.")
                             .font(.title3)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
@@ -63,7 +63,7 @@ struct PaywallView: View {
                     .padding(.vertical, 4)
 
                     HStack(spacing: 10) {
-                        F1StatPill(title: "Free", value: "3")
+                        F1StatPill(title: "Free", value: "1")
                         F1StatPill(title: "Left", value: "\(max(0, storeKit.credits))")
                         F1StatPill(title: "Model", value: "Credits")
                     }
