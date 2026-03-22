@@ -25,7 +25,7 @@
                                             <constraint firstAttribute="height" constant="124" id="uJf-57-pD2"/>
                                         </constraints>
                                     </imageView>
-                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="BOXBOX" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="7sT-bX-ZlD">
+                                    <label opaque="NO" userInteractionEnabled="NO" contentMode="left" text="RACE CALL" textAlignment="center" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" adjustsFontSizeToFit="NO" translatesAutoresizingMaskIntoConstraints="NO" id="7sT-bX-ZlD">
                                         <rect key="frame" x="0.0" y="152" width="167" height="34"/>
                                         <fontDescription key="fontDescription" type="boldSystem" pointSize="28"/>
                                         <color key="textColor" white="0.97000000000000008" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
