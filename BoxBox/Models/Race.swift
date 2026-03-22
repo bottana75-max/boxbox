@@ -45,7 +45,7 @@ struct Race: Identifiable, Codable, Hashable {
     }
 
     var isReplayEligible: Bool {
-        isPast
+        isPast && isCurrentSeason
     }
 
     var formattedDate: String {
