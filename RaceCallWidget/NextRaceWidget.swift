@@ -295,61 +295,80 @@ struct NextRaceMediumView: View {
 struct NextRaceLargeView: View {
     let entry: NextRaceEntry
 
+    private var circuitStats: (laps: Int, km: Double)? {
+        WidgetCircuitStats.stats(for: entry.circuitId)
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            // Header
-            HStack {
-                Text("R\(entry.round)")
-                    .font(.system(size: 11, weight: .black, design: .rounded))
-                    .foregroundStyle(widgetRed)
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(widgetRed.opacity(0.15))
-                    .clipShape(RoundedRectangle(cornerRadius: 4))
+        VStack(alignment: .leading, spacing: 0) {
 
-                Text(entry.raceName)
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-
-                Spacer()
-            }
-
-            // Circuit info
-            HStack(spacing: 6) {
-                Text(entry.circuitName)
-                    .font(.caption)
-                    .foregroundStyle(.white)
-                Text("·")
-                    .foregroundStyle(.secondary)
-                Text(entry.country)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-
-            // Date + local time
+            // — Top bar —
             HStack(spacing: 8) {
+                Text("RACE CALL")
+                    .font(.system(size: 9, weight: .heavy))
+                    .tracking(1.2)
+                    .foregroundStyle(widgetRed)
+                Spacer()
+                Text("ROUND \(entry.round)")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundStyle(.secondary)
+                    .tracking(0.6)
+            }
+            .padding(.bottom, 12)
+
+            // — Race name —
+            Text(entry.raceName)
+                .font(.system(size: 22, weight: .black))
+                .foregroundStyle(.white)
+                .lineLimit(2)
+                .minimumScaleFactor(0.8)
+
+            Text("\(entry.circuitName) · \(entry.country)")
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(.secondary)
+                .padding(.top, 2)
+
+            // — Divider —
+            Rectangle()
+                .fill(widgetRed.opacity(0.3))
+                .frame(height: 1)
+                .padding(.vertical, 14)
+
+            // — Date row —
+            HStack(spacing: 16) {
                 if let raceDate = entry.raceDate {
                     let formatter: DateFormatter = {
                         let f = DateFormatter()
-                        f.dateFormat = "EEEE, MMM d"
+                        f.dateFormat = "EEE, MMM d"
                         return f
                     }()
-                    Text(formatter.string(from: raceDate))
-                        .font(.caption)
+                    Label(formatter.string(from: raceDate), systemImage: "calendar")
+                        .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(.white)
                 }
                 if let raceTime = entry.raceTime {
-                    Text("\(raceTime) UTC")
-                        .font(.caption2)
-                        .fontWeight(.medium)
+                    Label("\(raceTime) UTC", systemImage: "clock")
+                        .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(.secondary)
                 }
             }
 
+            // — Circuit stats —
+            if let stats = circuitStats {
+                HStack(spacing: 16) {
+                    Label("\(stats.laps) laps", systemImage: "repeat")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.secondary)
+                    Label(String(format: "%.3f km", stats.km), systemImage: "road.lanes")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.top, 6)
+            }
+
             Spacer()
 
-            // Big countdown
+            // — Countdown —
             if let raceDate = entry.raceDate {
                 HStack {
                     Spacer()
@@ -361,6 +380,26 @@ struct NextRaceLargeView: View {
         .padding(16)
         .widgetURL(URL(string: "racecall://schedule"))
         .containerBackground(widgetBackground, for: .widget)
+    }
+}
+
+// MARK: - Circuit Stats
+
+enum WidgetCircuitStats {
+    static func stats(for circuitId: String) -> (laps: Int, km: Double)? {
+        let data: [String: (Int, Double)] = [
+            "albert_park": (58, 5.278), "bahrain": (57, 5.412), "jeddah": (50, 6.174),
+            "shanghai": (56, 5.451), "suzuka": (53, 5.807), "sakhir": (57, 5.412),
+            "miami": (57, 5.412), "imola": (63, 4.909), "monaco": (78, 3.337),
+            "catalunya": (66, 4.657), "villeneuve": (70, 4.361), "red_bull_ring": (71, 4.318),
+            "silverstone": (52, 5.891), "hungaroring": (70, 4.381), "spa": (44, 7.004),
+            "zandvoort": (72, 4.259), "monza": (53, 5.793), "baku": (51, 6.003),
+            "marina_bay": (62, 4.940), "americas": (56, 5.513), "rodriguez": (71, 4.304),
+            "interlagos": (71, 4.309), "las_vegas": (50, 6.201), "losail": (57, 5.380),
+            "yas_marina": (58, 5.281)
+        ]
+        guard let s = data[circuitId] else { return nil }
+        return (s.0, s.1)
     }
 }
 
