@@ -840,7 +840,7 @@ struct PredictView: View {
         VStack(alignment: .leading, spacing: 14) {
             F1SectionHeader(title: "KEY SIGNALS", subtitle: "Six sharp reads that make the brief feel complete.")
 
-            LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible(), spacing: 12)], spacing: 12) {
+            VStack(spacing: 12) {
                 winnerEdgeCard(call)
                 keyBattleCard(call)
                 strategyAngleCard(call)
