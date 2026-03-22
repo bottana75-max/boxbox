@@ -8,7 +8,7 @@ class StoreKitManager {
 
     private static let creditsKey = "prediction_credits"
     private static let initializedKey = "prediction_credits_initialized"
-    private static let initialCredits = 3
+    private static let initialCredits = 1
 
     static let productIDs: [String] = [
         "com.bottana.boxbox.credits3",
