@@ -192,7 +192,250 @@ struct SmartCountdownView: View {
     }
 }
 
-// MARK: - Mini Track Map
+// MARK: - Widget Views
+
+struct NextRaceSmallView: View {
+    let entry: NextRaceEntry
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text("NEXT RACE")
+                    .font(.system(size: 9, weight: .heavy))
+                    .foregroundStyle(widgetRed)
+                    .tracking(0.6)
+                Spacer()
+                Text("R\(entry.round)")
+                    .font(.system(size: 9, weight: .bold))
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer()
+
+            Text(entry.raceName.replacingOccurrences(of: " Grand Prix", with: ""))
+                .font(.headline)
+                .fontWeight(.bold)
+                .foregroundStyle(.white)
+                .lineLimit(2)
+
+            Text(entry.circuitName)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+
+            if let raceDate = entry.raceDate {
+                SmartCountdownView(raceDate: raceDate, large: false)
+            }
+        }
+        .padding(14)
+        .widgetURL(URL(string: "racecall://schedule"))
+        .containerBackground(widgetBackground, for: .widget)
+    }
+}
+
+struct NextRaceMediumView: View {
+    let entry: NextRaceEntry
+
+    var body: some View {
+        HStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("NEXT RACE")
+                        .font(.system(size: 9, weight: .heavy))
+                        .foregroundStyle(widgetRed)
+                        .tracking(0.6)
+                    Spacer()
+                }
+
+                Text(entry.raceName.replacingOccurrences(of: " Grand Prix", with: ""))
+                    .font(.title3)
+                    .fontWeight(.bold)
+                    .foregroundStyle(.white)
+                    .lineLimit(2)
+
+                Text("\(entry.circuitName) · \(entry.country)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+
+                Spacer()
+
+                if let raceDate = entry.raceDate {
+                    HStack(spacing: 8) {
+                        let formatter: DateFormatter = {
+                            let f = DateFormatter()
+                            f.dateFormat = "MMM d"
+                            return f
+                        }()
+                        Text(formatter.string(from: raceDate))
+                            .font(.caption)
+                            .foregroundStyle(.white)
+                        if let raceTime = entry.raceTime {
+                            Text("\(raceTime) UTC")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            }
+
+            Spacer()
+
+            if let raceDate = entry.raceDate {
+                SmartCountdownView(raceDate: raceDate, large: false)
+                    .frame(width: 90)
+            }
+        }
+        .padding(16)
+        .widgetURL(URL(string: "racecall://schedule"))
+        .containerBackground(widgetBackground, for: .widget)
+    }
+}
+
+struct NextRaceLargeView: View {
+    let entry: NextRaceEntry
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            // Header
+            HStack {
+                Text("R\(entry.round)")
+                    .font(.system(size: 11, weight: .black, design: .rounded))
+                    .foregroundStyle(widgetRed)
+                    .padding(.horizontal, 6)
+                    .padding(.vertical, 2)
+                    .background(widgetRed.opacity(0.15))
+                    .clipShape(RoundedRectangle(cornerRadius: 4))
+
+                Text(entry.raceName)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+
+                Spacer()
+            }
+
+            // Circuit info
+            HStack(spacing: 6) {
+                Text(entry.circuitName)
+                    .font(.caption)
+                    .foregroundStyle(.white)
+                Text("·")
+                    .foregroundStyle(.secondary)
+                Text(entry.country)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            // Date + local time
+            HStack(spacing: 8) {
+                if let raceDate = entry.raceDate {
+                    let formatter: DateFormatter = {
+                        let f = DateFormatter()
+                        f.dateFormat = "EEEE, MMM d"
+                        return f
+                    }()
+                    Text(formatter.string(from: raceDate))
+                        .font(.caption)
+                        .foregroundStyle(.white)
+                }
+                if let raceTime = entry.raceTime {
+                    Text("\(raceTime) UTC")
+                        .font(.caption2)
+                        .fontWeight(.medium)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Spacer()
+
+            // Big countdown
+            if let raceDate = entry.raceDate {
+                HStack {
+                    Spacer()
+                    SmartCountdownView(raceDate: raceDate, large: true)
+                    Spacer()
+                }
+            }
+        }
+        .padding(16)
+        .widgetURL(URL(string: "racecall://schedule"))
+        .containerBackground(widgetBackground, for: .widget)
+    }
+}
+
+// MARK: - Widget Definition
+
+struct NextRaceWidget: Widget {
+    let kind = "NextRaceWidget"
+
+    var body: some WidgetConfiguration {
+        StaticConfiguration(kind: kind, provider: NextRaceProvider()) { entry in
+            if #available(iOSApplicationExtension 17.0, *) {
+                NextRaceWidgetEntryView(entry: entry)
+            }
+        }
+        .configurationDisplayName("Next Race")
+        .description("Countdown to the next Formula 1 Grand Prix.")
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+    }
+}
+
+struct NextRaceWidgetEntryView: View {
+    @Environment(\.widgetFamily) var family
+    let entry: NextRaceEntry
+
+    var body: some View {
+        switch family {
+        case .systemLarge:
+            NextRaceLargeView(entry: entry)
+        case .systemMedium:
+            NextRaceMediumView(entry: entry)
+        default:
+            NextRaceSmallView(entry: entry)
+        }
+    }
+}
+
+// MARK: - Shared Colors
+
+let widgetRed = Color(red: 232/255, green: 0/255, blue: 45/255)
+let widgetBackground = Color(red: 17/255, green: 17/255, blue: 17/255) // #111111
+let widgetCardBackground = Color(red: 38/255, green: 38/255, blue: 38/255)
+
+// MARK: - API Models (widget-local, no shared state)
+
+struct WidgetRaceResponse: Codable {
+    let MRData: WidgetMRData
+}
+
+struct WidgetMRData: Codable {
+    let RaceTable: WidgetRaceTable
+}
+
+struct WidgetRaceTable: Codable {
+    let Races: [WidgetRace]
+}
+
+struct WidgetRace: Codable {
+    let round: String
+    let raceName: String
+    let Circuit: WidgetCircuit
+    let date: String
+    let time: String?
+}
+
+struct WidgetCircuit: Codable {
+    let circuitId: String
+    let circuitName: String
+    let Location: WidgetLocation
+}
+
+struct WidgetLocation: Codable {
+    let country: String
+}
+
+// MARK: - Track Map Data (self-contained fallback, ~10 points per circuit)
 
 // MARK: - Previews
 
