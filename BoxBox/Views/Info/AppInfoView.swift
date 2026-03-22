@@ -3,7 +3,7 @@ import SwiftUI
 struct AppInfoView: View {
     private let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
     private let legalURL = URL(string: "https://bottana75-max.github.io/boxbox/")!
-    private let supportEmail = "an.murru@gmail.com"
+    private let supportEmail = "appboxbox@proton.me"
 
     var body: some View {
         ScrollView {

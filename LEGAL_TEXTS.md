@@ -5,7 +5,7 @@ Status: DRAFT — verify checklist below before App Store submission
 ## PRE-SUBMISSION CHECKLIST
 
 - [ ] **Publisher / legal entity** — "Andrea Murru" come persona fisica è ok per App Store. Se hai una società (Ltd/ecc.), aggiornare ovunque nel testo.
-- [ ] **Support email** — an.murru@gmail.com funziona. Considera un indirizzo dedicato (es. support@boxboxapp.com) per sembrare più professionale.
+- [ ] **Support email** — appboxbox@proton.me funziona. Considera un indirizzo dedicato (es. support@boxboxapp.com) per sembrare più professionale.
 - [ ] **Jurisdiction** — "England and Wales" è corretto se sei residente UK. Verifica se vendi anche nell'UE (GDPR potrebbe richiedere un rappresentante EU).
 - [ ] **Analytics / ad SDK** — confermare che NON ci sono Firebase, Mixpanel, AdMob o altri SDK di terze parti nell'app. Se presenti, aggiornare la Privacy Policy.
 - [ ] **Purchase configuration finale** — verificare che i Product ID su App Store Connect corrispondano esattamente:
