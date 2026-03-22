@@ -175,7 +175,7 @@
 				86FB8E3EF96A3DB37D3B65D5 /* StandingsWidget.swift */,
 				A5416964D16F05B9E87671FE /* Info.plist */,
 			);
-			path = BoxBoxWidget;
+			path = RaceCallWidget;
 			sourceTree = "<group>";
 		};
 		A1B2C3D4D0000001 = {
@@ -202,7 +202,7 @@
 				A1B2C3D4D0000006 /* ViewModels */,
 				A1B2C3D4D0000007 /* Views */,
 			);
-			path = BoxBox;
+			path = RaceCall;
 			sourceTree = "<group>";
 		};
 		A1B2C3D4D0000003 /* Products */ = {
@@ -509,7 +509,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = BoxBoxWidget/Info.plist;
+				INFOPLIST_FILE = RaceCallWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -517,7 +517,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.bottana.boxbox.widget;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bottana.racecall.widget;
 				PRODUCT_NAME = RaceCallWidgetExtension;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -534,7 +534,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = BoxBoxWidget/Info.plist;
+				INFOPLIST_FILE = RaceCallWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -542,7 +542,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.bottana.boxbox.widget;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bottana.racecall.widget;
 				PRODUCT_NAME = RaceCallWidgetExtension;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -688,7 +688,7 @@
 				DEVELOPMENT_ASSET_PATHS = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = BoxBox/Info.plist;
+				INFOPLIST_FILE = RaceCall/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = NO;
@@ -702,7 +702,7 @@
 				);
 				MARKETING_VERSION = 1.0;
 				INFOPLIST_KEY_CFBundleDisplayName = "Race Call";
-				PRODUCT_BUNDLE_IDENTIFIER = com.bottana.boxbox;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bottana.racecall;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -720,7 +720,7 @@
 				DEVELOPMENT_ASSET_PATHS = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = BoxBox/Info.plist;
+				INFOPLIST_FILE = RaceCall/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = NO;
@@ -734,7 +734,7 @@
 				);
 				MARKETING_VERSION = 1.0;
 				INFOPLIST_KEY_CFBundleDisplayName = "Race Call";
-				PRODUCT_BUNDLE_IDENTIFIER = com.bottana.boxbox;
+				PRODUCT_BUNDLE_IDENTIFIER = com.bottana.racecall;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
