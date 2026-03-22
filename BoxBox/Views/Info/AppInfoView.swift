@@ -2,7 +2,7 @@ import SwiftUI
 
 struct AppInfoView: View {
     private let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
-    private let privacyURL = URL(string: "https://bottana75-max.github.io/boxbox/")!
+    private let legalURL = URL(string: "https://bottana75-max.github.io/boxbox/")!
     private let supportEmail = "an.murru@gmail.com"
 
     var body: some View {
@@ -25,7 +25,7 @@ struct AppInfoView: View {
     private var aboutCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             F1SectionHeader(title: "ABOUT", subtitle: "Independent F1 companion")
-            Text("BoxBox is an independent Formula 1 companion app for race context, standings, replay and AI-powered race predictions.")
+            Text("BoxBox is an independent Formula 1 companion app for race context, standings, replay and AI-powered Race Call briefings.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
             Text("Built to make a race weekend easier to read, not noisier.")
@@ -44,7 +44,7 @@ struct AppInfoView: View {
             Text("All trademarks, team names, driver names, and related marks belong to their respective owners.")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
-            Text("AI race predictions are provided for entertainment purposes only and do not constitute betting advice.")
+            Text("Race Call outputs are provided for informational and entertainment purposes and do not constitute betting advice.")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
         }
@@ -54,27 +54,19 @@ struct AppInfoView: View {
     private var privacyCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             F1SectionHeader(title: "PRIVACY", subtitle: "What BoxBox stores")
-            Text("BoxBox does not collect or transmit any personal data. The only information stored on your device is your prediction credit count and purchase status.")
+            Text("BoxBox is designed to minimize personal data handling and stores lightweight local settings on your device to support the app experience.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
-            Text("AI predictions send only publicly available F1 data (standings, results, circuit info) to OpenAI. No personal information is included.")
+            Text("When you use Race Call, the app may send structured public motorsport context to OpenAI. No personal profile information is intentionally included.")
                 .font(.caption)
                 .foregroundStyle(.tertiary)
 
             Divider().background(Color.white.opacity(0.08))
 
-            HStack(spacing: 16) {
-                Link(destination: privacyURL) {
-                    Label("Privacy Policy", systemImage: "lock.shield")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Color.f1Red)
-                }
-                Spacer()
-                Link(destination: privacyURL) {
-                    Label("Terms of Use", systemImage: "doc.text")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(Color.f1Red)
-                }
+            Link(destination: legalURL) {
+                Label("Privacy Policy & Terms", systemImage: "lock.shield")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(Color.f1Red)
             }
         }
         .f1Card()
@@ -84,10 +76,10 @@ struct AppInfoView: View {
         VStack(alignment: .leading, spacing: 12) {
             F1SectionHeader(title: "DATA SOURCES", subtitle: "Public racing data providers")
             VStack(alignment: .leading, spacing: 8) {
-                sourceRow(name: "OpenF1", detail: "Telemetry, positions, weather and session data", url: "https://openf1.org")
-                sourceRow(name: "Jolpica F1 API", detail: "Standings, results and schedule", url: "https://jolpica.github.io")
-                sourceRow(name: "OpenAI GPT-4o-mini", detail: "AI race predictions", url: "https://openai.com")
-                sourceRow(name: "Bacinger F1 Circuits", detail: "Track layout GeoJSON data", url: "https://github.com/bacinger/f1-circuits")
+                sourceRow(name: "OpenF1", detail: "Telemetry, positions, weather and session context")
+                sourceRow(name: "Jolpica F1 API", detail: "Standings, results, qualifying and schedule")
+                sourceRow(name: "OpenAI", detail: "Race Call generation")
+                sourceRow(name: "Bacinger F1 Circuits", detail: "Track layout reference data where applicable")
             }
         }
         .f1Card()
@@ -118,7 +110,7 @@ struct AppInfoView: View {
         .padding(.vertical, 8)
     }
 
-    private func sourceRow(name: String, detail: String, url: String) -> some View {
+    private func sourceRow(name: String, detail: String) -> some View {
         VStack(alignment: .leading, spacing: 3) {
             Text(name)
                 .font(.subheadline)
