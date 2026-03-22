@@ -5,30 +5,23 @@ struct PaywallView: View {
     @Environment(\.dismiss) private var dismiss
     var storeKit = StoreKitManager.shared
 
-    private var featuredProduct: Product? {
-        storeKit.products.first { $0.id == "com.bottana.boxbox.unlimited" } ?? storeKit.products.last ?? storeKit.products.first
-    }
+    private let packageDescriptions: [String: String] = [
+        "com.bottana.boxbox.credits3": "3 Race Calls",
+        "com.bottana.boxbox.credits10": "10 Race Calls",
+        "com.bottana.boxbox.credits25": "25 Race Calls"
+    ]
 
-    private var usedPredictions: Int {
-        max(0, 3 - storeKit.credits)
-    }
+    private let packageCaptions: [String: String] = [
+        "com.bottana.boxbox.credits3": "Best for trying a few extra calls",
+        "com.bottana.boxbox.credits10": "Best balance for active race weekends",
+        "com.bottana.boxbox.credits25": "Best value for heavy use across the season"
+    ]
 
-    private var freeLeft: Int {
-        storeKit.isUnlimited ? 0 : max(0, storeKit.credits)
-    }
-
-    private var priceLabel: String {
-        featuredProduct?.displayPrice ?? "—"
-    }
-
-    private var paywallFootnote: String {
-        if storeKit.isUnlimited {
-            return "BoxBox Pro unlocked. Unlimited race calls are active on this device."
+    private var sortedProducts: [Product] {
+        storeKit.products.sorted { lhs, rhs in
+            let order = StoreKitManager.productIDs
+            return (order.firstIndex(of: lhs.id) ?? 99) < (order.firstIndex(of: rhs.id) ?? 99)
         }
-        if featuredProduct == nil {
-            return "Purchases are temporarily unavailable on this build. You can still restore previous purchases."
-        }
-        return "One-time unlock for unlimited AI race calls. No subscription."
     }
 
     private var purchaseStatusNote: String? {
@@ -36,56 +29,50 @@ struct PaywallView: View {
             return error
         }
         if storeKit.didAttemptProductLoad && storeKit.products.isEmpty {
-            return "The App Store product is not available right now."
+            return "Race Call packs are not available right now."
         }
         return nil
     }
 
-    private var paywallCTA: String {
-        if storeKit.isUnlimited { return "BoxBox Pro Unlocked" }
-        if featuredProduct == nil { return "Unlock Unavailable" }
-        return "Unlock BoxBox Pro"
-    }
-
     var body: some View {
         NavigationStack {
-            VStack(spacing: 24) {
-                Spacer()
+            ScrollView {
+                VStack(spacing: 24) {
+                    Image(systemName: "flag.checkered")
+                        .font(.system(size: 56))
+                        .foregroundStyle(Color.f1Red)
 
-                Image(systemName: "flag.checkered")
-                    .font(.system(size: 56))
-                    .foregroundStyle(Color.f1Red)
+                    VStack(spacing: 8) {
+                        Text("Get More Race Calls")
+                            .font(.largeTitle)
+                            .fontWeight(.black)
+                            .foregroundStyle(.white)
 
-                Text("Unlock BoxBox Pro")
-                    .font(.largeTitle)
-                    .fontWeight(.black)
-                    .foregroundStyle(.white)
-
-                Text("Unlimited AI race calls after your first 3 free shots")
-                    .font(.title3)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                VStack(spacing: 12) {
-                    featureRow(icon: "brain.head.profile", text: "AI-powered podium, dark horse and risk calls")
-                    featureRow(icon: "cloud.sun.fill", text: "Weekend context: timing, weather pressure and circuit cues")
-                    featureRow(icon: "chart.line.uptrend.xyaxis", text: "Scoring engine: form, track fit and contender ranking")
-                    featureRow(icon: "infinity", text: "Unlimited race calls all season")
-                }
-                .padding(.vertical)
-
-                VStack(spacing: 12) {
-                    HStack(spacing: 10) {
-                        F1StatPill(title: "Used", value: "\(usedPredictions)")
-                        F1StatPill(title: "Free left", value: "\(freeLeft)")
-                        F1StatPill(title: "Price", value: priceLabel)
+                        Text("Start with 3 free. Then top up with simple credit packs.")
+                            .font(.title3)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
 
-                    Text(paywallFootnote)
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
-                        .multilineTextAlignment(.center)
+                    VStack(spacing: 12) {
+                        featureRow(icon: "brain.head.profile", text: "AI-powered podium, dark horse and risk calls")
+                        featureRow(icon: "chart.line.uptrend.xyaxis", text: "Race context, contender ranking and strategist-style output")
+                        featureRow(icon: "cloud.sun.fill", text: "Weather, tyre and weekend scenario context where available")
+                    }
+                    .padding(.vertical, 4)
+
+                    HStack(spacing: 10) {
+                        F1StatPill(title: "Free", value: "3")
+                        F1StatPill(title: "Left", value: "\(max(0, storeKit.credits))")
+                        F1StatPill(title: "Model", value: "Credits")
+                    }
+
+                    VStack(spacing: 12) {
+                        ForEach(sortedProducts, id: \.id) { product in
+                            packCard(product)
+                        }
+                    }
 
                     if let purchaseStatusNote {
                         Label(purchaseStatusNote, systemImage: "info.circle")
@@ -93,45 +80,17 @@ struct PaywallView: View {
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
                     }
-                }
 
-                Button {
-                    guard let featuredProduct else { return }
-                    Task { await storeKit.purchase(featuredProduct) }
-                } label: {
-                    VStack(spacing: 4) {
-                        Text(paywallCTA)
-                            .fontWeight(.bold)
-                        Text(storeKit.isUnlimited ? "Ready to race" : "Unlock once, call every race all season")
-                            .font(.caption)
-                            .foregroundStyle(.white.opacity(0.8))
+                    Button {
+                        Task { await storeKit.restorePurchases() }
+                    } label: {
+                        Text("Restore Purchases")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding()
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(Color.f1Red)
-                .disabled(featuredProduct == nil || storeKit.isUnlimited)
-                .opacity((featuredProduct == nil || storeKit.isUnlimited) ? 0.7 : 1)
-
-                Button {
-                    Task { await storeKit.restorePurchases() }
-                } label: {
-                    Text("Restore Purchases")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-
-                if let error = storeKit.purchaseError {
-                    Text(error)
-                        .font(.caption)
-                        .foregroundStyle(.orange)
-                        .multilineTextAlignment(.center)
-                }
-
-                Spacer()
+                .padding()
             }
-            .padding()
             .background(Color.f1Background)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -143,6 +102,39 @@ struct PaywallView: View {
         .task {
             await storeKit.loadProducts()
         }
+    }
+
+    private func packCard(_ product: Product) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(packageDescriptions[product.id] ?? product.displayName)
+                        .font(.headline)
+                        .fontWeight(.bold)
+                        .foregroundStyle(.white)
+                    Text(packageCaptions[product.id] ?? "Top up your Race Call balance")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Text(product.displayPrice)
+                    .font(.title3)
+                    .fontWeight(.black)
+                    .foregroundStyle(Color.f1Red)
+            }
+
+            Button {
+                Task { await storeKit.purchase(product) }
+            } label: {
+                Text("Buy \(packageDescriptions[product.id] ?? product.displayName)")
+                    .fontWeight(.bold)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+            }
+            .buttonStyle(.borderedProminent)
+            .tint(Color.f1Red)
+        }
+        .f1Card()
     }
 
     private func featureRow(icon: String, text: String) -> some View {

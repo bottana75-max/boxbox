@@ -688,9 +688,8 @@ class PredictViewModel {
     // MARK: - UI Text
 
     var trialStatusText: String {
-        if storeKit.isUnlimited { return "Pro unlocked — unlimited race calls" }
         let remaining = max(0, storeKit.credits)
-        if remaining == 0 { return "Free trial finished — unlock Pro to keep calling races" }
+        if remaining == 0 { return "Free trial finished — top up to keep making Race Calls" }
         return "\(remaining) free race call\(remaining == 1 ? "" : "s") remaining"
     }
 

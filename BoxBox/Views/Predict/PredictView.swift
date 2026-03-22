@@ -927,14 +927,14 @@ struct PredictView: View {
     private var trialStatusBanner: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(alignment: .top) {
-                Image(systemName: viewModel.storeKit.isUnlimited ? "checkmark.seal.fill" : "flag.checkered")
+                Image(systemName: viewModel.storeKit.canPredict ? "flag.checkered" : "lock.fill")
                     .foregroundStyle(Color.f1Red)
                 Text(viewModel.trialStatusText)
                     .font(.caption)
                     .fontWeight(.medium)
                     .foregroundStyle(.white)
                 Spacer()
-                if !viewModel.storeKit.isUnlimited && viewModel.storeKit.credits == 0 {
+                if viewModel.storeKit.credits == 0 {
                     Button("Upgrade") {
                         viewModel.showPaywall = true
                     }
@@ -965,13 +965,11 @@ struct PredictView: View {
     }
 
     private var progressText: String {
-        if viewModel.storeKit.isUnlimited { return "Pro unlocked" }
         let used = max(0, 3 - viewModel.storeKit.credits)
         return "Free trial used: \(used)/3"
     }
 
     private var progressValue: CGFloat {
-        if viewModel.storeKit.isUnlimited { return 1 }
         let used = max(0, min(3, 3 - viewModel.storeKit.credits))
         return CGFloat(Double(used) / 3.0)
     }

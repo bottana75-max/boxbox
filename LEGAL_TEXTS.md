@@ -9,9 +9,9 @@ Status: DRAFT — verify checklist below before App Store submission
 - [ ] **Jurisdiction** — "England and Wales" è corretto se sei residente UK. Verifica se vendi anche nell'UE (GDPR potrebbe richiedere un rappresentante EU).
 - [ ] **Analytics / ad SDK** — confermare che NON ci sono Firebase, Mixpanel, AdMob o altri SDK di terze parti nell'app. Se presenti, aggiornare la Privacy Policy.
 - [ ] **Purchase configuration finale** — verificare che i Product ID su App Store Connect corrispondano esattamente:
-  - `com.bottana.boxbox.credits5` → 5 predictions, $0.99
-  - `com.bottana.boxbox.credits20` → 20 predictions, $2.99
-  - `com.bottana.boxbox.unlimited` → Unlimited, $4.99
+  - `com.bottana.boxbox.credits3` → 3 Race Calls, $0.99
+  - `com.bottana.boxbox.credits10` → 10 Race Calls, $3.99
+  - `com.bottana.boxbox.credits25` → 25 Race Calls, $6.99
 - [ ] **Bundle ID** — `com.bottana.boxbox` deve corrispondere all'account App Store Connect di Andrea.
 - [ ] **URL Privacy Policy pubblica** — caricare il testo Privacy Policy su una URL pubblica (GitHub Pages, sito personale, ecc.) e inserirla su App Store Connect. Apple la richiede obbligatoriamente.
 
@@ -135,7 +135,12 @@ You agree not to:
 - circumvent purchases, entitlements, or access controls
 
 ### 3. Purchases
-BoxBox may offer optional in-app purchases, including credit-based or unlimited Race Call access, depending on the live App Store configuration.
+BoxBox may offer optional in-app purchases, including credit-based Race Call packs, depending on the live App Store configuration.
+
+Current launch pricing model:
+- 3 Race Calls — $0.99
+- 10 Race Calls — $3.99
+- 25 Race Calls — $6.99
 
 All purchases are handled by Apple and are subject to App Store terms, restoration rules, and applicable law.
 

@@ -8,13 +8,12 @@ class StoreKitManager {
 
     private static let creditsKey = "prediction_credits"
     private static let initializedKey = "prediction_credits_initialized"
-    private static let unlimitedKey = "prediction_unlimited"
     private static let initialCredits = 3
 
     static let productIDs: [String] = [
-        "com.bottana.boxbox.credits5",
-        "com.bottana.boxbox.credits20",
-        "com.bottana.boxbox.unlimited"
+        "com.bottana.boxbox.credits3",
+        "com.bottana.boxbox.credits10",
+        "com.bottana.boxbox.credits25"
     ]
 
     var products: [Product] = []
@@ -25,17 +24,14 @@ class StoreKitManager {
         UserDefaults.standard.integer(forKey: Self.creditsKey)
     }
 
-    var isUnlimited: Bool {
-        UserDefaults.standard.bool(forKey: Self.unlimitedKey)
-    }
+    var isUnlimited: Bool { false }
 
     var canPredict: Bool {
-        isUnlimited || credits > 0
+        credits > 0
     }
 
     var creditsLabel: String {
-        if isUnlimited { return "Unlimited" }
-        return "\(credits) prediction\(credits == 1 ? "" : "s") remaining"
+        return "\(credits) race call\(credits == 1 ? "" : "s") remaining"
     }
 
     private init() {
@@ -52,7 +48,6 @@ class StoreKitManager {
 
     func consumeCredit() {
         let defaults = UserDefaults.standard
-        guard !defaults.bool(forKey: Self.unlimitedKey) else { return }
         let current = defaults.integer(forKey: Self.creditsKey)
         defaults.set(max(0, current - 1), forKey: Self.creditsKey)
     }
@@ -100,9 +95,8 @@ class StoreKitManager {
     func restorePurchases() async {
         purchaseError = nil
         for await result in Transaction.currentEntitlements {
-            if case .verified(let transaction) = result,
-               transaction.productID == "com.bottana.boxbox.unlimited" {
-                UserDefaults.standard.set(true, forKey: Self.unlimitedKey)
+            if case .verified(let transaction) = result {
+                applyCredits(for: transaction.productID)
             }
         }
     }
@@ -110,13 +104,12 @@ class StoreKitManager {
     private func applyCredits(for productID: String) {
         let defaults = UserDefaults.standard
         let creditsByProduct: [String: Int] = [
-            "com.bottana.boxbox.credits5": 5,
-            "com.bottana.boxbox.credits20": 20,
+            "com.bottana.boxbox.credits3": 3,
+            "com.bottana.boxbox.credits10": 10,
+            "com.bottana.boxbox.credits25": 25,
         ]
         if let amount = creditsByProduct[productID] {
             defaults.set(defaults.integer(forKey: Self.creditsKey) + amount, forKey: Self.creditsKey)
-        } else if productID == "com.bottana.boxbox.unlimited" {
-            defaults.set(true, forKey: Self.unlimitedKey)
         }
     }
 }
