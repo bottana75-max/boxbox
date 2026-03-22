@@ -34,7 +34,6 @@
 		A1B2C3D40100000E /* StandingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D40000000E /* StandingsViewModel.swift */; };
 		A1B2C3D40100000F /* DriversView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D40000000F /* DriversView.swift */; };
 		A1B2C3D401000010 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000010 /* HomeView.swift */; };
-		A1B2C3D401000060 /* AppInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000060 /* AppInfoView.swift */; };
 		A1B2C3D401000011 /* PredictView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000011 /* PredictView.swift */; };
 		A1B2C3D401000012 /* ScheduleView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000012 /* ScheduleView.swift */; };
 		A1B2C3D401000013 /* StandingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000013 /* StandingsView.swift */; };
@@ -52,6 +51,7 @@
 		A1B2C3D401000042 /* ReplayViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000042 /* ReplayViewModel.swift */; };
 		A1B2C3D401000043 /* TrackReplayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000043 /* TrackReplayView.swift */; };
 		A1B2C3D401000050 /* CountdownHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000050 /* CountdownHelpers.swift */; };
+		A1B2C3D401000060 /* AppInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000060 /* AppInfoView.swift */; };
 		BD6DAA42D662BA4ED3BE7B65 /* TeamDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76CEFBDE356549A61B42D5C6 /* TeamDetailViewModel.swift */; };
 		BFBECDD5325F9A63E6456812 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AC42CA8437C937C1A1704BDF /* SwiftUI.framework */; };
 		F7598994CDA8645D57B9E7E7 /* NextRaceWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = E0BB7F7338ADE1257CC49FB7 /* NextRaceWidget.swift */; };
@@ -108,7 +108,6 @@
 		A1B2C3D40000000E /* StandingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StandingsViewModel.swift; sourceTree = "<group>"; };
 		A1B2C3D40000000F /* DriversView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DriversView.swift; sourceTree = "<group>"; };
 		A1B2C3D400000010 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
-		A1B2C3D400000060 /* AppInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppInfoView.swift; sourceTree = "<group>"; };
 		A1B2C3D400000011 /* PredictView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PredictView.swift; sourceTree = "<group>"; };
 		A1B2C3D400000012 /* ScheduleView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ScheduleView.swift; sourceTree = "<group>"; };
 		A1B2C3D400000013 /* StandingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StandingsView.swift; sourceTree = "<group>"; };
@@ -127,6 +126,7 @@
 		A1B2C3D400000042 /* ReplayViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReplayViewModel.swift; sourceTree = "<group>"; };
 		A1B2C3D400000043 /* TrackReplayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackReplayView.swift; sourceTree = "<group>"; };
 		A1B2C3D400000050 /* CountdownHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CountdownHelpers.swift; sourceTree = "<group>"; };
+		A1B2C3D400000060 /* AppInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppInfoView.swift; sourceTree = "<group>"; };
 		A1B2C3D4F0000001 /* BoxBox.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BoxBox.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A5416964D16F05B9E87671FE /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A5856908E55AC68E7DDE7106 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
@@ -167,7 +167,7 @@
 			name = iOS;
 			sourceTree = "<group>";
 		};
-		3195B2B5B9F05AC175633112 /* BoxBoxWidget */ = {
+		3195B2B5B9F05AC175633112 /* RaceCallWidget */ = {
 			isa = PBXGroup;
 			children = (
 				9FC0810A95EFBD26870CA7B3 /* RaceCallWidgetBundle.swift */,
@@ -181,14 +181,14 @@
 		A1B2C3D4D0000001 = {
 			isa = PBXGroup;
 			children = (
-				A1B2C3D4D0000002 /* BoxBox */,
+				A1B2C3D4D0000002 /* RaceCall */,
 				A1B2C3D4D0000003 /* Products */,
 				A1B2C3D4D000000D /* Frameworks */,
-				3195B2B5B9F05AC175633112 /* BoxBoxWidget */,
+				3195B2B5B9F05AC175633112 /* RaceCallWidget */,
 			);
 			sourceTree = "<group>";
 		};
-		A1B2C3D4D0000002 /* BoxBox */ = {
+		A1B2C3D4D0000002 /* RaceCall */ = {
 			isa = PBXGroup;
 			children = (
 				A1B2C3D400000001 /* RaceCallApp.swift */,
@@ -290,14 +290,6 @@
 			path = Home;
 			sourceTree = "<group>";
 		};
-		A1B2C3D4D000000F /* Info */ = {
-			isa = PBXGroup;
-			children = (
-				A1B2C3D400000060 /* AppInfoView.swift */,
-			);
-			path = Info;
-			sourceTree = "<group>";
-		};
 		A1B2C3D4D000000A /* Predict */ = {
 			isa = PBXGroup;
 			children = (
@@ -340,6 +332,14 @@
 				A1B2C3D400000043 /* TrackReplayView.swift */,
 			);
 			path = Replay;
+			sourceTree = "<group>";
+		};
+		A1B2C3D4D000000F /* Info */ = {
+			isa = PBXGroup;
+			children = (
+				A1B2C3D400000060 /* AppInfoView.swift */,
+			);
+			path = Info;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -508,6 +508,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = RA4VQQK3U6;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RaceCallWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -517,7 +518,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.bottana.racecall.widget;
+				PRODUCT_BUNDLE_IDENTIFIER = com.racecall.widget;
 				PRODUCT_NAME = RaceCallWidgetExtension;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -533,6 +534,7 @@
 				CLANG_ENABLE_OBJC_WEAK = NO;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = RA4VQQK3U6;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RaceCallWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -542,7 +544,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.bottana.racecall.widget;
+				PRODUCT_BUNDLE_IDENTIFIER = com.racecall.widget;
 				PRODUCT_NAME = RaceCallWidgetExtension;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
@@ -686,12 +688,13 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = RA4VQQK3U6;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RaceCall/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Race Call";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = NO;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -701,8 +704,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				INFOPLIST_KEY_CFBundleDisplayName = "Race Call";
-				PRODUCT_BUNDLE_IDENTIFIER = com.bottana.racecall;
+				PRODUCT_BUNDLE_IDENTIFIER = com.racecall;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -718,12 +720,13 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_ASSET_PATHS = "";
+				DEVELOPMENT_TEAM = RA4VQQK3U6;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = RaceCall/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Race Call";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = NO;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
@@ -733,8 +736,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				INFOPLIST_KEY_CFBundleDisplayName = "Race Call";
-				PRODUCT_BUNDLE_IDENTIFIER = com.bottana.racecall;
+				PRODUCT_BUNDLE_IDENTIFIER = com.racecall;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
