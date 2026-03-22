@@ -11,10 +11,10 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>com.boxbox.app</string>
+			<string>com.racecall.app</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>boxbox</string>
+				<string>racecall</string>
 			</array>
 		</dict>
 	</array>

@@ -274,7 +274,7 @@ struct NextRaceSmallView: View {
             }
         }
         .padding(14)
-        .widgetURL(URL(string: "boxbox://schedule"))
+        .widgetURL(URL(string: "racecall://schedule"))
         .containerBackground(widgetBackground, for: .widget)
     }
 }
@@ -333,7 +333,7 @@ struct NextRaceMediumView: View {
             }
         }
         .padding(16)
-        .widgetURL(URL(string: "boxbox://schedule"))
+        .widgetURL(URL(string: "racecall://schedule"))
         .containerBackground(widgetBackground, for: .widget)
     }
 }
@@ -412,7 +412,7 @@ struct NextRaceLargeView: View {
             }
         }
         .padding(16)
-        .widgetURL(URL(string: "boxbox://schedule"))
+        .widgetURL(URL(string: "racecall://schedule"))
         .containerBackground(widgetBackground, for: .widget)
     }
 }

@@ -172,7 +172,7 @@ struct StandingsSmallView: View {
                 }
             }
             .padding(14)
-            .widgetURL(URL(string: "boxbox://standings"))
+            .widgetURL(URL(string: "racecall://standings"))
             .containerBackground(widgetBackground, for: .widget)
         }
     }
@@ -240,7 +240,7 @@ struct StandingsMediumView: View {
             }
         }
         .padding(16)
-        .widgetURL(URL(string: "boxbox://standings"))
+        .widgetURL(URL(string: "racecall://standings"))
         .containerBackground(widgetBackground, for: .widget)
     }
 

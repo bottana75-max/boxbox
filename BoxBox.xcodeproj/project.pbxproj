@@ -13,12 +13,12 @@
 		33BDE43328D166E2BB0A38EC /* TeamDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AFBC482F2D7707CFADD5A2C /* TeamDetailView.swift */; };
 		33BDE43328D166E2BB0A38ED /* DriverComparisonView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3AFBC482F2D7707CFADD5A2D /* DriverComparisonView.swift */; };
 		3DC4BC69AB98E397DD1F9970 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4F041C9F8234BBB4C3593CB8 /* WidgetKit.framework */; };
-		7A1DD61A45033D49067CA3E3 /* BoxBoxWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FC0810A95EFBD26870CA7B3 /* BoxBoxWidgetBundle.swift */; };
-		8341330D724CA51259D09A5E /* BoxBoxWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CDF38FFC44E0E85C42316A44 /* BoxBoxWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		7A1DD61A45033D49067CA3E3 /* RaceCallWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FC0810A95EFBD26870CA7B3 /* RaceCallWidgetBundle.swift */; };
+		8341330D724CA51259D09A5E /* RaceCallWidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = CDF38FFC44E0E85C42316A44 /* RaceCallWidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		8979B858BFC10EA711997E01 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 93F95989627549CD3CC318DB /* PaywallView.swift */; };
 		8E064DD990E0B8611B1D82FA /* RaceContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8D939F5E50D2DC18FC4E0BB8 /* RaceContext.swift */; };
 		99E2F004A02B90ED1CD25438 /* StandingsWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86FB8E3EF96A3DB37D3B65D5 /* StandingsWidget.swift */; };
-		A1B2C3D401000001 /* BoxBoxApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000001 /* BoxBoxApp.swift */; };
+		A1B2C3D401000001 /* RaceCallApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000001 /* RaceCallApp.swift */; };
 		A1B2C3D401000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000002 /* ContentView.swift */; };
 		A1B2C3D401000003 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000003 /* Assets.xcassets */; };
 		A1B2C3D401000004 /* Constructor.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1B2C3D400000004 /* Constructor.swift */; };
@@ -63,7 +63,7 @@
 			containerPortal = A1B2C3D4A0000001 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = 9270B742AF946322FF62C8AB;
-			remoteInfo = BoxBoxWidgetExtension;
+			remoteInfo = RaceCallWidgetExtension;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -74,7 +74,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				8341330D724CA51259D09A5E /* BoxBoxWidgetExtension.appex in Embed Foundation Extensions */,
+				8341330D724CA51259D09A5E /* RaceCallWidgetExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -91,8 +91,8 @@
 		86FB8E3EF96A3DB37D3B65D5 /* StandingsWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = StandingsWidget.swift; sourceTree = "<group>"; };
 		8D939F5E50D2DC18FC4E0BB8 /* RaceContext.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RaceContext.swift; sourceTree = "<group>"; };
 		93F95989627549CD3CC318DB /* PaywallView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
-		9FC0810A95EFBD26870CA7B3 /* BoxBoxWidgetBundle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = BoxBoxWidgetBundle.swift; sourceTree = "<group>"; };
-		A1B2C3D400000001 /* BoxBoxApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoxBoxApp.swift; sourceTree = "<group>"; };
+		9FC0810A95EFBD26870CA7B3 /* RaceCallWidgetBundle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RaceCallWidgetBundle.swift; sourceTree = "<group>"; };
+		A1B2C3D400000001 /* RaceCallApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RaceCallApp.swift; sourceTree = "<group>"; };
 		A1B2C3D400000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A1B2C3D400000003 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A1B2C3D400000004 /* Constructor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Constructor.swift; sourceTree = "<group>"; };
@@ -131,7 +131,7 @@
 		A5416964D16F05B9E87671FE /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A5856908E55AC68E7DDE7106 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		AC42CA8437C937C1A1704BDF /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/SwiftUI.framework; sourceTree = DEVELOPER_DIR; };
-		CDF38FFC44E0E85C42316A44 /* BoxBoxWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BoxBoxWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		CDF38FFC44E0E85C42316A44 /* RaceCallWidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = RaceCallWidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		E0BB7F7338ADE1257CC49FB7 /* NextRaceWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NextRaceWidget.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -170,7 +170,7 @@
 		3195B2B5B9F05AC175633112 /* BoxBoxWidget */ = {
 			isa = PBXGroup;
 			children = (
-				9FC0810A95EFBD26870CA7B3 /* BoxBoxWidgetBundle.swift */,
+				9FC0810A95EFBD26870CA7B3 /* RaceCallWidgetBundle.swift */,
 				E0BB7F7338ADE1257CC49FB7 /* NextRaceWidget.swift */,
 				86FB8E3EF96A3DB37D3B65D5 /* StandingsWidget.swift */,
 				A5416964D16F05B9E87671FE /* Info.plist */,
@@ -191,7 +191,7 @@
 		A1B2C3D4D0000002 /* BoxBox */ = {
 			isa = PBXGroup;
 			children = (
-				A1B2C3D400000001 /* BoxBoxApp.swift */,
+				A1B2C3D400000001 /* RaceCallApp.swift */,
 				A1B2C3D400000002 /* ContentView.swift */,
 				A1B2C3D400000036 /* DesignSystem.swift */,
 				A1B2C3D400000003 /* Assets.xcassets */,
@@ -209,7 +209,7 @@
 			isa = PBXGroup;
 			children = (
 				A1B2C3D4F0000001 /* BoxBox.app */,
-				CDF38FFC44E0E85C42316A44 /* BoxBoxWidgetExtension.appex */,
+				CDF38FFC44E0E85C42316A44 /* RaceCallWidgetExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -345,9 +345,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		9270B742AF946322FF62C8AB /* BoxBoxWidgetExtension */ = {
+		9270B742AF946322FF62C8AB /* RaceCallWidgetExtension */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C130025A4C63803168AAD31E /* Build configuration list for PBXNativeTarget "BoxBoxWidgetExtension" */;
+			buildConfigurationList = C130025A4C63803168AAD31E /* Build configuration list for PBXNativeTarget "RaceCallWidgetExtension" */;
 			buildPhases = (
 				C840C6F647E2D931CEB958D4 /* Sources */,
 				6820BAA58FD18A490FDC24BD /* Frameworks */,
@@ -357,9 +357,9 @@
 			);
 			dependencies = (
 			);
-			name = BoxBoxWidgetExtension;
-			productName = BoxBoxWidgetExtension;
-			productReference = CDF38FFC44E0E85C42316A44 /* BoxBoxWidgetExtension.appex */;
+			name = RaceCallWidgetExtension;
+			productName = RaceCallWidgetExtension;
+			productReference = CDF38FFC44E0E85C42316A44 /* RaceCallWidgetExtension.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 		A1B2C3D4C0000001 /* BoxBox */ = {
@@ -410,7 +410,7 @@
 			projectRoot = "";
 			targets = (
 				A1B2C3D4C0000001 /* BoxBox */,
-				9270B742AF946322FF62C8AB /* BoxBoxWidgetExtension */,
+				9270B742AF946322FF62C8AB /* RaceCallWidgetExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -439,7 +439,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A1B2C3D401000001 /* BoxBoxApp.swift in Sources */,
+				A1B2C3D401000001 /* RaceCallApp.swift in Sources */,
 				A1B2C3D401000002 /* ContentView.swift in Sources */,
 				A1B2C3D401000004 /* Constructor.swift in Sources */,
 				A1B2C3D401000005 /* Driver.swift in Sources */,
@@ -484,7 +484,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7A1DD61A45033D49067CA3E3 /* BoxBoxWidgetBundle.swift in Sources */,
+				7A1DD61A45033D49067CA3E3 /* RaceCallWidgetBundle.swift in Sources */,
 				F7598994CDA8645D57B9E7E7 /* NextRaceWidget.swift in Sources */,
 				99E2F004A02B90ED1CD25438 /* StandingsWidget.swift in Sources */,
 			);
@@ -495,8 +495,8 @@
 /* Begin PBXTargetDependency section */
 		E9C43E2CCA94CFB50F15FE1C /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			name = BoxBoxWidgetExtension;
-			target = 9270B742AF946322FF62C8AB /* BoxBoxWidgetExtension */;
+			name = RaceCallWidgetExtension;
+			target = 9270B742AF946322FF62C8AB /* RaceCallWidgetExtension */;
 			targetProxy = 5BC77C0A08A76425F91EEB19 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -518,7 +518,7 @@
 				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.bottana.boxbox.widget;
-				PRODUCT_NAME = BoxBoxWidgetExtension;
+				PRODUCT_NAME = RaceCallWidgetExtension;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.9;
@@ -543,7 +543,7 @@
 				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.bottana.boxbox.widget;
-				PRODUCT_NAME = BoxBoxWidgetExtension;
+				PRODUCT_NAME = RaceCallWidgetExtension;
 				SDKROOT = iphoneos;
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.9;
@@ -761,7 +761,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C130025A4C63803168AAD31E /* Build configuration list for PBXNativeTarget "BoxBoxWidgetExtension" */ = {
+		C130025A4C63803168AAD31E /* Build configuration list for PBXNativeTarget "RaceCallWidgetExtension" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				88ADC30F376C7EAAD48FBA2C /* Release */,

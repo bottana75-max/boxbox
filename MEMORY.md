@@ -17,7 +17,7 @@ _(nessuna ancora — si parte!)_
 
 ## Apps in Sviluppo
 
-### Settimana 01 — BoxBox 🏎️
+### Settimana 01 — RaceCall 🏎️
 - **Stato:** In sviluppo (Claude Code in background)
 - **Concept:** F1 Stats + AI Race Predictor iOS app
 - **Tagline:** AI-powered F1 stats & race predictions
@@ -27,9 +27,9 @@ _(nessuna ancora — si parte!)_
 - **Schermate:** Home, Predict (AI podio), Standings, Schedule, Drivers
 - **AI Predictor:** GPT-4o-mini con dati reali (standings + ultimi risultati) → podio previsto + reasoning
 - **Trial:** Prime 3 predictions gratis, poi sblocco con purchase
-- **GitHub:** https://github.com/bottana75-max/boxbox
-- **Local:** /Users/tana/app-factory/apps/week-01-boxbox
-- **Notion:** https://www.notion.so/Settimana-01-BoxBox-328428bb394a81459372d9a2d5f50480
+- **GitHub:** https://github.com/bottana75-max/racecall
+- **Local:** /Users/tana/app-factory/apps/week-01-racecall
+- **Notion:** https://www.notion.so/Settimana-01-RaceCall-328428bb394a81459372d9a2d5f50480
 - **Piano:**
   - Gio 19/3: Setup Xcode, struttura, OpenF1Service ← siamo qui
   - Ven 20/3: Home + Schedule + Standings

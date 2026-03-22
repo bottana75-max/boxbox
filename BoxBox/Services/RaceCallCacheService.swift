@@ -38,14 +38,14 @@ final class RaceCallCacheService {
         return encoder
     }()
     private let decoder = JSONDecoder()
-    private let queue = DispatchQueue(label: "com.bottana.boxbox.racecall-cache", qos: .utility)
+    private let queue = DispatchQueue(label: "com.bottana.racecall.racecall-cache", qos: .utility)
     private let maxEntries = 48
 
     private init(fileManager: FileManager = .default) {
         let baseDirectory = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first
             ?? fileManager.urls(for: .documentDirectory, in: .userDomainMask).first
             ?? URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
-        let appDirectory = baseDirectory.appendingPathComponent("BoxBox", isDirectory: true)
+        let appDirectory = baseDirectory.appendingPathComponent("RaceCall", isDirectory: true)
         try? fileManager.createDirectory(at: appDirectory, withIntermediateDirectories: true)
         self.fileURL = appDirectory.appendingPathComponent("race-call-cache.json")
     }

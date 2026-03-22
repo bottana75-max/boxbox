@@ -6,15 +6,15 @@ struct PaywallView: View {
     var storeKit = StoreKitManager.shared
 
     private let packageDescriptions: [String: String] = [
-        "com.bottana.boxbox.credits3": "3 Race Calls",
-        "com.bottana.boxbox.credits10": "10 Race Calls",
-        "com.bottana.boxbox.credits25": "25 Race Calls"
+        "com.bottana.racecall.credits3": "3 Race Calls",
+        "com.bottana.racecall.credits10": "10 Race Calls",
+        "com.bottana.racecall.credits25": "25 Race Calls"
     ]
 
     private let packageCaptions: [String: String] = [
-        "com.bottana.boxbox.credits3": "Best for trying a few extra calls",
-        "com.bottana.boxbox.credits10": "Best balance for active race weekends",
-        "com.bottana.boxbox.credits25": "Best value for heavy use across the season"
+        "com.bottana.racecall.credits3": "Best for trying a few extra calls",
+        "com.bottana.racecall.credits10": "Best balance for active race weekends",
+        "com.bottana.racecall.credits25": "Best value for heavy use across the season"
     ]
 
     private var sortedProducts: [Product] {

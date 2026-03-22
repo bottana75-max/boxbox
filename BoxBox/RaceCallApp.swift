@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct BoxBoxApp: App {
+struct RaceCallApp: App {
     @State private var selectedTab: AppTab = .home
 
     var body: some Scene {
@@ -9,7 +9,7 @@ struct BoxBoxApp: App {
             ContentView(selectedTab: $selectedTab)
                 .preferredColorScheme(.dark)
                 .onOpenURL { url in
-                    guard url.scheme == "boxbox" else { return }
+                    guard url.scheme == "racecall" else { return }
                     switch url.host {
                     case "schedule":
                         selectedTab = .schedule

@@ -27,7 +27,7 @@ struct HomeView: View {
                             F1EmptyView(
                                 icon: "antenna.radiowaves.left.and.right.slash",
                                 title: "Race data is not ready yet",
-                                subtitle: "Pull to refresh and BoxBox will repopulate the home dashboard as soon as the schedule feed is back."
+                                subtitle: "Pull to refresh and RaceCall will repopulate the home dashboard as soon as the schedule feed is back."
                             )
                             .frame(minHeight: 140)
                         }
@@ -47,7 +47,7 @@ struct HomeView: View {
             .refreshable {
                 await viewModel.loadData()
             }
-            .navigationTitle("BoxBox")
+            .navigationTitle("RaceCall")
             .toolbarColorScheme(.dark, for: .navigationBar)
             .navigationDestination(for: Race.self) { race in
                 RaceDetailView(race: race)

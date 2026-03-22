@@ -2,8 +2,8 @@ import SwiftUI
 
 struct AppInfoView: View {
     private let appVersion = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
-    private let legalURL = URL(string: "https://bottana75-max.github.io/boxbox/")!
-    private let supportEmail = "appboxbox@proton.me"
+    private let legalURL = URL(string: "https://bottana75-max.github.io/racecall/")!
+    private let supportEmail = "appracecall@proton.me"
 
     var body: some View {
         ScrollView {
@@ -25,7 +25,7 @@ struct AppInfoView: View {
     private var aboutCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             F1SectionHeader(title: "ABOUT", subtitle: "Independent F1 companion")
-            Text("BoxBox is an independent Formula 1 companion app for race context, standings, replay and AI-powered Race Call briefings.")
+            Text("RaceCall is an independent Formula 1 companion app for race context, standings, replay and AI-powered Race Call briefings.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
             Text("Built to make a race weekend easier to read, not noisier.")
@@ -38,7 +38,7 @@ struct AppInfoView: View {
     private var legalCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             F1SectionHeader(title: "LEGAL", subtitle: "Independence and trademark notice")
-            Text("BoxBox is an independent app and is not affiliated with, endorsed by, or sponsored by Formula 1, FIA, or any Formula 1 team.")
+            Text("RaceCall is an independent app and is not affiliated with, endorsed by, or sponsored by Formula 1, FIA, or any Formula 1 team.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
             Text("All trademarks, team names, driver names, and related marks belong to their respective owners.")
@@ -53,8 +53,8 @@ struct AppInfoView: View {
 
     private var privacyCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            F1SectionHeader(title: "PRIVACY", subtitle: "What BoxBox stores")
-            Text("BoxBox is designed to minimize personal data handling and stores lightweight local settings on your device to support the app experience.")
+            F1SectionHeader(title: "PRIVACY", subtitle: "What RaceCall stores")
+            Text("RaceCall is designed to minimize personal data handling and stores lightweight local settings on your device to support the app experience.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
             Text("When you use Race Call, the app may send structured public motorsport context to OpenAI. No personal profile information is intentionally included.")
@@ -99,7 +99,7 @@ struct AppInfoView: View {
 
     private var footerCard: some View {
         VStack(spacing: 6) {
-            Text("BoxBox v\(appVersion)")
+            Text("RaceCall v\(appVersion)")
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
             Text("© 2026 Andrea Murru · All rights reserved")

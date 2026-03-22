@@ -11,9 +11,9 @@ class StoreKitManager {
     private static let initialCredits = 1
 
     static let productIDs: [String] = [
-        "com.bottana.boxbox.credits3",
-        "com.bottana.boxbox.credits10",
-        "com.bottana.boxbox.credits25"
+        "com.bottana.racecall.credits3",
+        "com.bottana.racecall.credits10",
+        "com.bottana.racecall.credits25"
     ]
 
     var products: [Product] = []
@@ -104,9 +104,9 @@ class StoreKitManager {
     private func applyCredits(for productID: String) {
         let defaults = UserDefaults.standard
         let creditsByProduct: [String: Int] = [
-            "com.bottana.boxbox.credits3": 3,
-            "com.bottana.boxbox.credits10": 10,
-            "com.bottana.boxbox.credits25": 25,
+            "com.bottana.racecall.credits3": 3,
+            "com.bottana.racecall.credits10": 10,
+            "com.bottana.racecall.credits25": 25,
         ]
         if let amount = creditsByProduct[productID] {
             defaults.set(defaults.integer(forKey: Self.creditsKey) + amount, forKey: Self.creditsKey)

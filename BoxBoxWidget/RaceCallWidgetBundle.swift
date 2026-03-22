@@ -2,7 +2,7 @@ import SwiftUI
 import WidgetKit
 
 @main
-struct BoxBoxWidgetBundle: WidgetBundle {
+struct RaceCallWidgetBundle: WidgetBundle {
     var body: some Widget {
         NextRaceWidget()
         StandingsWidget()

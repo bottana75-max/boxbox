@@ -990,7 +990,7 @@ struct PredictView: View {
             F1EmptyView(
                 icon: "flag.checkered",
                 title: "Waiting for the next grand prix",
-                subtitle: "Pull to refresh once the next race weekend is available and BoxBox will rebuild the briefing automatically."
+                subtitle: "Pull to refresh once the next race weekend is available and RaceCall will rebuild the briefing automatically."
             )
             .frame(minHeight: 120)
         }

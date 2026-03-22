@@ -1,27 +1,27 @@
-# BoxBox — Legal Texts
+# RaceCall — Legal Texts
 Generated: 2026-03-21
 Status: DRAFT — verify checklist below before App Store submission
 
 ## PRE-SUBMISSION CHECKLIST
 
 - [ ] **Publisher / legal entity** — "Andrea Murru" come persona fisica è ok per App Store. Se hai una società (Ltd/ecc.), aggiornare ovunque nel testo.
-- [ ] **Support email** — appboxbox@proton.me funziona. Considera un indirizzo dedicato (es. support@boxboxapp.com) per sembrare più professionale.
+- [ ] **Support email** — appracecall@proton.me funziona. Considera un indirizzo dedicato (es. support@racecallapp.com) per sembrare più professionale.
 - [ ] **Jurisdiction** — "England and Wales" è corretto se sei residente UK. Verifica se vendi anche nell'UE (GDPR potrebbe richiedere un rappresentante EU).
 - [ ] **Analytics / ad SDK** — confermare che NON ci sono Firebase, Mixpanel, AdMob o altri SDK di terze parti nell'app. Se presenti, aggiornare la Privacy Policy.
 - [ ] **Purchase configuration finale** — verificare che i Product ID su App Store Connect corrispondano esattamente:
-  - `com.bottana.boxbox.credits3` → 3 Race Calls, $0.99
-  - `com.bottana.boxbox.credits10` → 10 Race Calls, $3.99
-  - `com.bottana.boxbox.credits25` → 25 Race Calls, $6.99
-- [ ] **Bundle ID** — `com.bottana.boxbox` deve corrispondere all'account App Store Connect di Andrea.
+  - `com.bottana.racecall.credits3` → 3 Race Calls, $0.99
+  - `com.bottana.racecall.credits10` → 10 Race Calls, $3.99
+  - `com.bottana.racecall.credits25` → 25 Race Calls, $6.99
+- [ ] **Bundle ID** — `com.bottana.racecall` deve corrispondere all'account App Store Connect di Andrea.
 - [ ] **URL Privacy Policy pubblica** — caricare il testo Privacy Policy su una URL pubblica (GitHub Pages, sito personale, ecc.) e inserirla su App Store Connect. Apple la richiede obbligatoriamente.
 
 ---
 
 ## 1. ABOUT
 
-**BoxBox** is an independent Formula 1 companion app built for fans who want cleaner race context, standings, replay, and race-weekend intelligence in one place.
+**RaceCall** is an independent Formula 1 companion app built for fans who want cleaner race context, standings, replay, and race-weekend intelligence in one place.
 
-BoxBox combines schedule and standings coverage, driver and constructor context, circuit information, replay tools for completed races, widgets, and an AI-powered **Race Call** feature.
+RaceCall combines schedule and standings coverage, driver and constructor context, circuit information, replay tools for completed races, widgets, and an AI-powered **Race Call** feature.
 
 ### Core product areas
 - **Race Call** — AI-assisted pre-race briefing powered by public motorsport data and OpenAI
@@ -30,14 +30,14 @@ BoxBox combines schedule and standings coverage, driver and constructor context,
 - **Widgets** — next race countdown and standings at a glance
 
 ### Data sources
-BoxBox uses publicly available Formula 1 data from:
+RaceCall uses publicly available Formula 1 data from:
 - **OpenF1** (openf1.org) — telemetry, positions, weather, and session context
 - **Jolpica F1 API** (jolpica.github.io) — race results, standings, qualifying, and schedule data
 - **OpenAI** — structured AI-generated Race Call output
 - **Bacinger F1 Circuits** (github.com/bacinger/f1-circuits) — circuit layout reference data for track maps where applicable
 
 ### Independence notice
-BoxBox is an independent app and is not affiliated with, endorsed by, or connected to Formula One World Championship Limited, Formula 1, FIA, or any Formula 1 team.
+RaceCall is an independent app and is not affiliated with, endorsed by, or connected to Formula One World Championship Limited, Formula 1, FIA, or any Formula 1 team.
 
 **Formula 1**, **F1**, team names, driver names, and related marks belong to their respective owners.
 
@@ -49,16 +49,16 @@ BoxBox is an independent app and is not affiliated with, endorsed by, or connect
 **Last updated:** 2026-03-21
 
 ### Who we are
-BoxBox is developed and published by **[PUBLISHER NAME / LEGAL ENTITY]** ("we", "us", "our").
+RaceCall is developed and published by **[PUBLISHER NAME / LEGAL ENTITY]** ("we", "us", "our").
 
 Contact: **[SUPPORT EMAIL]**
 
 > Replace the publisher name and contact email above with final submission details.
 
-### What BoxBox collects
-BoxBox does **not** require account creation or registration.
+### What RaceCall collects
+RaceCall does **not** require account creation or registration.
 
-BoxBox is designed to minimize personal data handling. We do **not** intentionally collect profile data such as your name, email address, or precise location through the app experience itself.
+RaceCall is designed to minimize personal data handling. We do **not** intentionally collect profile data such as your name, email address, or precise location through the app experience itself.
 
 ### Data stored locally on your device
 The app may store lightweight local state on-device to support the app experience, including for example:
@@ -70,7 +70,7 @@ The app may store lightweight local state on-device to support the app experienc
 This data is stored locally on your device using Apple platform storage mechanisms.
 
 ### In-app purchases
-BoxBox may offer optional in-app purchases. All payments are processed exclusively by **Apple** through the App Store.
+RaceCall may offer optional in-app purchases. All payments are processed exclusively by **Apple** through the App Store.
 
 We do not receive or store your payment card details.
 
@@ -80,28 +80,28 @@ https://www.apple.com/legal/privacy/
 ### AI / Race Call requests
 When you use **Race Call**, the app may send public motorsport context (for example standings, race context, circuit/profile context, and other non-personal racing data) to **OpenAI** to generate the result.
 
-BoxBox is not designed to send personal profile information as part of a Race Call request.
+RaceCall is not designed to send personal profile information as part of a Race Call request.
 
 OpenAI's privacy policy applies to those API requests:  
 https://openai.com/privacy
 
 ### Third-party motorsport data providers
-BoxBox retrieves public motorsport data from providers such as:
+RaceCall retrieves public motorsport data from providers such as:
 - **OpenF1**
 - **Jolpica F1 API**
 
 Requests to those services may involve standard network metadata such as IP address, timestamp, device network routing information, and similar server-log data handled by those providers under their own policies.
 
 ### Analytics / advertising
-If BoxBox does **not** use analytics or ad SDKs at release, say so clearly in the shipped privacy policy.
+If RaceCall does **not** use analytics or ad SDKs at release, say so clearly in the shipped privacy policy.
 
 Recommended release wording if true:
-> BoxBox does not use advertising SDKs or third-party analytics trackers.
+> RaceCall does not use advertising SDKs or third-party analytics trackers.
 
 If that changes, update this policy before release.
 
 ### Children's privacy
-BoxBox is not directed at children under the age threshold applicable in your region, and we do not knowingly collect personal data from children.
+RaceCall is not directed at children under the age threshold applicable in your region, and we do not knowingly collect personal data from children.
 
 ### Your rights
 Depending on your jurisdiction, you may have rights relating to personal data access, deletion, correction, restriction, or portability.
@@ -122,10 +122,10 @@ We may update this policy from time to time. Material changes may be communicate
 
 **Effective date:** 2026-03-21
 
-Please read these Terms of Use ("Terms") carefully before using BoxBox (the "App"). By downloading or using the App, you agree to these Terms.
+Please read these Terms of Use ("Terms") carefully before using RaceCall (the "App"). By downloading or using the App, you agree to these Terms.
 
 ### 1. License
-We grant you a limited, non-exclusive, non-transferable, revocable license to use BoxBox for personal, non-commercial use on devices you own or control, subject to the App Store terms.
+We grant you a limited, non-exclusive, non-transferable, revocable license to use RaceCall for personal, non-commercial use on devices you own or control, subject to the App Store terms.
 
 ### 2. Acceptable use
 You agree not to:
@@ -135,7 +135,7 @@ You agree not to:
 - circumvent purchases, entitlements, or access controls
 
 ### 3. Purchases
-BoxBox may offer optional in-app purchases, including credit-based Race Call packs, depending on the live App Store configuration.
+RaceCall may offer optional in-app purchases, including credit-based Race Call packs, depending on the live App Store configuration.
 
 Current launch pricing model:
 - 3 Race Calls — $0.99
@@ -145,7 +145,7 @@ Current launch pricing model:
 All purchases are handled by Apple and are subject to App Store terms, restoration rules, and applicable law.
 
 ### 4. Data and prediction disclaimer
-BoxBox relies on third-party public motorsport data sources that may contain delays, gaps, estimation, approximation, or errors.
+RaceCall relies on third-party public motorsport data sources that may contain delays, gaps, estimation, approximation, or errors.
 
 Race Call outputs are provided for informational and entertainment purposes only. They are not betting advice, financial advice, or guaranteed race outcomes.
 
@@ -158,11 +158,11 @@ The app is provided "AS IS" and "AS AVAILABLE" without warranties of any kind, t
 To the maximum extent permitted by law, **[PUBLISHER NAME / LEGAL ENTITY]** is not liable for indirect, incidental, special, consequential, or similar damages arising from use of the app.
 
 ### 7. Intellectual property
-BoxBox and its original code, branding, text, and presentation are the property of **[PUBLISHER NAME / LEGAL ENTITY]**.
+RaceCall and its original code, branding, text, and presentation are the property of **[PUBLISHER NAME / LEGAL ENTITY]**.
 
 Formula 1-related names, marks, team names, driver names, and third-party data rights remain the property of their respective owners.
 
-BoxBox is an independent app and is not affiliated with Formula 1, FIA, or any team.
+RaceCall is an independent app and is not affiliated with Formula 1, FIA, or any team.
 
 ### 8. Governing law
 These Terms are governed by the laws of **[JURISDICTION]**, unless mandatory local consumer law provides otherwise.
@@ -181,19 +181,19 @@ We may update these Terms from time to time. Continued use of the app after upda
 Use short-form in-app copy for the Info / Legal screen.
 
 ### About
-BoxBox is an independent Formula 1 companion focused on race context, standings, replay, and AI-powered Race Call briefings.
+RaceCall is an independent Formula 1 companion focused on race context, standings, replay, and AI-powered Race Call briefings.
 
 Built to make a race weekend easier to read, not noisier.
 
 ### Legal
-BoxBox is an independent app and is not affiliated with, endorsed by, or sponsored by Formula 1, FIA, or any Formula 1 team.
+RaceCall is an independent app and is not affiliated with, endorsed by, or sponsored by Formula 1, FIA, or any Formula 1 team.
 
 All trademarks, team names, driver names, and related marks belong to their respective owners.
 
 Race Call outputs are provided for informational and entertainment purposes.
 
 ### Privacy
-BoxBox stores lightweight local settings on your device to support the app experience.
+RaceCall stores lightweight local settings on your device to support the app experience.
 
 If you add an API key for Race Call, it is stored locally on your device for your own use.
 
