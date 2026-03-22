@@ -1,7 +1,11 @@
 import SwiftUI
 
 struct ContentView: View {
-    init() {
+    @Binding var selectedTab: AppTab
+
+    init(selectedTab: Binding<AppTab>) {
+        self._selectedTab = selectedTab
+
         let appearance = UITabBarAppearance()
         appearance.configureWithOpaqueBackground()
         appearance.backgroundColor = UIColor(Color.f1Background)
@@ -12,25 +16,29 @@ struct ContentView: View {
     }
 
     var body: some View {
-        TabView {
-            Tab("Home", systemImage: "house.fill") {
+        TabView(selection: $selectedTab) {
+            Tab("Home", systemImage: "house.fill", value: .home) {
                 HomeView()
             }
-            Tab("Drivers", systemImage: "person.3.fill") {
+            Tab("Drivers", systemImage: "person.3.fill", value: .drivers) {
                 DriversView()
             }
-            Tab("Race Call", systemImage: "flag.checkered") {
+            Tab("Race Call", systemImage: "flag.checkered", value: .raceCall) {
                 PredictView()
             }
-            Tab("Standings", systemImage: "chart.bar.fill") {
+            Tab("Standings", systemImage: "chart.bar.fill", value: .standings) {
                 StandingsView()
             }
-            Tab("Races", systemImage: "flag.checkered") {
+            Tab("Races", systemImage: "flag.checkered", value: .schedule) {
                 ScheduleView()
             }
         }
         .tint(Color.f1Red)
     }
+}
+
+enum AppTab: Hashable {
+    case home, drivers, raceCall, standings, schedule
 }
 
 extension Color {
@@ -42,5 +50,5 @@ extension Color {
 }
 
 #Preview {
-    ContentView()
+    ContentView(selectedTab: .constant(.home))
 }

@@ -13,8 +13,8 @@ struct StandingsEntry: TimelineEntry {
             date: .now,
             drivers: [
                 WidgetDriverStanding(position: 1, name: "Max Verstappen", code: "VER", team: "Red Bull", points: 195),
-                WidgetDriverStanding(position: 2, name: "Lando Norris", code: "NOR", team: "McLaren", points: 168),
-                WidgetDriverStanding(position: 3, name: "Charles Leclerc", code: "LEC", team: "Ferrari", points: 142),
+                WidgetDriverStanding(position: 2, name: "Lando Norris", code: "NOR", team: "McLaren", points: 183),
+                WidgetDriverStanding(position: 3, name: "Charles Leclerc", code: "LEC", team: "Ferrari", points: 162),
             ],
             isPlaceholder: true
         )
@@ -32,6 +32,35 @@ struct WidgetDriverStanding: Identifiable {
 
     var lastName: String {
         name.components(separatedBy: " ").last ?? name
+    }
+}
+
+// MARK: - Team Colors
+
+enum WidgetTeamColor {
+    static func color(for team: String) -> Color {
+        let name = team.lowercased()
+        if name.contains("mclaren") { return Color(hex: 0xFF8000) }
+        if name.contains("ferrari") { return Color(hex: 0xE8002D) }
+        if name.contains("red bull") && !name.contains("rb ") { return Color(hex: 0x3671C6) }
+        if name.contains("mercedes") { return Color(hex: 0x27F4D2) }
+        if name.contains("aston") { return Color(hex: 0x229971) }
+        if name.contains("alpine") { return Color(hex: 0xFF87BC) }
+        if name.contains("williams") { return Color(hex: 0x64C4FF) }
+        if name.contains("haas") { return Color(hex: 0xB6BABD) }
+        if name.contains("sauber") || name.contains("stake") || name.contains("kick") { return Color(hex: 0x52E252) }
+        if name.contains("rb") || name.contains("alpha") || name.contains("vcarb") || name.contains("visa") { return Color(hex: 0x6692FF) }
+        return .white
+    }
+}
+
+private extension Color {
+    init(hex: UInt32) {
+        self.init(
+            red: Double((hex >> 16) & 0xFF) / 255,
+            green: Double((hex >> 8) & 0xFF) / 255,
+            blue: Double(hex & 0xFF) / 255
+        )
     }
 }
 
@@ -98,10 +127,65 @@ struct StandingsProvider: TimelineProvider {
     }
 }
 
-// MARK: - Widget View
+// MARK: - Small View (leader only)
+
+struct StandingsSmallView: View {
+    let entry: StandingsEntry
+
+    var body: some View {
+        if let leader = entry.drivers.first {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack {
+                    Text("LEADER")
+                        .font(.system(size: 9, weight: .heavy))
+                        .foregroundStyle(widgetRed)
+                        .tracking(0.6)
+                    Spacer()
+                    Text("P1")
+                        .font(.system(size: 9, weight: .bold))
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                HStack(spacing: 6) {
+                    Circle()
+                        .fill(WidgetTeamColor.color(for: leader.team))
+                        .frame(width: 8, height: 8)
+                    Text(leader.lastName.uppercased())
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                }
+
+                Text(leader.team)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+
+                HStack(spacing: 4) {
+                    Text("\(Int(leader.points))")
+                        .font(.system(size: 28, weight: .black, design: .rounded))
+                        .foregroundStyle(widgetRed)
+                    Text("PTS")
+                        .font(.system(size: 9, weight: .heavy))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(14)
+            .widgetURL(URL(string: "boxbox://standings"))
+            .containerBackground(widgetBackground, for: .widget)
+        }
+    }
+}
+
+// MARK: - Medium View (top 3 with gap)
 
 struct StandingsMediumView: View {
     let entry: StandingsEntry
+
+    private var leaderPoints: Double {
+        entry.drivers.first?.points ?? 0
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -124,7 +208,9 @@ struct StandingsMediumView: View {
                         .foregroundStyle(positionColor(driver.position))
                         .frame(width: 24)
 
-                    teamDot(driver.team)
+                    Circle()
+                        .fill(WidgetTeamColor.color(for: driver.team))
+                        .frame(width: 6, height: 6)
 
                     VStack(alignment: .leading, spacing: 1) {
                         Text(driver.lastName.uppercased())
@@ -137,6 +223,13 @@ struct StandingsMediumView: View {
 
                     Spacer()
 
+                    if driver.position > 1 {
+                        let gap = Int(driver.points - leaderPoints)
+                        Text("\(gap)")
+                            .font(.system(size: 11, weight: .medium, design: .rounded))
+                            .foregroundStyle(.secondary)
+                    }
+
                     Text("\(Int(driver.points))")
                         .font(.system(size: 16, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
@@ -147,6 +240,7 @@ struct StandingsMediumView: View {
             }
         }
         .padding(16)
+        .widgetURL(URL(string: "boxbox://standings"))
         .containerBackground(widgetBackground, for: .widget)
     }
 
@@ -158,24 +252,6 @@ struct StandingsMediumView: View {
         default: return .white
         }
     }
-
-    private func teamDot(_ team: String) -> some View {
-        let name = team.lowercased()
-        let color: Color = {
-            if name.contains("red bull") { return Color(red: 0.21, green: 0.44, blue: 0.78) }
-            if name.contains("ferrari") { return widgetRed }
-            if name.contains("mercedes") { return Color(red: 0.15, green: 0.96, blue: 0.82) }
-            if name.contains("mclaren") { return .orange }
-            if name.contains("aston") { return Color(red: 0.13, green: 0.6, blue: 0.44) }
-            if name.contains("alpine") { return Color(red: 1.0, green: 0.53, blue: 0.74) }
-            if name.contains("williams") { return Color(red: 0.39, green: 0.77, blue: 1.0) }
-            if name.contains("rb") || name.contains("alpha") { return Color(red: 0.4, green: 0.57, blue: 1.0) }
-            if name.contains("sauber") || name.contains("stake") { return Color(red: 0.32, green: 0.89, blue: 0.32) }
-            if name.contains("haas") { return Color(white: 0.72) }
-            return .gray
-        }()
-        return Circle().fill(color).frame(width: 6, height: 6)
-    }
 }
 
 // MARK: - Widget Definition
@@ -186,12 +262,26 @@ struct StandingsWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: kind, provider: StandingsProvider()) { entry in
             if #available(iOSApplicationExtension 17.0, *) {
-                StandingsMediumView(entry: entry)
+                StandingsWidgetEntryView(entry: entry)
             }
         }
         .configurationDisplayName("Championship")
-        .description("Top 3 drivers in the current championship standings.")
-        .supportedFamilies([.systemMedium])
+        .description("Driver championship standings.")
+        .supportedFamilies([.systemSmall, .systemMedium])
+    }
+}
+
+struct StandingsWidgetEntryView: View {
+    @Environment(\.widgetFamily) var family
+    let entry: StandingsEntry
+
+    var body: some View {
+        switch family {
+        case .systemSmall:
+            StandingsSmallView(entry: entry)
+        default:
+            StandingsMediumView(entry: entry)
+        }
     }
 }
 
@@ -233,6 +323,12 @@ struct WidgetJolpicaConstructor: Codable {
 }
 
 // MARK: - Previews
+
+#Preview("Small", as: .systemSmall) {
+    StandingsWidget()
+} timeline: {
+    StandingsEntry.placeholder
+}
 
 #Preview("Standings", as: .systemMedium) {
     StandingsWidget()
